@@ -26,7 +26,7 @@ const GenreSelectorIntegrationExample: React.FC = () => {
   return (
     <div className="space-y-6">
       <div className="text-center">
-        <h2 className="text-2xl font-bold mb-2">Escolha o estilo musical</h2>
+        <h2 className="text-2xl font-heading font-bold mb-2">Escolha o estilo musical</h2>
         <p className="text-muted-foreground">
           Selecione o gênero musical e as preferências para sua música
         </p>

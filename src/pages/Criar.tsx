@@ -1,7 +1,6 @@
 import React from 'react';
 import { useState } from "react";
-import Header from "@/components/Header";
-import Footer from "@/components/Footer";
+
 import StepIndicator from "@/components/StepIndicator";
 import MusicPreview from "@/components/MusicPreview";
 import ValidationPopup from "@/components/ValidationPopup";
@@ -181,7 +180,7 @@ export default function Criar() {
               
               {/* A Ocasião */}
               <div className="space-y-4">
-                <h3 className="text-lg font-semibold">A Ocasião</h3>
+                <h3 className="text-lg font-semibold font-heading">A Ocasião</h3>
                 <div className="space-y-2">
                   <Label htmlFor="occasion">Qual a ocasião especial? *</Label>
                   <Select value={formData.occasion} onValueChange={(value) => handleFieldUpdate('occasion', value)}>
@@ -204,7 +203,7 @@ export default function Criar() {
 
               {/* Sobre a(s) Pessoa(s) */}
               <div className="space-y-4">
-                <h3 className="text-lg font-semibold">Sobre a(s) Pessoa(s)</h3>
+                <h3 className="text-lg font-semibold font-heading">Sobre a(s) Pessoa(s)</h3>
                 <div className="space-y-4">
                   <div className="space-y-2">
                     <Label htmlFor="recipientName">Qual o nome da pessoa para quem está a criar esta música? *</Label>
@@ -253,7 +252,7 @@ export default function Criar() {
 
               {/* Detalhes e Personalidade */}
               <div className="space-y-4">
-                <h3 className="text-lg font-semibold">Detalhes e Personalidade</h3>
+                <h3 className="text-lg font-semibold font-heading">Detalhes e Personalidade</h3>
                 <div className="space-y-4">
                   <div className="space-y-2">
                     <Label htmlFor="hobbies">Fale-nos sobre os seus hobbies e interesses!</Label>
@@ -295,7 +294,7 @@ export default function Criar() {
 
               {/* Memórias e Histórias */}
               <div className="space-y-4">
-                <h3 className="text-lg font-semibold">Memórias e Histórias</h3>
+                <h3 className="text-lg font-semibold font-heading">Memórias e Histórias</h3>
                 <div className="space-y-2">
                   <Label htmlFor="memories">Partilhe as vossas histórias ou memórias favoritas que gostaria de incluir na música.</Label>
                   <Textarea
@@ -362,7 +361,7 @@ export default function Criar() {
               {formData.lyrics && !isLoading && (
                 <div className="space-y-4">
                   <div className="bg-muted p-6 rounded-lg">
-                    <h3 className="font-semibold mb-3 flex items-center gap-2">
+                    <h3 className="font-heading font-semibold mb-3 flex items-center gap-2">
                       <Music className="w-5 h-5 text-primary" />
                       Sua Letra Personalizada
                     </h3>
@@ -404,7 +403,7 @@ export default function Criar() {
         return (
           <div className="space-y-6">
             <div className="text-center">
-              <h2 className="text-2xl font-bold mb-2">Escolha o estilo musical</h2>
+              <h2 className="text-2xl font-bold font-heading mb-2">Escolha o estilo musical</h2>
               <p className="text-muted-foreground">
                 Selecione o gênero musical e as preferências para sua música
               </p>
@@ -480,7 +479,7 @@ export default function Criar() {
         return (
           <div className="space-y-6">
             <div className="text-center">
-              <h2 className="text-2xl font-bold mb-2">Ouça a sua criação</h2>
+              <h2 className="text-2xl font-bold font-heading mb-2">Ouça a sua criação</h2>
               <p className="text-muted-foreground">
                 Sua música está pronta! Ouça uma prévia e escolha o que fazer a seguir
               </p>
@@ -492,7 +491,7 @@ export default function Criar() {
                   <Loader2 className="w-8 h-8 text-accent-turquoise animate-spin" />
                 </div>
                 <div>
-                  <h3 className="text-xl font-bold mb-2">
+                  <h3 className="text-xl font-bold font-heading mb-2">
                     {musicGenerationStatus === 'PROCESSING' ? 'Criando sua música...' : 'Iniciando geração...'}
                   </h3>
                   <p className="text-muted-foreground">
@@ -517,7 +516,7 @@ export default function Criar() {
                   )}
                 </div>
                 <div className="bg-muted/50 rounded-lg p-6 space-y-4">
-                  <h4 className="font-semibold text-lg">Resumo da sua música:</h4>
+                  <h4 className="font-semibold font-heading text-lg">Resumo da sua música:</h4>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
                     <div>
                       <span className="font-medium">Ocasião:</span> {formData.occasion}
@@ -578,7 +577,7 @@ export default function Criar() {
                       <div key={clip.id || index} className="bg-gradient-to-r from-primary/10 to-secondary/10 p-6 rounded-lg border">
                         <div className="flex items-center justify-between mb-4">
                           <div>
-                            <h3 className="font-semibold text-lg flex items-center gap-2">
+                            <h3 className="font-semibold font-heading text-lg flex items-center gap-2">
                               Opção {index + 1}
                               <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
                                 ✓ Pronta
@@ -604,7 +603,7 @@ export default function Criar() {
                         <div key={`placeholder-${placeholderIndex}`} className="bg-gradient-to-r from-muted/50 to-muted/30 p-6 rounded-lg border border-dashed">
                           <div className="flex items-center justify-between mb-4">
                             <div>
-                              <h3 className="font-semibold text-lg flex items-center gap-2">
+                              <h3 className="font-semibold font-heading text-lg flex items-center gap-2">
                                 Opção {placeholderIndex}
                                 <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
                                   <Loader2 className="w-3 h-3 mr-1 animate-spin" />
@@ -645,7 +644,7 @@ export default function Criar() {
                     {(!audioClips || audioClips.length === 0) && !isPolling && (
                       <div className="bg-gradient-to-r from-primary/10 to-secondary/10 p-6 rounded-lg border">
                         <div className="text-center">
-                          <h3 className="font-semibold text-lg mb-2">Nenhuma prévia disponível</h3>
+                          <h3 className="font-heading font-semibold text-lg mb-2">Nenhuma prévia disponível</h3>
                           <p className="text-sm text-muted-foreground">Tente gerar a música novamente.</p>
                         </div>
                       </div>
@@ -688,13 +687,11 @@ export default function Criar() {
 
   return (
     <div className="min-h-screen flex flex-col">
-      <Header />
-      
       <main className="flex-1 pt-20 pb-12">
         <div className="container mx-auto px-4">
           <div className="max-w-2xl mx-auto">
             <div className="text-center mb-8">
-              <h1 className="text-3xl md:text-4xl font-bold mb-4">
+              <h1 className="text-3xl md:text-4xl font-bold font-heading mb-4">
                 Criar sua <span className="bg-gradient-music bg-clip-text text-transparent">música personalizada</span>
               </h1>
               <p className="text-muted-foreground">
@@ -741,7 +738,7 @@ export default function Criar() {
         </div>
       </main>
       
-      <Footer />
+
       
       {/* ValidationPopup renderizado condicionalmente */}
       {isValidationPopupVisible && <ValidationPopup />}

@@ -92,7 +92,7 @@ export const GenreSelector: React.FC<GenreSelectorProps> = ({
               <Music className="h-5 w-5 text-white" />
             </div>
             <div>
-              <h3 className="font-semibold text-gray-900">{genre.name}</h3>
+              <h3 className="font-heading font-semibold text-gray-900">{genre.name}</h3>
               <p className="text-sm text-gray-600">{genre.description}</p>
             </div>
           </div>
@@ -122,7 +122,7 @@ export const GenreSelector: React.FC<GenreSelectorProps> = ({
             <Music className="h-4 w-4 text-white" />
           </div>
           <div>
-            <h4 className="font-medium text-gray-900">{subGenre.name}</h4>
+            <h4 className="font-heading font-medium text-gray-900">{subGenre.name}</h4>
             <p className="text-sm text-gray-600">{subGenre.description}</p>
           </div>
         </div>
@@ -137,7 +137,7 @@ export const GenreSelector: React.FC<GenreSelectorProps> = ({
       <div className="space-y-3">
         <div className="flex items-center space-x-2">
           <span className="text-2xl">{icon}</span>
-          <h3 className="text-lg font-semibold text-gray-800">{title}</h3>
+          <h3 className="text-lg font-heading font-semibold text-gray-800">{title}</h3>
           <Badge variant="outline">{genres.length}</Badge>
         </div>
         <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2">
@@ -214,7 +214,7 @@ export const GenreSelector: React.FC<GenreSelectorProps> = ({
                 {searchQuery ? (
                   // Resultados da busca
                   <div className="space-y-3">
-                    <h3 className="text-lg font-semibold text-gray-800">
+                    <h3 className="text-lg font-heading font-semibold text-gray-800">
                       Resultados da busca ({filteredGenres.length})
                     </h3>
                     <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2">
@@ -259,7 +259,7 @@ export const GenreSelector: React.FC<GenreSelectorProps> = ({
                 {selectedMainGenre && (
                   <>
                     <div className="bg-gradient-to-r from-purple-50 to-pink-50 p-4 rounded-lg border">
-                      <h3 className="font-semibold text-gray-900">{selectedMainGenre.name}</h3>
+                      <h3 className="font-heading font-semibold text-gray-900">{selectedMainGenre.name}</h3>
                       <p className="text-sm text-gray-600">{selectedMainGenre.description}</p>
                     </div>
                     

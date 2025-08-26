@@ -5,7 +5,7 @@ import heroImage from "@/assets/hero-music.jpg";
 
 export default function HeroSection() {
   return (
-    <section className="relative min-h-screen flex items-center justify-center bg-gradient-hero overflow-hidden">
+    <section className="relative min-h-screen bg-gradient-to-br from-slate-700 via-slate-800 to-purple-900 overflow-hidden flex items-center justify-center">
       {/* Background Image with Overlay */}
       <div className="absolute inset-0 z-0">
         <img
@@ -33,7 +33,7 @@ export default function HeroSection() {
             <Sparkles className="w-6 h-6" />
           </div>
           
-          <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold leading-tight">
+          <h1 className="text-4xl md:text-6xl lg:text-7xl font-heading font-bold leading-tight">
             Transforme{" "}
             <span className="bg-gradient-music bg-clip-text text-transparent">
               memórias

@@ -21,7 +21,7 @@ export default function Footer() {
 
           {/* Links */}
           <div className="space-y-4">
-            <h3 className="font-semibold text-lg">Links</h3>
+            <h3 className="font-heading font-semibold text-lg">Links</h3>
             <div className="space-y-2 text-sm">
               <div><a href="#como-funciona" className="text-primary-foreground/80 hover:text-secondary transition-smooth">Como Funciona</a></div>
               <div><a href="#exemplos" className="text-primary-foreground/80 hover:text-secondary transition-smooth">Exemplos</a></div>
@@ -31,7 +31,7 @@ export default function Footer() {
 
           {/* Contact */}
           <div className="space-y-4">
-            <h3 className="font-semibold text-lg">Contato</h3>
+            <h3 className="font-heading font-semibold text-lg">Contato</h3>
             <div className="space-y-2 text-sm text-primary-foreground/80">
               <div>contato@memora.music</div>
               <div>© 2024 Memora.music</div>

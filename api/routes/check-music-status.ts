@@ -5,7 +5,11 @@ const router = express.Router();
 
 // Configurar CORS para permitir requisições do frontend
 router.use(cors({
-  origin: ['http://localhost:5173', 'http://localhost:3000'],
+  origin: [
+    'http://localhost:5173',
+    'http://localhost:3000',
+    'https://traememoramusicouxl-ottomiranda-twingcombrs-projects.vercel.app'
+  ],
   credentials: true
 }));
 

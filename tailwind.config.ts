@@ -20,6 +20,17 @@ export default {
 		},
 		extend: {
 			colors: {
+				// Memora Music Brand Colors
+				memora: {
+					primary: '#7B3FE4',    // Roxo primário
+					secondary: '#FEC641',  // Dourado secundário
+					coral: '#FF5A73',      // Coral de apoio
+					turquoise: '#3ECFBB',  // Turquesa de apoio
+					black: '#101010',      // Preto neutro
+					gray: '#7A7A7A',       // Cinza médio
+					'gray-light': '#F4F4F4' // Cinza claro
+				},
+				// Shadcn/ui colors
 				border: 'hsl(var(--border))',
 				input: 'hsl(var(--input))',
 				ring: 'hsl(var(--ring))',
@@ -87,6 +98,10 @@ export default {
 			animation: {
 				'accordion-down': 'accordion-down 0.2s ease-out',
 				'accordion-up': 'accordion-up 0.2s ease-out'
+			},
+			fontFamily: {
+				'heading': ['Sora', 'sans-serif'],
+				'body': ['Inter', 'sans-serif']
 			}
 		}
 	},

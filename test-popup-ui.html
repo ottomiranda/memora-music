@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teste do Popup de Validação</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .test-section {
+            margin-bottom: 30px;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+        }
+        .test-section h3 {
+            color: #333;
+            margin-top: 0;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        input[type="radio"] {
+            margin-right: 8px;
+        }
+        input[type="text"] {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        .result {
+            margin-top: 15px;
+            padding: 10px;
+            border-radius: 4px;
+            font-weight: bold;
+        }
+        .success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .info {
+            background-color: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 Teste do Popup de Validação - Memora Music</h1>
+        <p>Este teste simula o comportamento do popup de validação que aparece após 45 segundos de reprodução de música.</p>
+        
+        <div class="test-section">
+            <h3>📝 Formulário de Feedback</h3>
+            <form id="feedbackForm">
+                <div class="form-group">
+                    <label>1. Qual foi o nível de dificuldade para usar nossa plataforma?</label>
+                    <div>
+                        <input type="radio" name="difficulty" value="1" id="diff1">
+                        <label for="diff1" style="display: inline; font-weight: normal;">1 - Muito fácil</label>
+                    </div>
+                    <div>
+                        <input type="radio" name="difficulty" value="2" id="diff2">
+                        <label for="diff2" style="display: inline; font-weight: normal;">2 - Fácil</label>
+                    </div>
+                    <div>
+                        <input type="radio" name="difficulty" value="3" id="diff3">
+                        <label for="diff3" style="display: inline; font-weight: normal;">3 - Médio</label>
+                    </div>
+                    <div>
+                        <input type="radio" name="difficulty" value="4" id="diff4">
+                        <label for="diff4" style="display: inline; font-weight: normal;">4 - Difícil</label>
+                    </div>
+                    <div>
+                        <input type="radio" name="difficulty" value="5" id="diff5">
+                        <label for="diff5" style="display: inline; font-weight: normal;">5 - Muito difícil</label>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label>2. Você recomendaria nossa plataforma para outras pessoas?</label>
+                    <div>
+                        <input type="radio" name="wouldRecommend" value="true" id="rec1">
+                        <label for="rec1" style="display: inline; font-weight: normal;">Sim</label>
+                    </div>
+                    <div>
+                        <input type="radio" name="wouldRecommend" value="false" id="rec2">
+                        <label for="rec2" style="display: inline; font-weight: normal;">Não</label>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label>3. Quanto você estaria disposto(a) a pagar por uma música personalizada?</label>
+                    <div>
+                        <input type="radio" name="priceWillingness" value="10-20" id="price1">
+                        <label for="price1" style="display: inline; font-weight: normal;">R$ 10-20</label>
+                    </div>
+                    <div>
+                        <input type="radio" name="priceWillingness" value="20-50" id="price2">
+                        <label for="price2" style="display: inline; font-weight: normal;">R$ 20-50</label>
+                    </div>
+                    <div>
+                        <input type="radio" name="priceWillingness" value="50-100" id="price3">
+                        <label for="price3" style="display: inline; font-weight: normal;">R$ 50-100</label>
+                    </div>
+                    <div>
+                        <input type="radio" name="priceWillingness" value="100+" id="price4">
+                        <label for="price4" style="display: inline; font-weight: normal;">R$ 100+</label>
+                    </div>
+                    <div>
+                        <input type="radio" name="priceWillingness" value="custom" id="price5">
+                        <label for="price5" style="display: inline; font-weight: normal;">Outro valor:</label>
+                        <input type="text" id="customPrice" placeholder="Digite o valor" style="margin-top: 5px; display: none;">
+                    </div>
+                </div>
+                
+                <button type="submit">Enviar Feedback</button>
+            </form>
+            
+            <div id="result"></div>
+        </div>
+        
+        <div class="test-section">
+            <h3>📊 Status da Conexão</h3>
+            <button onclick="testConnection()">Testar Conexão com API</button>
+            <div id="connectionResult"></div>
+        </div>
+        
+        <div class="test-section">
+            <h3>🎵 Simulação do Comportamento do Player</h3>
+            <p>Na aplicação real, o popup aparece automaticamente após 45 segundos de reprodução de música.</p>
+            <button onclick="simulatePopup()">Simular Popup Após 45s</button>
+            <div id="simulationResult"></div>
+        </div>
+    </div>
+    
+    <script>
+        const API_BASE = 'http://localhost:3001';
+        
+        // Manipular formulário
+        document.getElementById('feedbackForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const formData = new FormData(e.target);
+            const difficulty = parseInt(formData.get('difficulty'));
+            const wouldRecommend = formData.get('wouldRecommend') === 'true';
+            let priceWillingness = formData.get('priceWillingness');
+            
+            // Se selecionou "custom", pegar o valor do campo de texto
+            if (priceWillingness === 'custom') {
+                const customValue = document.getElementById('customPrice').value.trim();
+                if (!customValue) {
+                    showResult('error', 'Por favor, digite um valor personalizado.');
+                    return;
+                }
+                priceWillingness = customValue;
+            }
+            
+            // Validação
+            if (!difficulty || wouldRecommend === null || !priceWillingness) {
+                showResult('error', 'Por favor, preencha todos os campos.');
+                return;
+            }
+            
+            // Enviar dados
+            try {
+                showResult('info', 'Enviando feedback...');
+                
+                const response = await fetch(`${API_BASE}/api/save-feedback`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        difficulty,
+                        wouldRecommend,
+                        priceWillingness
+                    })
+                });
+                
+                if (response.ok) {
+                    const result = await response.json();
+                    showResult('success', `✅ Feedback enviado com sucesso! ID: ${result.data?.id || 'N/A'}`);
+                    document.getElementById('feedbackForm').reset();
+                } else {
+                    const error = await response.text();
+                    showResult('error', `❌ Erro ao enviar feedback: ${error}`);
+                }
+                
+            } catch (error) {
+                showResult('error', `❌ Erro de conexão: ${error.message}`);
+            }
+        });
+        
+        // Mostrar/ocultar campo de preço personalizado
+        document.getElementById('price5').addEventListener('change', (e) => {
+            const customField = document.getElementById('customPrice');
+            customField.style.display = e.target.checked ? 'block' : 'none';
+        });
+        
+        // Ocultar campo personalizado quando outras opções são selecionadas
+        document.querySelectorAll('input[name="priceWillingness"]:not(#price5)').forEach(radio => {
+            radio.addEventListener('change', () => {
+                document.getElementById('customPrice').style.display = 'none';
+            });
+        });
+        
+        // Testar conexão
+        async function testConnection() {
+            const resultDiv = document.getElementById('connectionResult');
+            resultDiv.innerHTML = '<div class="info">Testando conexão...</div>';
+            
+            try {
+                const response = await fetch(`${API_BASE}/api/save-feedback`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        difficulty: 3,
+                        wouldRecommend: true,
+                        priceWillingness: 'test-connection'
+                    })
+                });
+                
+                if (response.ok) {
+                    resultDiv.innerHTML = '<div class="success">✅ Conexão com API funcionando!</div>';
+                } else {
+                    resultDiv.innerHTML = `<div class="error">❌ Erro na API: ${response.status} ${response.statusText}</div>`;
+                }
+                
+            } catch (error) {
+                resultDiv.innerHTML = `<div class="error">❌ Erro de conexão: ${error.message}</div>`;
+            }
+        }
+        
+        // Simular popup
+        function simulatePopup() {
+            const resultDiv = document.getElementById('simulationResult');
+            resultDiv.innerHTML = '<div class="info">⏱️ Simulando reprodução de música por 45 segundos...</div>';
+            
+            let seconds = 0;
+            const interval = setInterval(() => {
+                seconds++;
+                resultDiv.innerHTML = `<div class="info">🎵 Reproduzindo música... ${seconds}s / 45s</div>`;
+                
+                if (seconds >= 45) {
+                    clearInterval(interval);
+                    resultDiv.innerHTML = '<div class="success">🎉 Popup de validação seria exibido agora! (Na aplicação real, o áudio seria pausado e o popup apareceria)</div>';
+                }
+            }, 100); // Acelerar para demonstração (100ms = 1s simulado)
+        }
+        
+        // Função auxiliar para mostrar resultados
+        function showResult(type, message) {
+            const resultDiv = document.getElementById('result');
+            resultDiv.innerHTML = `<div class="${type}">${message}</div>`;
+        }
+    </script>
+</body>
+</html>

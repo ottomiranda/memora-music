@@ -60,10 +60,23 @@ const ValidationPopup: React.FC = () => {
 
     try {
       // Preparar dados para envio ao backend
+      let priceWillingness = '';
+      if (formData.price === 'outro') {
+        priceWillingness = formData.customPrice;
+      } else {
+        // Mapear valores do formulário para formato esperado pela API
+        const priceMap: { [key: string]: string } = {
+          '99': '99',
+          '149': '149', 
+          '219': '219'
+        };
+        priceWillingness = priceMap[formData.price] || formData.price;
+      }
+      
       const feedbackData = {
         difficulty: formData.difficulty,
         wouldRecommend: formData.recommendation === 'sim' ? true : false,
-        priceWillingness: formData.price === 'outro' ? formData.customPrice : formData.price
+        priceWillingness: priceWillingness
       };
 
       console.log('[MVP] Enviando dados do formulário de validação:', feedbackData);
@@ -103,7 +116,7 @@ const ValidationPopup: React.FC = () => {
       <div className="bg-white rounded-lg shadow-xl max-w-md w-full max-h-[90vh] overflow-y-auto">
         <div className="p-6">
           <div className="flex items-center justify-between mb-6">
-            <h2 className="text-xl font-bold text-gray-800">
+            <h2 className="text-xl font-heading font-bold text-gray-800">
               Ajude-nos a melhorar!
             </h2>
             {/* Removido botão de fechar para tornar o modal obrigatório */}

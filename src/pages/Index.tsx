@@ -1,17 +1,37 @@
-import Header from "@/components/Header";
-import HeroSection from "@/components/HeroSection";
-import HowItWorks from "@/components/HowItWorks";
-import Footer from "@/components/Footer";
+import { useState } from "react";
+import Hero from "@/components/memora/Hero";
+import HowItWorks from "@/components/memora/HowItWorks";
+import PlanSection from "@/components/memora/PlanSection";
+import ExamplesGrid from "@/components/memora/ExamplesGrid";
+import ArtistsSection from "@/components/memora/ArtistsSection";
+import TestimonialSection from "@/components/memora/TestimonialSection";
+import FAQSection from "@/components/memora/FAQSection";
+import FinalCTA from "@/components/memora/FinalCTA";
+
+import CookieBanner from "@/components/memora/CookieBanner";
+import AuthModal from "@/components/memora/AuthModal";
 
 const Index = () => {
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+
   return (
-    <div className="min-h-screen">
-      <Header />
+    <div className="min-h-screen bg-white font-body">
       <main>
-        <HeroSection />
+        <Hero />
         <HowItWorks />
+        <PlanSection />
+        <ExamplesGrid />
+        <ArtistsSection />
+        <TestimonialSection />
+        <FAQSection />
+        <FinalCTA />
       </main>
-      <Footer />
+
+      <CookieBanner />
+      <AuthModal 
+        isOpen={isAuthModalOpen} 
+        onClose={() => setIsAuthModalOpen(false)} 
+      />
     </div>
   );
 };

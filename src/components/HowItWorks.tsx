@@ -29,7 +29,7 @@ export default function HowItWorks() {
     <section id="como-funciona" className="py-20 bg-card">
       <div className="container mx-auto px-4">
         <div className="text-center space-y-4 mb-16">
-          <h2 className="text-3xl md:text-4xl font-bold">Como Funciona</h2>
+          <h2 className="text-3xl md:text-4xl font-heading font-bold">Como Funciona</h2>
           <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
             Quatro passos simples para criar sua música personalizada
           </p>
@@ -51,7 +51,7 @@ export default function HowItWorks() {
                 
                 {/* Content */}
                 <div className="space-y-2">
-                  <h3 className="text-xl font-semibold">{step.title}</h3>
+                  <h3 className="text-xl font-heading font-semibold">{step.title}</h3>
                   <p className="text-muted-foreground text-sm">{step.description}</p>
                 </div>
               </CardContent>
