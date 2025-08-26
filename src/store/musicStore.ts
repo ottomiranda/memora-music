@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { toast } from 'sonner';
+import { API_ENDPOINTS, apiRequest } from '../config/api';
 
 // Tipos para o formulário
 export interface FormData {
@@ -213,11 +214,8 @@ export const useMusicStore = create<MusicStore>((set, get) => ({
     set({ isLoading: true, error: null });
     
     try {
-      const response = await fetch('http://localhost:3001/api/generate-preview', {
+      const response = await apiRequest(API_ENDPOINTS.GENERATE_PREVIEW, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
         body: JSON.stringify(payload),
       });
       
@@ -291,12 +289,9 @@ export const useMusicStore = create<MusicStore>((set, get) => ({
     set({ isPreviewLoading: true, error: null });
     
     try {
-      const response = await fetch('http://localhost:3001/api/generate-preview', {
+      const response = await apiRequest(API_ENDPOINTS.GENERATE_PREVIEW, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(formData),
+        body: JSON.stringify(payload),
       });
       
       const result: GeneratePreviewResponse = await response.json();
@@ -380,11 +375,8 @@ export const useMusicStore = create<MusicStore>((set, get) => ({
     });
     
     try {
-      const response = await fetch('http://localhost:3001/api/generate-preview', {
+      const response = await apiRequest(API_ENDPOINTS.GENERATE_PREVIEW, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
         body: JSON.stringify(payload),
       });
       
@@ -483,11 +475,8 @@ export const useMusicStore = create<MusicStore>((set, get) => ({
     try {
       console.log('[DEBUG] Verificando status para taskId:', currentTaskId);
       
-      const response = await fetch(`http://localhost:3001/api/check-music-status/${currentTaskId}`, {
+      const response = await apiRequest(`${API_ENDPOINTS.CHECK_MUSIC_STATUS}/${currentTaskId}`, {
         method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        },
       });
       const result = await response.json();
       
