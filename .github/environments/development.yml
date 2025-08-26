@@ -1,0 +1,107 @@
+# GitHub Environment Configuration: Development
+# This file documents the development environment setup
+# Actual configuration is done through GitHub UI
+
+name: development
+description: "Development environment for preview deployments and testing"
+
+# Environment Protection Rules
+protection_rules:
+  # No deployment protection for development
+  # Allows automatic deployments from any branch
+  required_reviewers: []
+  prevent_self_review: false
+  
+  # Wait timer (in minutes) - 0 for immediate deployment
+  wait_timer: 0
+  
+  # Deployment branches - allow all branches for development
+  deployment_branches:
+    protected_branches: false
+    custom_branch_policies: true
+    custom_branches:
+      - "develop"
+      - "feature/*"
+      - "hotfix/*"
+      - "release/*"
+
+# Environment Variables (non-sensitive)
+variables:
+  NODE_ENV: "development"
+  NEXT_PUBLIC_APP_NAME: "Memora Music (Dev)"
+  NEXT_PUBLIC_APP_ENV: "development"
+  VERCEL_ENV: "preview"
+  
+# Environment Secrets (sensitive data)
+# These must be configured through GitHub UI: Settings > Environments > development
+secrets:
+  # Vercel Integration
+  - VERCEL_TOKEN
+  - VERCEL_ORG_ID
+  - VERCEL_PROJECT_ID
+  
+  # Supabase Configuration
+  - NEXT_PUBLIC_SUPABASE_URL
+  - NEXT_PUBLIC_SUPABASE_ANON_KEY
+  - SUPABASE_SERVICE_ROLE_KEY
+  
+  # Authentication
+  - NEXTAUTH_SECRET
+  - NEXTAUTH_URL
+  
+  # OAuth Providers (Development)
+  - GOOGLE_CLIENT_ID_DEV
+  - GOOGLE_CLIENT_SECRET_DEV
+  - GITHUB_ID_DEV
+  - GITHUB_SECRET_DEV
+  - SPOTIFY_CLIENT_ID_DEV
+  - SPOTIFY_CLIENT_SECRET_DEV
+  
+  # External APIs (Development)
+  - OPENAI_API_KEY_DEV
+  - LASTFM_API_KEY_DEV
+  - YOUTUBE_API_KEY_DEV
+  
+  # Monitoring (Optional for dev)
+  - SENTRY_DSN_DEV
+  - NEXT_PUBLIC_GA_MEASUREMENT_ID_DEV
+
+# Deployment Configuration
+deployment:
+  # Automatic deployment on PR creation/update
+  auto_deploy: true
+  
+  # Preview URL pattern
+  preview_url_pattern: "https://memora-music-{branch}-{team}.vercel.app"
+  
+  # Deployment timeout (minutes)
+  timeout: 10
+  
+  # Post-deployment checks
+  health_checks:
+    - url: "/api/health"
+      expected_status: 200
+      timeout: 30
+    - url: "/"
+      expected_status: 200
+      timeout: 30
+
+# Notifications
+notifications:
+  # Slack webhook for deployment notifications (optional)
+  slack_webhook: "SLACK_WEBHOOK_DEV"
+  
+  # Discord webhook for deployment notifications (optional)
+  discord_webhook: "DISCORD_WEBHOOK_DEV"
+  
+  # Email notifications
+  email_on_failure: true
+  email_on_success: false
+
+# Usage Instructions:
+# 1. Go to GitHub repository > Settings > Environments
+# 2. Create new environment named "development"
+# 3. Configure protection rules as specified above
+# 4. Add all secrets listed in the secrets section
+# 5. Add environment variables as specified
+# 6. Save the environment configuration

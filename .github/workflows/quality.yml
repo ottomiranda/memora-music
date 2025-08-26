@@ -1,0 +1,204 @@
+name: Code Quality & Security
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+  schedule:
+    # Executa diariamente às 2:00 AM UTC
+    - cron: '0 2 * * *'
+
+env:
+  NODE_VERSION: '20'
+
+jobs:
+  # Análise de qualidade de código
+  code-quality:
+    name: Code Quality Analysis
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          
+      - name: Install dependencies
+        run: npm ci
+        
+      - name: Run ESLint with report
+        run: |
+          npm run lint:legacy -- --format json --output-file eslint-report.json || true
+          npm run lint:legacy
+          
+      - name: Upload ESLint report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: eslint-report
+          path: eslint-report.json
+          
+      - name: Type check
+        run: npx tsc --noEmit
+        
+      - name: Check for unused dependencies
+        run: |
+          npx depcheck --json > depcheck-report.json || true
+          cat depcheck-report.json
+          
+      - name: Upload dependency report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: depcheck-report
+          path: depcheck-report.json
+
+  # Análise de segurança
+  security-scan:
+    name: Security Scan
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          
+      - name: Install dependencies
+        run: npm ci
+        
+      - name: Run npm audit
+        run: |
+          npm audit --audit-level=moderate --json > audit-report.json || true
+          npm audit --audit-level=moderate
+          
+      - name: Upload audit report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: audit-report
+          path: audit-report.json
+          
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v3
+        with:
+          languages: javascript
+          
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v3
+        with:
+          category: "/language:javascript"
+
+  # Verificação de build em múltiplos ambientes
+  build-matrix:
+    name: Build Matrix Test
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        node-version: ['18', '20', '21']
+      fail-fast: false
+      
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Setup Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: 'npm'
+          
+      - name: Install dependencies
+        run: npm ci
+        
+      - name: Build project
+        run: npm run build:legacy
+        
+      - name: Test build output
+        run: |
+          if [ -d "dist" ]; then
+            echo "✅ Build successful - dist folder created"
+            ls -la dist/
+          else
+            echo "❌ Build failed - no dist folder found"
+            exit 1
+          fi
+        shell: bash
+
+  # Análise de performance do bundle
+  bundle-analysis:
+    name: Bundle Analysis
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          
+      - name: Install dependencies
+        run: npm ci
+        
+      - name: Build for analysis
+        run: npm run build:legacy
+        
+      - name: Analyze bundle size
+        run: |
+          echo "📊 Bundle Analysis Report"
+          echo "========================"
+          
+          if [ -d "dist/assets" ]; then
+            echo "📁 Assets folder contents:"
+            ls -lah dist/assets/
+            
+            echo ""
+            echo "📈 File sizes:"
+            find dist -name "*.js" -o -name "*.css" | while read file; do
+              size=$(stat -f%z "$file" 2>/dev/null || stat -c%s "$file" 2>/dev/null)
+              echo "  $(basename "$file"): ${size} bytes"
+            done
+            
+            echo ""
+            echo "🎯 Total bundle size:"
+            du -sh dist/
+          else
+            echo "❌ No assets folder found"
+            exit 1
+          fi
+        
+      - name: Comment bundle size on PR
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const path = require('path');
+            
+            // Get bundle size info
+            const { execSync } = require('child_process');
+            const bundleSize = execSync('du -sh dist/', { encoding: 'utf8' }).trim();
+            
+            const comment = `## 📊 Bundle Analysis Report\n\n**Total bundle size:** ${bundleSize}\n\n*This comment is automatically generated by the CI/CD pipeline.*`;
+            
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: comment
+            });

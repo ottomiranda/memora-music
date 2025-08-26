@@ -1,0 +1,208 @@
+# GitHub Environment Configuration: Production
+# This file documents the production environment setup
+# Actual configuration is done through GitHub UI
+
+name: production
+description: "Production environment for live deployments"
+
+# Environment Protection Rules
+protection_rules:
+  # Required reviewers for production deployments
+  required_reviewers:
+    - "@otomiranda"  # Replace with actual GitHub usernames
+    # - "@team-lead"
+    # - "@senior-dev"
+  
+  prevent_self_review: true
+  
+  # Wait timer (in minutes) - 5 minutes for production safety
+  wait_timer: 5
+  
+  # Deployment branches - only allow main branch for production
+  deployment_branches:
+    protected_branches: true
+    custom_branch_policies: false
+    allowed_branches:
+      - "main"
+      - "release/*"
+
+# Environment Variables (non-sensitive)
+variables:
+  NODE_ENV: "production"
+  NEXT_PUBLIC_APP_NAME: "Memora Music"
+  NEXT_PUBLIC_APP_ENV: "production"
+  VERCEL_ENV: "production"
+  
+# Environment Secrets (sensitive data)
+# These must be configured through GitHub UI: Settings > Environments > production
+secrets:
+  # Vercel Integration
+  - VERCEL_TOKEN
+  - VERCEL_ORG_ID
+  - VERCEL_PROJECT_ID
+  
+  # Supabase Configuration (Production)
+  - NEXT_PUBLIC_SUPABASE_URL
+  - NEXT_PUBLIC_SUPABASE_ANON_KEY
+  - SUPABASE_SERVICE_ROLE_KEY
+  
+  # Authentication (Production)
+  - NEXTAUTH_SECRET
+  - NEXTAUTH_URL
+  - NEXT_PUBLIC_APP_URL
+  
+  # OAuth Providers (Production)
+  - GOOGLE_CLIENT_ID
+  - GOOGLE_CLIENT_SECRET
+  - GITHUB_ID
+  - GITHUB_SECRET
+  - SPOTIFY_CLIENT_ID
+  - SPOTIFY_CLIENT_SECRET
+  
+  # External APIs (Production)
+  - OPENAI_API_KEY
+  - LASTFM_API_KEY
+  - YOUTUBE_API_KEY
+  
+  # Monitoring & Analytics (Production)
+  - SENTRY_DSN
+  - NEXT_PUBLIC_GA_MEASUREMENT_ID
+  - DATADOG_API_KEY
+  - NEW_RELIC_LICENSE_KEY
+  
+  # Email Service (Production)
+  - SENDGRID_API_KEY
+  - SMTP_HOST
+  - SMTP_PORT
+  - SMTP_USER
+  - SMTP_PASS
+  
+  # Rate Limiting & Security
+  - REDIS_URL
+  - RATE_LIMIT_SECRET
+  
+  # Feature Flags
+  - FEATURE_FLAGS_API_KEY
+  - LAUNCHDARKLY_SDK_KEY
+
+# Deployment Configuration
+deployment:
+  # Manual deployment approval required
+  auto_deploy: false
+  
+  # Production URL
+  production_url: "https://memora-music.vercel.app"
+  
+  # Deployment timeout (minutes)
+  timeout: 15
+  
+  # Pre-deployment checks
+  pre_deployment_checks:
+    - name: "Security Scan"
+      required: true
+    - name: "Performance Tests"
+      required: true
+    - name: "Integration Tests"
+      required: true
+  
+  # Post-deployment checks
+  health_checks:
+    - url: "/api/health"
+      expected_status: 200
+      timeout: 60
+    - url: "/"
+      expected_status: 200
+      timeout: 60
+    - url: "/api/auth/session"
+      expected_status: 200
+      timeout: 30
+  
+  # Rollback configuration
+  rollback:
+    enabled: true
+    auto_rollback_on_failure: true
+    rollback_timeout: 5  # minutes
+
+# Monitoring & Alerts
+monitoring:
+  # Health check intervals
+  health_check_interval: 300  # 5 minutes
+  
+  # Performance monitoring
+  performance_monitoring: true
+  
+  # Error tracking
+  error_tracking: true
+  
+  # Uptime monitoring
+  uptime_monitoring: true
+
+# Notifications
+notifications:
+  # Slack webhook for deployment notifications
+  slack_webhook: "SLACK_WEBHOOK_PROD"
+  
+  # Discord webhook for deployment notifications
+  discord_webhook: "DISCORD_WEBHOOK_PROD"
+  
+  # Email notifications
+  email_on_failure: true
+  email_on_success: true
+  
+  # PagerDuty integration for critical alerts
+  pagerduty_integration_key: "PAGERDUTY_INTEGRATION_KEY"
+  
+  # Teams webhook for deployment notifications
+  teams_webhook: "TEAMS_WEBHOOK_PROD"
+
+# Security Configuration
+security:
+  # Branch protection
+  branch_protection: true
+  
+  # Required status checks
+  required_status_checks:
+    - "ci/lint"
+    - "ci/test"
+    - "ci/build"
+    - "ci/security-scan"
+    - "ci/performance-test"
+  
+  # Dismiss stale reviews
+  dismiss_stale_reviews: true
+  
+  # Require code owner reviews
+  require_code_owner_reviews: true
+  
+  # Restrict pushes to admins only
+  restrict_pushes: true
+
+# Compliance & Auditing
+compliance:
+  # Audit logging
+  audit_logging: true
+  
+  # Deployment approval tracking
+  approval_tracking: true
+  
+  # Change management integration
+  change_management: true
+  
+  # Compliance checks
+  compliance_checks:
+    - "GDPR"
+    - "SOC2"
+    - "HIPAA"  # if applicable
+
+# Usage Instructions:
+# 1. Go to GitHub repository > Settings > Environments
+# 2. Create new environment named "production"
+# 3. Configure protection rules as specified above
+# 4. Add required reviewers (replace with actual GitHub usernames)
+# 5. Set wait timer to 5 minutes
+# 6. Restrict deployment to main branch only
+# 7. Add all secrets listed in the secrets section
+# 8. Add environment variables as specified
+# 9. Enable branch protection rules
+# 10. Configure monitoring and alerting integrations
+# 11. Save the environment configuration

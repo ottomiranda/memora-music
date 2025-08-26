@@ -1,0 +1,81 @@
+# Code Owners for Memora Music
+# This file defines who should review specific parts of the codebase
+# Learn more: https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
+
+# Global owners - these users will be requested for review on all PRs
+* @team-leads @senior-devs
+
+# Frontend code
+/src/ @frontend-team @react-specialists
+/public/ @frontend-team
+/components/ @frontend-team @ui-specialists
+/pages/ @frontend-team
+/styles/ @frontend-team @design-system-team
+
+# Backend code
+/api/ @backend-team @node-specialists
+/server/ @backend-team
+/lib/ @backend-team
+/utils/ @backend-team
+
+# Database and migrations
+/prisma/ @backend-team @database-team
+/supabase/ @backend-team @database-team
+/migrations/ @database-team @senior-devs
+
+# Infrastructure and DevOps
+/.github/ @devops-team @senior-devs
+/docker/ @devops-team
+/scripts/ @devops-team
+/Dockerfile @devops-team
+vercel.json @devops-team @senior-devs
+
+# Configuration files
+package.json @team-leads @senior-devs
+package-lock.json @team-leads
+tsconfig.json @team-leads @typescript-specialists
+tailwind.config.js @frontend-team @design-system-team
+vite.config.ts @frontend-team @build-specialists
+turbo.json @devops-team @monorepo-specialists
+
+# Environment and secrets
+.env.example @team-leads @devops-team @security-team
+.env* @security-team @devops-team
+
+# Documentation
+/docs/ @tech-writers @team-leads
+*.md @tech-writers @team-leads
+README.md @team-leads @tech-writers
+CHANGELOG.md @team-leads
+
+# Security and compliance
+/.github/workflows/ @devops-team @security-team
+/.github/SECURITY.md @security-team @team-leads
+/.github/dependabot.yml @security-team @devops-team
+
+# Testing
+/tests/ @qa-team @backend-team @frontend-team
+/e2e/ @qa-team @senior-devs
+*.test.* @qa-team
+*.spec.* @qa-team
+jest.config.* @qa-team @test-specialists
+playwright.config.* @qa-team @e2e-specialists
+
+# Specific file types
+*.sql @database-team @senior-devs
+*.yml @devops-team
+*.yaml @devops-team
+*.json @team-leads
+
+# Third-party integrations
+/integrations/ @backend-team @integration-specialists
+/webhooks/ @backend-team @security-team
+
+# Performance critical files
+/performance/ @performance-team @senior-devs
+/optimization/ @performance-team
+
+# Monitoring and observability
+/monitoring/ @devops-team @sre-team
+/logging/ @devops-team @backend-team
+/metrics/ @devops-team @data-team

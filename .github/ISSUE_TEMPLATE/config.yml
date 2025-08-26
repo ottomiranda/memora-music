@@ -1,0 +1,11 @@
+blank_issues_enabled: false
+contact_links:
+  - name: 📚 Documentação
+    url: https://github.com/otomiranda/memora-music/blob/main/README.md
+    about: Consulte a documentação do projeto
+  - name: 💬 Discussões
+    url: https://github.com/otomiranda/memora-music/discussions
+    about: Faça perguntas gerais ou inicie discussões sobre o projeto
+  - name: 🔒 Relatório de Segurança
+    url: https://github.com/otomiranda/memora-music/security/advisories/new
+    about: Reporte vulnerabilidades de segurança de forma privada
