@@ -3,6 +3,8 @@ import { X, Mail, Eye, EyeOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { useAuthStore } from "@/store/authStore";
+import { useUiStore } from "@/store/uiStore";
 
 interface AuthModalProps {
   isOpen: boolean;
@@ -15,20 +17,47 @@ const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
+  
+  const { login, signup, isLoading, error, clearError } = useAuthStore();
+  const { hideAuthPopup, executeAuthCallback } = useUiStore();
 
   if (!isOpen) return null;
 
-  const handleGoogleAuth = () => {
-    // Simulação do fluxo de autenticação com Google
+  const handleGoogleAuth = async () => {
+    // TODO: Implementar autenticação com Google
     console.log("Autenticação com Google");
-    onClose();
+    // Por enquanto, simular login bem-sucedido
+    const success = await login({ email: "google@user.com", password: "google" });
+    if (success) {
+      executeAuthCallback();
+      hideAuthPopup();
+      onClose();
+    }
   };
 
-  const handleEmailAuth = (e: React.FormEvent) => {
+  const handleEmailAuth = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Simulação do fluxo de autenticação com email
-    console.log(isLogin ? "Login" : "Cadastro", { email, password, name });
-    onClose();
+    clearError();
+    
+    let success = false;
+    
+    if (isLogin) {
+      console.log('[DEBUG] Enviando para login:', { email, password });
+      success = await login({ email, password });
+    } else {
+      console.log('[DEBUG] Enviando para signup:', { email, password, name });
+      success = await signup({ email, password, name });
+    }
+    
+    if (success) {
+      executeAuthCallback();
+      hideAuthPopup();
+      onClose();
+      // Limpar formulário
+      setEmail("");
+      setPassword("");
+      setName("");
+    }
   };
 
   return (
@@ -67,7 +96,7 @@ const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
         <Button
           onClick={handleGoogleAuth}
           variant="outline"
-          className="w-full mb-4 h-12 border-2 border-memora-gray-light hover:border-memora-primary hover:bg-memora-primary/5 transition-all duration-200"
+          className="w-full mb-4 border-2 border-memora-gray-light hover:border-memora-primary hover:bg-memora-primary/5"
           data-attr={isLogin ? "google-login" : "google-signup"}
         >
           <svg className="w-5 h-5 mr-3" viewBox="0 0 24 24">
@@ -100,6 +129,13 @@ const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
             <span className="px-2 bg-white text-memora-gray">ou</span>
           </div>
         </div>
+
+        {/* Error Message */}
+        {error && (
+          <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+            <p className="text-red-600 text-sm">{error}</p>
+          </div>
+        )}
 
         {/* Email Form */}
         <form onSubmit={handleEmailAuth} className="space-y-4">
@@ -169,10 +205,18 @@ const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
 
           <Button
             type="submit"
-            className="w-full h-12 bg-memora-primary hover:bg-memora-primary/90 text-white rounded-2xl font-medium transition-all duration-200 shadow-lg hover:shadow-xl hover:-translate-y-0.5"
+            disabled={isLoading}
+            className="w-full bg-memora-primary hover:bg-memora-primary/90 text-white font-medium disabled:opacity-50"
             data-attr={isLogin ? "email-login" : "email-signup"}
           >
-            {isLogin ? "Entrar" : "Criar conta"}
+            {isLoading ? (
+              <div className="flex items-center gap-2">
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                {isLogin ? "Entrando..." : "Criando conta..."}
+              </div>
+            ) : (
+              isLogin ? "Entrar" : "Criar conta"
+            )}
           </Button>
         </form>
 
