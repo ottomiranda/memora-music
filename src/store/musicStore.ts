@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { persist } from 'zustand/middleware';
 import { toast } from 'sonner';
 import { API_ENDPOINTS, apiRequest } from '../config/api';
 
@@ -129,7 +130,9 @@ interface MusicStore {
 let pollingInterval: NodeJS.Timeout | null = null;
 
 // Criação do store
-export const useMusicStore = create<MusicStore>((set, get) => ({
+export const useMusicStore = create<MusicStore>()(
+  persist(
+    (set, get) => ({
   // Estados iniciais
   formData: initialFormData,
   currentStep: 0,
@@ -612,4 +615,20 @@ export const useMusicStore = create<MusicStore>((set, get) => ({
       isValidationPopupVisible: false,
     });
   },
-}));
+}),
+{
+  name: 'music-generation-storage',
+  partialize: (state) => ({
+    formData: state.formData,
+    currentStep: state.currentStep,
+    generatedAudioUrl: state.generatedAudioUrl,
+    generatedLyrics: state.generatedLyrics,
+    audioClips: state.audioClips,
+    musicGenerationStatus: state.musicGenerationStatus,
+    completedClips: state.completedClips,
+    totalExpected: state.totalExpected,
+    isMvpFlowComplete: state.isMvpFlowComplete,
+  }),
+}
+  )
+);

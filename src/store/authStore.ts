@@ -1,5 +1,35 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+import { API_BASE_URL } from '../config/api';
+
+/**
+ * Função para migrar dados do convidado para o usuário logado
+ */
+const migrateGuestData = async (guestId: string, userId: string): Promise<void> => {
+  try {
+    console.log('Iniciando migração de dados do convidado:', { guestId, userId });
+    
+    const response = await fetch(`${API_BASE_URL}/api/migrate-guest-data`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ guestId, userId }),
+    });
+    
+    if (response.ok) {
+      const result = await response.json();
+      console.log('Migração concluída com sucesso:', result);
+    } else {
+      const error = await response.json();
+      console.error('Erro na migração:', error);
+      // Não falha o login/cadastro por causa da migração
+    }
+  } catch (error) {
+    console.error('Erro ao migrar dados do convidado:', error);
+    // Não falha o login/cadastro por causa da migração
+  }
+};
 
 interface User {
   id: string;
@@ -31,6 +61,10 @@ export const useAuthStore = create<AuthState>()(
       login: async (credentials) => {
         set({ isLoading: true, error: null });
         
+        // Captura o guestId antes do login (se existir)
+        const { getCurrentGuestId, clearGuestId } = await import('../utils/guest');
+        const guestId = getCurrentGuestId();
+        
         try {
           // Simular chamada de API para login
           // TODO: Substituir por chamada real para o backend
@@ -51,6 +85,13 @@ export const useAuthStore = create<AuthState>()(
               isLoading: false,
               error: null 
             });
+            
+            // Migrar dados do convidado se existir guestId
+            if (guestId) {
+              await migrateGuestData(guestId, userData.user.id);
+              clearGuestId();
+            }
+            
             return true;
           } else {
             const errorData = await response.json();
@@ -64,9 +105,11 @@ export const useAuthStore = create<AuthState>()(
           // Por enquanto, simular login bem-sucedido para desenvolvimento
           console.log('Simulando login bem-sucedido:', credentials.email);
           const simulatedToken = `token_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+          const simulatedUserId = `user_${Date.now()}`;
+          
           set({ 
             user: { 
-              id: '1', 
+              id: simulatedUserId, 
               email: credentials.email, 
               name: credentials.email.split('@')[0] 
             },
@@ -75,6 +118,13 @@ export const useAuthStore = create<AuthState>()(
             isLoading: false,
             error: null 
           });
+          
+          // Migrar dados do convidado se existir guestId
+          if (guestId) {
+            await migrateGuestData(guestId, simulatedUserId);
+            clearGuestId();
+          }
+          
           return true;
         }
       },
@@ -82,6 +132,10 @@ export const useAuthStore = create<AuthState>()(
       signup: async (data) => {
         console.log('[DEBUG] authStore.signup recebido. Payload:', data);
         set({ isLoading: true, error: null });
+        
+        // Captura o guestId antes do cadastro (se existir)
+        const { getCurrentGuestId, clearGuestId } = await import('../utils/guest');
+        const guestId = getCurrentGuestId();
         
         try {
           // Simular chamada de API para cadastro
@@ -103,6 +157,13 @@ export const useAuthStore = create<AuthState>()(
               isLoading: false,
               error: null 
             });
+            
+            // Migrar dados do convidado se existir guestId
+            if (guestId) {
+              await migrateGuestData(guestId, userData.user.id);
+              clearGuestId();
+            }
+            
             return true;
           } else {
             const errorData = await response.json();
@@ -116,9 +177,11 @@ export const useAuthStore = create<AuthState>()(
           // Por enquanto, simular cadastro bem-sucedido para desenvolvimento
           console.log('Simulando cadastro bem-sucedido:', data.email);
           const simulatedToken = `token_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+          const simulatedUserId = `user_${Date.now()}`;
+          
           set({ 
             user: { 
-              id: '1', 
+              id: simulatedUserId, 
               email: data.email, 
               name: data.name || data.email.split('@')[0] 
             },
@@ -127,6 +190,13 @@ export const useAuthStore = create<AuthState>()(
             isLoading: false,
             error: null 
           });
+          
+          // Migrar dados do convidado se existir guestId
+          if (guestId) {
+            await migrateGuestData(guestId, simulatedUserId);
+            clearGuestId();
+          }
+          
           return true;
         }
       },

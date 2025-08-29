@@ -8,16 +8,30 @@ const isDevelopment = () => {
   return import.meta.env.DEV || window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
 };
 
-// Função para obter a URL base da API
-const getApiBaseUrl = (): string => {
-  // Em desenvolvimento, usa a variável de ambiente ou fallback para localhost:3001
-  if (isDevelopment()) {
-    return import.meta.env.VITE_API_URL || 'http://localhost:3001';
+// Função para obter a configuração da API
+const getApiConfig = () => {
+  const isDev = isDevelopment();
+  const apiBaseUrl = isDev
+    ? (import.meta.env.VITE_API_URL || 'http://localhost:3001')
+    : import.meta.env.VITE_PROD_API_URL;
+
+  if (!apiBaseUrl && !isDev) {
+    console.error("ERRO: A URL da API não está definida nas variáveis de ambiente!");
+    console.error("Por favor, defina VITE_PROD_API_URL nas variáveis de ambiente do Vercel.");
   }
-  
-  // Em produção, usa a mesma origem do frontend (Vercel)
-  // Isso funciona porque o Vercel serve tanto o frontend quanto as API routes
-  return window.location.origin;
+
+  return {
+    isDevelopment: isDev,
+    apiBaseUrl: apiBaseUrl || 'http://localhost:3001' // fallback para desenvolvimento
+  };
+};
+
+// Obter configuração da API
+const apiConfig = getApiConfig();
+
+// Função para obter a URL base da API (mantida para compatibilidade)
+const getApiBaseUrl = (): string => {
+  return apiConfig.apiBaseUrl;
 };
 
 // URL base da API
@@ -32,12 +46,32 @@ export const API_ENDPOINTS = {
 // Função helper para fazer requisições com tratamento de erro
 export const apiRequest = async (url: string, options: RequestInit = {}) => {
   try {
+    // Importação dinâmica para evitar problemas de SSR
+    const { getOrCreateGuestId } = await import('../utils/guest');
+    const { useAuthStore } = await import('../store/authStore');
+    
+    // Verifica se o usuário está logado
+    const isLoggedIn = useAuthStore.getState().isLoggedIn;
+    const token = useAuthStore.getState().token;
+    
+    // Prepara os headers
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+      ...options.headers as Record<string, string>,
+    };
+    
+    // Se o usuário estiver logado, adiciona o token de autorização
+    if (isLoggedIn && token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    } else {
+      // Se não estiver logado, adiciona o guestId
+      const guestId = getOrCreateGuestId();
+      headers['X-Guest-ID'] = guestId;
+    }
+    
     const response = await fetch(url, {
-      headers: {
-        'Content-Type': 'application/json',
-        ...options.headers,
-      },
       ...options,
+      headers,
     });
 
     if (!response.ok) {
@@ -52,10 +86,16 @@ export const apiRequest = async (url: string, options: RequestInit = {}) => {
 };
 
 // Log da configuração atual (apenas em desenvolvimento)
-if (isDevelopment()) {
+if (apiConfig.isDevelopment) {
   console.log('🔧 API Configuration:', {
-    isDevelopment: isDevelopment(),
-    apiBaseUrl: API_BASE_URL,
+    isDevelopment: apiConfig.isDevelopment,
+    apiBaseUrl: apiConfig.apiBaseUrl,
+    environment: import.meta.env.MODE,
     endpoints: API_ENDPOINTS,
   });
+} else {
+  // Em produção, apenas log se houver erro de configuração
+  if (!apiConfig.apiBaseUrl) {
+    console.error('❌ API Configuration Error: VITE_PROD_API_URL não definida!');
+  }
 }

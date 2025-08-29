@@ -199,7 +199,7 @@ const port = Number(process.env.PORT ?? 3337);
 const host = "0.0.0.0";
 const server = http.createServer(app);
 
-server.on("error", (err: any) => {
+server.on("error", (err: Error & { code?: string }) => {
   if (err?.code === "EADDRINUSE") {
     console.error(`Porta ${port} em uso. Saindo com código 1.`);
     process.exit(1);

@@ -35,6 +35,19 @@ interface MusicTaskStatus {
   lastUpdate: number;
 }
 
+// GET /api/check-music-status/health
+// Endpoint de health check
+router.get('/health', (req, res) => {
+  const tasksCount = global.musicTasks ? global.musicTasks.size : 0;
+  
+  res.json({
+    success: true,
+    status: 'healthy',
+    activeTasks: tasksCount,
+    timestamp: new Date().toISOString()
+  });
+});
+
 // GET /api/check-music-status/:taskId
 // Verificar o status de uma tarefa de geração de música
 router.get('/:taskId', async (req, res) => {
@@ -110,19 +123,6 @@ router.get('/:taskId', async (req, res) => {
       taskId
     });
   }
-});
-
-// GET /api/check-music-status/health
-// Endpoint de health check
-router.get('/health', (req, res) => {
-  const tasksCount = global.musicTasks ? global.musicTasks.size : 0;
-  
-  res.json({
-    success: true,
-    status: 'healthy',
-    activeTasks: tasksCount,
-    timestamp: new Date().toISOString()
-  });
 });
 
 export default router;
