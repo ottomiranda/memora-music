@@ -1,3 +1,4 @@
+import http from "http";
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
@@ -16,6 +17,8 @@ import generatePreviewRoute from './routes/generate-preview.js';
 import authRoute from './routes/auth.js';
 import checkMusicStatusRoute from './routes/check-music-status.js';
 import saveFeedbackRoute from './routes/save-feedback.js';
+import songsRoute from './routes/songs.js';
+import migrateGuestDataRoute from './routes/migrate-guest-data.js';
 
 // Criar rota de health check como Express Router
 import { Router } from 'express';
@@ -76,7 +79,6 @@ healthRoute.get('/', (req, res) => {
 });
 
 const app = express();
-const PORT = process.env.PORT || 3001;
 
 // Inicializar mapa global de tarefas de música
 if (!global.musicTasks) {
@@ -115,7 +117,7 @@ const corsOptions = {
   },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'x-guest-id'],
   optionsSuccessStatus: 200
 };
 
@@ -140,6 +142,8 @@ app.use('/api/generate-preview', generatePreviewRoute);
 app.use('/api/auth', authRoute);
 app.use('/api/check-music-status', checkMusicStatusRoute);
 app.use('/api/save-feedback', saveFeedbackRoute);
+app.use('/api/songs', songsRoute);
+app.use('/api/migrate-guest-data', migrateGuestDataRoute);
 
 console.log('📋 Rotas registradas:');
 console.log('  - /api/health');
@@ -147,6 +151,9 @@ console.log('  - /api/generate-preview');
 console.log('  - /api/auth');
 console.log('  - /api/check-music-status');
 console.log('  - /api/save-feedback');
+console.log('  - /api/songs');
+console.log('  - /api/migrate-guest-data');
+console.log('🔄 Sistema de salvamento automático ativo');
 
 // Rota de teste simples
 app.get('/api/test', (req, res) => {
@@ -188,33 +195,33 @@ app.use('*', (req, res) => {
   });
 });
 
-// Inicializar servidor na porta fixa para ambiente estável
-app.listen(PORT, () => {
-  console.log(`🚀 Servidor back-end rodando de forma estável na porta ${PORT}`);
-  console.log(`📍 URL: http://localhost:${PORT}`);
-  console.log(`🌍 Ambiente: ${process.env.NODE_ENV || 'development'}`);
-  console.log(`⏰ Iniciado em: ${new Date().toISOString()}`);
-  console.log(`✅ Ambiente de desenvolvimento estabilizado - porta fixa configurada`);
-}).on('error', (err: NodeJS.ErrnoException) => {
-  if (err.code === 'EADDRINUSE') {
-    console.error(`❌ Erro: Porta ${PORT} já está em uso.`);
-    console.error(`💡 Solução: Pare o processo que está usando a porta ${PORT} ou altere a variável PORT no arquivo .env`);
-    console.error(`🔍 Para encontrar o processo: lsof -ti:${PORT}`);
-  } else {
-    console.error('❌ Erro ao iniciar servidor:', err);
+const port = Number(process.env.PORT ?? 3337);
+const host = "0.0.0.0";
+const server = http.createServer(app);
+
+server.on("error", (err: any) => {
+  if (err?.code === "EADDRINUSE") {
+    console.error(`Porta ${port} em uso. Saindo com código 1.`);
+    process.exit(1);
   }
-  process.exit(1);
+  throw err;
 });
 
-// Tratamento de sinais de encerramento
-process.on('SIGTERM', () => {
-  console.log('🛑 Recebido SIGTERM, encerrando servidor...');
-  process.exit(0);
-});
+declare global { var __memoraServerStarted: boolean | undefined; }
+if (!global.__memoraServerStarted) {
+  global.__memoraServerStarted = true;
+  server.listen(port, host, () => {
+    console.log(`Backend em http://localhost:${port}`);
+  });
+} else {
+  console.log("Servidor já iniciado. Ignorando novo listen.");
+}
 
-process.on('SIGINT', () => {
-  console.log('🛑 Recebido SIGINT, encerrando servidor...');
-  process.exit(0);
-});
+function shutdown(sig: string) {
+  console.log(`Recebido ${sig}. Encerrando...`);
+  server.close(() => process.exit(0));
+}
+process.once("SIGINT", () => shutdown("SIGINT"));
+process.once("SIGTERM", () => shutdown("SIGTERM"));
 
 export default app;
