@@ -1,5 +1,6 @@
 import { Star, Quote, ChevronLeft, ChevronRight } from "lucide-react";
 import { useState } from "react";
+import { Button } from '@/components/ui/button';
 
 const TestimonialSection = () => {
   const [currentTestimonial, setCurrentTestimonial] = useState(0);
@@ -111,21 +112,25 @@ const TestimonialSection = () => {
           {/* Navigation Arrows */}
           {testimonials.length > 1 && (
             <>
-              <button
+              <Button
                 onClick={prevTestimonial}
-                className="absolute left-4 top-1/2 -translate-y-1/2 w-12 h-12 bg-white/20 hover:bg-white/30 backdrop-blur-sm rounded-full flex items-center justify-center transition-all duration-300 group"
+                variant="ghost"
+                size="sm"
+                className="absolute left-4 top-1/2 -translate-y-1/2 w-12 h-12 bg-white/20 hover:bg-white/30 backdrop-blur-sm rounded-full flex items-center justify-center transition-all duration-300 group p-0"
                 aria-label="Depoimento anterior"
               >
                 <ChevronLeft className="w-6 h-6 text-white group-hover:scale-110 transition-transform" />
-              </button>
+              </Button>
               
-              <button
+              <Button
                 onClick={nextTestimonial}
-                className="absolute right-4 top-1/2 -translate-y-1/2 w-12 h-12 bg-white/20 hover:bg-white/30 backdrop-blur-sm rounded-full flex items-center justify-center transition-all duration-300 group"
+                variant="ghost"
+                size="sm"
+                className="absolute right-4 top-1/2 -translate-y-1/2 w-12 h-12 bg-white/20 hover:bg-white/30 backdrop-blur-sm rounded-full flex items-center justify-center transition-all duration-300 group p-0"
                 aria-label="Próximo depoimento"
               >
                 <ChevronRight className="w-6 h-6 text-white group-hover:scale-110 transition-transform" />
-              </button>
+              </Button>
             </>
           )}
         </div>
@@ -134,10 +139,12 @@ const TestimonialSection = () => {
         {testimonials.length > 1 && (
           <div className="flex justify-center mt-8 space-x-3">
             {testimonials.map((_, index) => (
-              <button
+              <Button
                 key={index}
                 onClick={() => setCurrentTestimonial(index)}
-                className={`w-3 h-3 rounded-full transition-all duration-300 ${
+                variant="ghost"
+                size="sm"
+                className={`w-3 h-3 rounded-full transition-all duration-300 p-0 h-3 min-w-0 ${
                   index === currentTestimonial
                     ? 'bg-memora-secondary scale-125'
                     : 'bg-white/30 hover:bg-white/50'
@@ -180,12 +187,13 @@ const TestimonialSection = () => {
 
         {/* CTA */}
         <div className="text-center mt-12">
-          <button
+          <Button
             className="bg-memora-secondary hover:bg-memora-secondary/90 text-memora-primary font-heading font-bold py-4 px-8 rounded-2xl transition-all duration-300 hover:scale-105 hover:shadow-2xl"
             data-attr="testimonial-cta-create-music"
+            size="lg"
           >
             Criar minha música agora
-          </button>
+          </Button>
         </div>
       </div>
     </section>

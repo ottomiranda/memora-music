@@ -40,10 +40,15 @@ const generatePreviewSchema = z.object({
 // Tipo inferido do schema para uso em TypeScript
 type GenerateMusicPayload = z.infer<typeof generatePreviewSchema>;
 
-// Inicializar cliente OpenAI
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY
-});
+// Função para obter cliente OpenAI (lazy initialization)
+function getOpenAIClient() {
+  if (!process.env.OPENAI_API_KEY) {
+    throw new Error('OPENAI_API_KEY não está configurada');
+  }
+  return new OpenAI({
+    apiKey: process.env.OPENAI_API_KEY
+  });
+}
 
 // Configuração da API da Suno
 const SUNO_API_BASE = 'https://api.sunoapi.org/api/v1';
@@ -417,7 +422,7 @@ router.post('/', async (req: Request, res: Response) => {
       }
       
       const prompt = createLyricsAndTitlePrompt(formData);
-      const aiResponse = await openai.chat.completions.create({
+      const aiResponse = await getOpenAIClient().chat.completions.create({
         model: "gpt-4",
         messages: [{ role: "user", content: prompt }],
         max_tokens: 1000,
@@ -466,7 +471,7 @@ router.post('/', async (req: Request, res: Response) => {
       console.log('---END PROMPT---');
       
       console.log('🎵 Fazendo chamada para OpenAI...');
-      const completion = await openai.chat.completions.create({
+      const completion = await getOpenAIClient().chat.completions.create({
         model: 'gpt-4',
         messages: [
           {

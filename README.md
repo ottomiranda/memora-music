@@ -191,9 +191,10 @@ npm run deploy:quick
 
 #### Desenvolvimento
 ```
-VERCEL_TOKEN=seu_vercel_token
-VERCEL_ORG_ID=seu_org_id
-VERCEL_PROJECT_ID=seu_project_id
+# Vercel integration removed
+# VERCEL_TOKEN=seu_vercel_token
+# VERCEL_ORG_ID=seu_org_id
+# VERCEL_PROJECT_ID=seu_project_id
 SUPABASE_ACCESS_TOKEN=seu_supabase_token
 ```
 
@@ -301,7 +302,7 @@ chore: tarefas de manutenção
 ### Métricas Disponíveis
 - **Performance**: Core Web Vitals
 - **Erros**: Sentry (produção)
-- **Uptime**: Vercel Analytics
+- **Uptime**: Local monitoring
 - **Bundle Size**: Análise automática no CI
 
 ### Health Checks
@@ -329,11 +330,11 @@ npm run validate-env
 # Arquivo: api/index.js - configuração CORS
 ```
 
-#### Deploy falha no Vercel
+#### Deploy falha
 ```bash
-# Verificar logs no Vercel Dashboard
-# Verificar secrets do GitHub
-# Validar vercel.json
+# Verificar logs do servidor
+# Verificar configuração do ambiente
+# Validar configuração do Express
 ```
 
 ### Logs
@@ -341,8 +342,8 @@ npm run validate-env
 # Logs do desenvolvimento
 npm run dev
 
-# Logs do Vercel
-vercel logs
+# Logs do servidor local
+npm run server:dev
 
 # Logs do GitHub Actions
 # Disponíveis na aba Actions do repositório

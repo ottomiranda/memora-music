@@ -6,7 +6,7 @@
 A API da Memora Music é uma REST API que permite a criação de músicas personalizadas utilizando inteligência artificial. A API integra serviços como OpenAI para geração de letras e Suno AI para geração de áudio musical.
 
 ### 1.2 Informações Gerais
-- **Base URL**: `https://memora-music.vercel.app/api`
+- **Base URL**: `http://localhost:3000/api`
 - **Versão**: v1.0
 - **Protocolo**: HTTPS
 - **Formato**: JSON
@@ -52,7 +52,7 @@ Access-Control-Allow-Headers: Content-Type, Authorization
 **Request**:
 ```http
 GET /api/health HTTP/1.1
-Host: memora-music.vercel.app
+Host: localhost:3000
 ```
 
 **Response**:
@@ -739,7 +739,7 @@ Strict-Transport-Security: max-age=31536000; includeSubDomains
 
 #### Passo 1: Iniciar Geração
 ```bash
-curl -X POST https://memora-music.vercel.app/api/generate-preview \
+curl -X POST http://localhost:3000/api/generate-preview \
   -H "Content-Type: application/json" \
   -d '{
     "occasion": "aniversário",
@@ -755,12 +755,12 @@ curl -X POST https://memora-music.vercel.app/api/generate-preview \
 
 #### Passo 2: Verificar Status (Polling)
 ```bash
-curl https://memora-music.vercel.app/api/check-music-status/task_abc123def456
+curl http://localhost:3000/api/check-music-status/task_abc123def456
 ```
 
 #### Passo 3: Salvar Feedback
 ```bash
-curl -X POST https://memora-music.vercel.app/api/save-feedback \
+curl -X POST http://localhost:3000/api/save-feedback \
   -H "Content-Type: application/json" \
   -d '{
     "difficulty": 2,
@@ -773,7 +773,7 @@ curl -X POST https://memora-music.vercel.app/api/save-feedback \
 
 ```javascript
 class MemoraMusicAPI {
-  constructor(baseURL = 'https://memora-music.vercel.app/api') {
+  constructor(baseURL = 'http://localhost:3000/api') {
     this.baseURL = baseURL;
   }
 
@@ -869,12 +869,12 @@ DEBUG=memora:* npm start
 
 #### Verificar Health da API
 ```bash
-curl https://memora-music.vercel.app/api/health
+curl http://localhost:3000/api/health
 ```
 
 #### Testar Conectividade
 ```bash
-curl -I https://memora-music.vercel.app/api/health
+curl -I http://localhost:3000/api/health
 ```
 
 ## 12. Roadmap da API

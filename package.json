@@ -20,10 +20,6 @@
     "validate-env": "node scripts/validate-env.js",
     "validate-env:prod": "node scripts/validate-env.js --env production",
     "validate-env:list": "node scripts/validate-env.js --list",
-    "deploy": "node scripts/deploy.js",
-    "deploy:dev": "node scripts/deploy.js development",
-    "deploy:prod": "node scripts/deploy.js production",
-    "deploy:quick": "node scripts/deploy.js development --skip-tests --skip-linting",
     "predev": "npm run validate-env",
     "prebuild": "npm run validate-env",
     "check": "npm run lint && npm run validate-env"
@@ -86,7 +82,6 @@
     "tailwindcss-animate": "^1.0.7",
     "uuid": "^11.1.0",
     "vaul": "^0.9.9",
-    "vercel": "^46.0.4",
     "vite-tsconfig-paths": "^5.1.4",
     "zod": "^3.25.76",
     "zustand": "^5.0.8"
@@ -101,7 +96,6 @@
     "@types/react": "^18.3.23",
     "@types/react-dom": "^18.3.7",
     "@types/uuid": "^10.0.0",
-    "@vercel/node": "^5.3.6",
     "@vitejs/plugin-react-swc": "^3.11.0",
     "autoprefixer": "^10.4.21",
     "concurrently": "^9.2.1",

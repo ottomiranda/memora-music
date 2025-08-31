@@ -2,6 +2,7 @@ import { useState } from "react";
 import { X, Send, CheckCircle } from "lucide-react";
 import { toast } from "sonner";
 import { API_BASE_URL } from "../../config/api";
+import { Button } from '@/components/ui/button';
 
 interface FeedbackPopupProps {
   isOpen: boolean;
@@ -91,14 +92,16 @@ const FeedbackPopup = ({ isOpen, onClose }: FeedbackPopupProps) => {
       {/* Modal */}
       <div className="relative bg-white rounded-3xl p-6 lg:p-8 max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-2xl">
         {/* Close Button */}
-        <button
+        <Button
           onClick={handleClose}
           disabled={isSubmitting}
-          className="absolute top-4 right-4 p-2 rounded-full hover:bg-gray-100 transition-colors duration-200 disabled:opacity-50"
+          variant="ghost"
+          size="sm"
+          className="absolute top-4 right-4 p-2 rounded-full hover:bg-gray-100 transition-colors duration-200 disabled:opacity-50 h-auto"
           aria-label="Fechar popup"
         >
           <X className="w-6 h-6 text-memora-gray" />
-        </button>
+        </Button>
 
         {/* Content */}
         <div className="pr-12">
@@ -122,12 +125,13 @@ const FeedbackPopup = ({ isOpen, onClose }: FeedbackPopupProps) => {
               <p className="text-memora-gray mb-6">
                 Suas respostas nos ajudarão a criar uma experiência ainda melhor.
               </p>
-              <button
+              <Button
                 onClick={handleClose}
                 className="bg-memora-primary hover:bg-memora-primary/90 text-white font-heading font-bold py-3 px-6 rounded-xl transition-all duration-300"
+                size="lg"
               >
                 Fechar
-              </button>
+              </Button>
             </div>
           ) : (
             <form onSubmit={handleSubmit} className="space-y-8">
@@ -228,11 +232,12 @@ const FeedbackPopup = ({ isOpen, onClose }: FeedbackPopupProps) => {
 
               {/* Submit Button */}
               <div className="text-center pt-4">
-                <button
+                <Button
                   type="submit"
                   disabled={isSubmitting}
                   className="bg-memora-primary hover:bg-memora-primary/90 disabled:bg-memora-gray/50 text-white font-heading font-bold py-4 px-8 rounded-xl transition-all duration-300 disabled:hover:scale-100 flex items-center space-x-2 mx-auto"
                   data-attr="mvp-feedback-submit"
+                  size="lg"
                 >
                   {isSubmitting ? (
                     <>
@@ -245,7 +250,7 @@ const FeedbackPopup = ({ isOpen, onClose }: FeedbackPopupProps) => {
                       <span>Enviar feedback</span>
                     </>
                   )}
-                </button>
+                </Button>
               </div>
             </form>
           )}

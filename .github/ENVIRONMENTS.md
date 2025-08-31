@@ -7,13 +7,13 @@ Este documento descreve como configurar os ambientes GitHub para o projeto Memor
 ### 1. Development
 - **Nome**: `development`
 - **Branch**: `develop`
-- **URL**: Preview deployments do Vercel
+- **URL**: Local development server
 - **Proteção**: Nenhuma (deploy automático)
 
 ### 2. Production
 - **Nome**: `production`
 - **Branch**: `main`
-- **URL**: https://memora-music.vercel.app
+- **URL**: http://localhost:3000
 - **Proteção**: Requer aprovação de revisores
 
 ## 🔧 Configuração dos Ambientes
@@ -43,10 +43,10 @@ Este documento descreve como configurar os ambientes GitHub para o projeto Memor
 Estes secrets são compartilhados entre todos os ambientes:
 
 ```bash
-# Vercel
-VERCEL_TOKEN=your_vercel_token
-VERCEL_ORG_ID=your_vercel_org_id
-VERCEL_PROJECT_ID=your_vercel_project_id
+# Vercel (removed - integration no longer used)
+# VERCEL_TOKEN=your_vercel_token
+# VERCEL_ORG_ID=your_vercel_org_id
+# VERCEL_PROJECT_ID=your_vercel_project_id
 
 # Supabase
 SUPABASE_SERVICE_ROLE_KEY=your_supabase_service_role_key
@@ -72,13 +72,13 @@ SENTRY_DSN=your_sentry_dsn
 ```bash
 SUPABASE_URL=your_dev_supabase_url
 SUPABASE_ANON_KEY=your_dev_supabase_anon_key
-NEXTAUTH_URL=https://your-dev-deployment.vercel.app
+NEXTAUTH_URL=http://localhost:3000
 ```
 
 #### Variables
 ```bash
 NODE_ENV=development
-NEXT_PUBLIC_APP_URL=https://your-dev-deployment.vercel.app
+NEXT_PUBLIC_APP_URL=http://localhost:3000
 NEXT_PUBLIC_APP_NAME=Memora Music (Dev)
 DEBUG=true
 ENABLE_API_DOCS=true
@@ -91,13 +91,13 @@ FEATURE_ADVANCED_ANALYTICS=false
 ```bash
 SUPABASE_URL=your_prod_supabase_url
 SUPABASE_ANON_KEY=your_prod_supabase_anon_key
-NEXTAUTH_URL=https://memora-music.vercel.app
+NEXTAUTH_URL=http://localhost:3000
 ```
 
 #### Variables
 ```bash
 NODE_ENV=production
-NEXT_PUBLIC_APP_URL=https://memora-music.vercel.app
+NEXT_PUBLIC_APP_URL=http://localhost:3000
 NEXT_PUBLIC_APP_NAME=Memora Music
 DEBUG=false
 ENABLE_API_DOCS=false

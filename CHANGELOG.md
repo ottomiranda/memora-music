@@ -13,14 +13,14 @@ e este projeto adere ao [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 - Templates para issues e pull requests
 - Configuração de segurança com Dependabot e CodeQL
 - Scripts de validação de ambiente
-- Deploy automatizado para Vercel
+- Deploy automatizado removido (Vercel integration removed)
 - Proteção de branches e políticas de review
 - Documentação abrangente do projeto
 - Guia de contribuição detalhado
 
 ### Changed
 - Estrutura do projeto organizada para suportar CI/CD
-- Configuração do Vercel otimizada para segurança
+- Configuração do servidor Express otimizada para segurança
 - Package.json atualizado com scripts de qualidade
 
 ### Security
@@ -40,7 +40,7 @@ e este projeto adere ao [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 - Configuração básica do TypeScript
 
 ### Infrastructure
-- Configuração inicial do Vercel
+- Configuração inicial do servidor Express
 - Estrutura de pastas organizada
 - Configuração de desenvolvimento local
 

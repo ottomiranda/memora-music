@@ -17,7 +17,7 @@ const getApiConfig = () => {
 
   if (!apiBaseUrl && !isDev) {
     console.error("ERRO: A URL da API não está definida nas variáveis de ambiente!");
-    console.error("Por favor, defina VITE_PROD_API_URL nas variáveis de ambiente do Vercel.");
+    console.error("Por favor, defina VITE_PROD_API_URL nas variáveis de ambiente.");
   }
 
   return {

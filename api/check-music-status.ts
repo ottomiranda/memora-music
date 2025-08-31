@@ -1,4 +1,4 @@
-import type { VercelRequest, VercelResponse } from '@vercel/node';
+import type { Request, Response } from 'express';
 import { SongService } from '../src/lib/services/songService';
 import { CheckStatusQuerySchema } from '../src/lib/schemas/song';
 
@@ -31,7 +31,7 @@ declare global {
   var musicTasks: Map<string, MusicTaskStatus> | undefined;
 }
 
-export default async function handler(req: VercelRequest, res: VercelResponse) {
+export default async function handler(req: Request, res: Response) {
   // Configurar CORS
   res.setHeader('Access-Control-Allow-Credentials', 'true');
   res.setHeader('Access-Control-Allow-Origin', '*');

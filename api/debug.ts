@@ -1,12 +1,12 @@
 /**
- * Vercel serverless function for debug endpoint
+ * Debug endpoint for API
  * Verifica configurações sem expor chaves sensíveis
  */
-import type { VercelRequest, VercelResponse } from '@vercel/node';
+import type { Request, Response } from 'express';
 import { createClient } from '@supabase/supabase-js';
 
 // Configurar CORS
-function setCorsHeaders(res: VercelResponse) {
+function setCorsHeaders(res: Response) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
@@ -24,9 +24,7 @@ function checkEnvironmentVariables() {
   const envVars = {
     SUPABASE_URL: process.env.SUPABASE_URL,
     SUPABASE_SERVICE_ROLE_KEY: process.env.SUPABASE_SERVICE_ROLE_KEY,
-    NODE_ENV: process.env.NODE_ENV,
-    VERCEL: process.env.VERCEL,
-    VERCEL_ENV: process.env.VERCEL_ENV
+    NODE_ENV: process.env.NODE_ENV
   };
 
   const status = {
@@ -40,9 +38,7 @@ function checkEnvironmentVariables() {
       masked_value: maskSensitiveValue(envVars.SUPABASE_SERVICE_ROLE_KEY),
       valid_format: envVars.SUPABASE_SERVICE_ROLE_KEY?.startsWith('eyJ') || false
     },
-    NODE_ENV: envVars.NODE_ENV || 'unknown',
-    VERCEL: envVars.VERCEL || 'false',
-    VERCEL_ENV: envVars.VERCEL_ENV || 'unknown'
+    NODE_ENV: envVars.NODE_ENV || 'unknown'
   };
 
   return status;
@@ -89,7 +85,7 @@ async function testSupabaseConnection() {
   }
 }
 
-export default async function handler(req: VercelRequest, res: VercelResponse) {
+export default async function handler(req: Request, res: Response) {
   // Configurar CORS
   setCorsHeaders(res);
 

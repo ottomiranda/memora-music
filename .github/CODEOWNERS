@@ -28,7 +28,7 @@
 /docker/ @devops-team
 /scripts/ @devops-team
 /Dockerfile @devops-team
-vercel.json @devops-team @senior-devs
+# vercel.json @devops-team @senior-devs (removed - Vercel integration removed)
 
 # Configuration files
 package.json @team-leads @senior-devs

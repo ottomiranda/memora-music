@@ -26,7 +26,7 @@ app.use(cors({
   origin: [
     'http://localhost:5173',
     'http://localhost:3000',
-    'https://traememoramusicouxl-ottomiranda-twingcombrs-projects.vercel.app'
+    'http://localhost:3000'
   ],
   credentials: true
 }));

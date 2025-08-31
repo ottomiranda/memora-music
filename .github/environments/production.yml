@@ -31,15 +31,15 @@ variables:
   NODE_ENV: "production"
   NEXT_PUBLIC_APP_NAME: "Memora Music"
   NEXT_PUBLIC_APP_ENV: "production"
-  VERCEL_ENV: "production"
-  
+# Vercel integration removed
+
 # Environment Secrets (sensitive data)
 # These must be configured through GitHub UI: Settings > Environments > production
 secrets:
-  # Vercel Integration
-  - VERCEL_TOKEN
-  - VERCEL_ORG_ID
-  - VERCEL_PROJECT_ID
+  # Vercel Integration (removed)
+  # - VERCEL_TOKEN
+  # - VERCEL_ORG_ID
+  # - VERCEL_PROJECT_ID
   
   # Supabase Configuration (Production)
   - NEXT_PUBLIC_SUPABASE_URL
@@ -91,7 +91,7 @@ deployment:
   auto_deploy: false
   
   # Production URL
-  production_url: "https://memora-music.vercel.app"
+  production_url: "http://localhost:3000"
   
   # Deployment timeout (minutes)
   timeout: 15

@@ -71,13 +71,15 @@ const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
       {/* Modal */}
       <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 p-6">
         {/* Close Button */}
-        <button
+        <Button
           onClick={onClose}
-          className="absolute top-4 right-4 text-memora-gray hover:text-memora-black transition-colors duration-200"
+          variant="ghost"
+          size="icon"
+          className="absolute top-4 right-4 text-memora-gray hover:text-memora-black"
           aria-label="Fechar modal"
         >
           <X className="w-6 h-6" />
-        </button>
+        </Button>
 
         {/* Header */}
         <div className="text-center mb-6">
@@ -188,10 +190,12 @@ const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
                 placeholder="Sua senha"
                 required
               />
-              <button
+              <Button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-memora-gray hover:text-memora-black transition-colors duration-200"
+                variant="ghost"
+                size="icon"
+                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-memora-gray hover:text-memora-black h-auto w-auto p-0"
                 aria-label={showPassword ? "Ocultar senha" : "Mostrar senha"}
               >
                 {showPassword ? (
@@ -199,7 +203,7 @@ const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
                 ) : (
                   <Eye className="w-5 h-5" />
                 )}
-              </button>
+              </Button>
             </div>
           </div>
 
@@ -224,12 +228,13 @@ const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
         <div className="text-center mt-6">
           <p className="text-memora-gray">
             {isLogin ? "Não tem uma conta?" : "Já tem uma conta?"}
-            <button
+            <Button
               onClick={() => setIsLogin(!isLogin)}
-              className="ml-1 text-memora-primary hover:text-memora-primary/80 font-medium transition-colors duration-200"
+              variant="link"
+              className="ml-1 text-memora-primary hover:text-memora-primary/80 font-medium p-0 h-auto"
             >
               {isLogin ? "Criar conta" : "Entrar"}
-            </button>
+            </Button>
           </p>
         </div>
       </div>

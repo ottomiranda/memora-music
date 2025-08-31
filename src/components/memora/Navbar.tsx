@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Heart, Menu, X } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
+import { Button } from "../ui/button";
 
 const Navbar = () => {
   const [isScrolled, setIsScrolled] = useState(false);
@@ -52,24 +53,27 @@ const Navbar = () => {
             >
               Home
             </Link>
-            <button
+            <Button
               onClick={() => scrollToSection("como-funciona")}
-              className={`${isHomePage && !isScrolled ? 'text-white hover:text-memora-gold' : 'text-memora-gray hover:text-memora-primary'} transition-colors duration-200 font-medium`}
+              variant="ghost"
+              className={`${isHomePage && !isScrolled ? 'text-white hover:text-memora-gold' : 'text-memora-gray hover:text-memora-primary'} transition-colors duration-200 font-medium p-0 h-auto`}
             >
               Como Funciona
-            </button>
-            <button
+            </Button>
+            <Button
               onClick={() => scrollToSection("exemplos")}
-              className={`${isHomePage && !isScrolled ? 'text-white hover:text-memora-gold' : 'text-memora-gray hover:text-memora-primary'} transition-colors duration-200 font-medium`}
+              variant="ghost"
+              className={`${isHomePage && !isScrolled ? 'text-white hover:text-memora-gold' : 'text-memora-gray hover:text-memora-primary'} transition-colors duration-200 font-medium p-0 h-auto`}
             >
               Exemplos
-            </button>
-            <button
+            </Button>
+            <Button
               onClick={() => scrollToSection("artistas")}
-              className={`${isHomePage && !isScrolled ? 'text-white hover:text-memora-gold' : 'text-memora-gray hover:text-memora-primary'} transition-colors duration-200 font-medium`}
+              variant="ghost"
+              className={`${isHomePage && !isScrolled ? 'text-white hover:text-memora-gold' : 'text-memora-gray hover:text-memora-primary'} transition-colors duration-200 font-medium p-0 h-auto`}
             >
               Artistas
-            </button>
+            </Button>
             <Link
               to="/criar"
               className="bg-memora-primary text-white px-6 py-2 rounded-2xl hover:bg-memora-primary/90 transition-all duration-200 font-medium shadow-lg hover:shadow-xl hover:-translate-y-0.5"
@@ -80,8 +84,10 @@ const Navbar = () => {
 
           {/* Mobile Menu Button */}
           <div className="md:hidden">
-            <button
+            <Button
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+              variant="ghost"
+              size="icon"
               className={`${isHomePage && !isScrolled ? 'text-white hover:text-memora-gold' : 'text-memora-gray hover:text-memora-primary'} transition-colors duration-200`}
               aria-label="Menu de navegação"
             >
@@ -90,7 +96,7 @@ const Navbar = () => {
               ) : (
                 <Menu className="w-6 h-6" />
               )}
-            </button>
+            </Button>
           </div>
         </div>
 
@@ -105,24 +111,27 @@ const Navbar = () => {
               >
                 Home
               </Link>
-              <button
+              <Button
                 onClick={() => scrollToSection("como-funciona")}
-                className="block w-full text-left px-3 py-2 text-memora-gray hover:text-memora-primary transition-colors duration-200 font-medium"
+                variant="ghost"
+                className="block w-full text-left px-3 py-2 text-memora-gray hover:text-memora-primary transition-colors duration-200 font-medium h-auto justify-start"
               >
                 Como Funciona
-              </button>
-              <button
+              </Button>
+              <Button
                 onClick={() => scrollToSection("exemplos")}
-                className="block w-full text-left px-3 py-2 text-memora-gray hover:text-memora-primary transition-colors duration-200 font-medium"
+                variant="ghost"
+                className="block w-full text-left px-3 py-2 text-memora-gray hover:text-memora-primary transition-colors duration-200 font-medium h-auto justify-start"
               >
                 Exemplos
-              </button>
-              <button
+              </Button>
+              <Button
                 onClick={() => scrollToSection("artistas")}
-                className="block w-full text-left px-3 py-2 text-memora-gray hover:text-memora-primary transition-colors duration-200 font-medium"
+                variant="ghost"
+                className="block w-full text-left px-3 py-2 text-memora-gray hover:text-memora-primary transition-colors duration-200 font-medium h-auto justify-start"
               >
                 Artistas
-              </button>
+              </Button>
               <Link
                 to="/criar"
                 onClick={() => setIsMobileMenuOpen(false)}

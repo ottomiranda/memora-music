@@ -65,7 +65,7 @@ Reconhecemos e agradecemos pesquisadores de segurança que nos ajudam a manter o
 
 Esta política se aplica a:
 
-- **Aplicação Web**: https://memora-music.vercel.app
+- **Aplicação Web**: http://localhost:3000 (local development)
 - **API**: Endpoints da API do Memora Music
 - **Código Fonte**: Repositório GitHub principal
 - **Infraestrutura**: Serviços relacionados ao Memora Music

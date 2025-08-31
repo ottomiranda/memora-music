@@ -1,6 +1,19 @@
-import { v4 as uuidv4 } from 'uuid';
-
 const GUEST_ID_KEY = 'memora_guest_id';
+
+/**
+ * Gera um UUID v4 usando a API nativa do browser
+ */
+function generateUUID(): string {
+  if (typeof crypto !== 'undefined' && crypto.randomUUID) {
+    return crypto.randomUUID();
+  }
+  // Fallback para ambientes que não suportam crypto.randomUUID
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+    const r = Math.random() * 16 | 0;
+    const v = c === 'x' ? r : (r & 0x3 | 0x8);
+    return v.toString(16);
+  });
+}
 
 /**
  * Obtém ou cria um ID único para usuários convidados (não logados).
@@ -18,7 +31,7 @@ export function getOrCreateGuestId(): string {
     }
     
     // Se não existir, gera um novo UUID
-    const newGuestId = uuidv4();
+    const newGuestId = generateUUID();
     
     // Salva no localStorage
     localStorage.setItem(GUEST_ID_KEY, newGuestId);
@@ -27,7 +40,7 @@ export function getOrCreateGuestId(): string {
   } catch (error) {
     // Fallback caso localStorage não esteja disponível (SSR, etc.)
     console.warn('Erro ao acessar localStorage para guestId:', error);
-    return uuidv4(); // Retorna um ID temporário
+    return generateUUID(); // Retorna um ID temporário
   }
 }
 

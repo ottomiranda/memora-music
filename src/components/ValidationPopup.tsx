@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useMusicStore } from '@/store/musicStore';
 import { X } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 interface ValidationFormData {
   difficulty: number;
@@ -213,10 +214,11 @@ const ValidationPopup: React.FC = () => {
 
             {/* Botão de envio */}
             <div className="pt-4">
-              <button
+              <Button
                 type="submit"
                 disabled={!isFormValid() || isSubmitting}
-                className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white font-medium py-3 px-4 rounded-lg transition-colors duration-200"
+                className="w-full"
+                size="lg"
               >
                 {isSubmitting ? (
                   <div className="flex items-center justify-center gap-2">
@@ -226,7 +228,7 @@ const ValidationPopup: React.FC = () => {
                 ) : (
                   'Enviar Feedback'
                 )}
-              </button>
+              </Button>
             </div>
           </form>
 

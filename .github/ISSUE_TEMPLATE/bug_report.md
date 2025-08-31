@@ -45,7 +45,7 @@ assignees: ''
 **Aplicação:**
 - Versão: [ex: 1.0.0]
 - Ambiente: [ex: Produção, Desenvolvimento, Staging]
-- URL: [ex: https://memora-music.vercel.app]
+- URL: [ex: http://localhost:3000]
 
 ## 📋 Contexto Adicional
 

@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { ChevronLeft, ChevronRight, ImageIcon } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 interface Slide {
   id: number;
@@ -161,29 +162,35 @@ const HeroSlideshow: React.FC<HeroSlideshowProps> = ({ className = '' }) => {
       </div>
 
       {/* Controles de navegação - Setas */}
-      <button
+      <Button
         onClick={prevSlide}
-        className="absolute left-4 top-1/2 -translate-y-1/2 w-12 h-12 bg-white/10 backdrop-blur-md border border-white/20 rounded-full flex items-center justify-center text-white hover:bg-white/20 transition-all duration-300 opacity-0 group-hover:opacity-100 hover:scale-110 focus:outline-none focus:ring-2 focus:ring-white/50"
+        variant="ghost"
+        size="sm"
+        className="absolute left-4 top-1/2 -translate-y-1/2 w-12 h-12 bg-white/10 backdrop-blur-md border border-white/20 rounded-full flex items-center justify-center text-white hover:bg-white/20 transition-all duration-300 opacity-0 group-hover:opacity-100 hover:scale-110 focus:outline-none focus:ring-2 focus:ring-white/50 p-0"
         aria-label="Slide anterior"
       >
         <ChevronLeft className="w-6 h-6" />
-      </button>
+      </Button>
 
-      <button
+      <Button
         onClick={nextSlide}
-        className="absolute right-4 top-1/2 -translate-y-1/2 w-12 h-12 bg-white/10 backdrop-blur-md border border-white/20 rounded-full flex items-center justify-center text-white hover:bg-white/20 transition-all duration-300 opacity-0 group-hover:opacity-100 hover:scale-110 focus:outline-none focus:ring-2 focus:ring-white/50"
+        variant="ghost"
+        size="sm"
+        className="absolute right-4 top-1/2 -translate-y-1/2 w-12 h-12 bg-white/10 backdrop-blur-md border border-white/20 rounded-full flex items-center justify-center text-white hover:bg-white/20 transition-all duration-300 opacity-0 group-hover:opacity-100 hover:scale-110 focus:outline-none focus:ring-2 focus:ring-white/50 p-0"
         aria-label="Próximo slide"
       >
         <ChevronRight className="w-6 h-6" />
-      </button>
+      </Button>
 
       {/* Indicadores (dots) */}
       <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex space-x-3">
         {slides.map((_, index) => (
-          <button
+          <Button
             key={index}
             onClick={() => goToSlide(index)}
-            className={`w-3 h-3 rounded-full transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-white/50 ${
+            variant="ghost"
+            size="sm"
+            className={`w-3 h-3 rounded-full transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-white/50 p-0 h-3 min-w-0 ${
               index === currentSlide
                 ? 'bg-white scale-125 animate-pulse'
                 : 'bg-white/40 hover:bg-white/60 hover:scale-110'
