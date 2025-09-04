@@ -82,6 +82,11 @@ healthRoute.get('/', (req, res) => {
 
 const app = express();
 
+// Configurar trust proxy para identificar IP do cliente corretamente
+// Necessário para req.ip funcionar com proxies (Vercel, Heroku, etc.)
+app.set('trust proxy', true);
+console.log('🔒 Trust proxy configurado para extração de IP do cliente');
+
 // Inicializar mapa global de tarefas de música
 if (!global.musicTasks) {
   global.musicTasks = new Map();
@@ -119,7 +124,7 @@ const corsOptions = {
   },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'x-guest-id'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'x-guest-id', 'X-Device-ID'],
   optionsSuccessStatus: 200
 };
 

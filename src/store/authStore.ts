@@ -44,8 +44,8 @@ export const useAuthStore = create<AuthState>()(
   persist(
     (set, get) => ({
       user: null,
-      token: null,
-      isLoggedIn: false, // Sempre inicia como false
+      token: localStorage.getItem('authToken') || null,
+      isLoggedIn: !!localStorage.getItem('authToken'),
       isLoading: false,
       error: null,
 
@@ -60,6 +60,9 @@ export const useAuthStore = create<AuthState>()(
           const response: LoginResponse = await authApi.login(credentials.email, credentials.password);
           
           console.log('[AuthStore] Login bem-sucedido:', response.user.email);
+          
+          // Salvar token no localStorage
+          localStorage.setItem('authToken', response.token);
           
           // Atualizar estado com dados do usuário
           set({ 
@@ -111,6 +114,9 @@ export const useAuthStore = create<AuthState>()(
           
           console.log('[AuthStore] Signup bem-sucedido:', response.user.email);
           
+          // Salvar token no localStorage
+          localStorage.setItem('authToken', response.token);
+          
           // Atualizar estado com dados do usuário
           set({ 
             user: response.user,
@@ -149,6 +155,9 @@ export const useAuthStore = create<AuthState>()(
       },
 
       logout: () => {
+        // Remover token do localStorage
+        localStorage.removeItem('authToken');
+        
         set({ 
           user: null,
           token: null,

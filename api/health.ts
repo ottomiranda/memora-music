@@ -1,4 +1,5 @@
 import type { Request, Response } from 'express';
+import { testSupabaseConnection, getSupabaseServiceClient } from '../src/lib/supabase-client.js';
 
 export default async function handler(req: Request, res: Response) {
   // Configurar CORS
@@ -35,6 +36,15 @@ export default async function handler(req: Request, res: Response) {
 
     const allEnvVarsPresent = Object.values(envChecks).every(Boolean);
 
+    // Testar conexão com Supabase usando cliente robusto
+    let supabaseStatus = 'unknown';
+    try {
+      const result = await testSupabaseConnection();
+      supabaseStatus = result.success ? 'connected' : 'error';
+    } catch (error) {
+      supabaseStatus = 'error';
+    }
+
     const healthData = {
       success: true,
       status: 'healthy',
@@ -51,7 +61,8 @@ export default async function handler(req: Request, res: Response) {
         external: Math.round(process.memoryUsage().external / 1024 / 1024)
       },
       env_checks: envChecks,
-      all_env_vars_present: allEnvVarsPresent
+      all_env_vars_present: allEnvVarsPresent,
+      supabase_status: supabaseStatus
     };
 
     console.log('✅ Health check concluído:', {

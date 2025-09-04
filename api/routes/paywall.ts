@@ -3,20 +3,16 @@
  * Handle user creation status, mock payments, and paywall protection
  */
 import { Router, type Request, type Response } from 'express';
-import { createClient } from '@supabase/supabase-js';
+import { z } from 'zod';
+import Stripe from 'stripe';
+import jwt from 'jsonwebtoken';
+import { executeSupabaseQuery, getSupabaseServiceClient } from '../../src/lib/supabase-client.js';
 
 const router = Router();
 
-// Função para obter cliente Supabase sob demanda
+// Função para obter cliente Supabase sob demanda (compatibilidade)
 const getSupabaseClient = () => {
-  const supabaseUrl = process.env.SUPABASE_URL;
-  const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  
-  if (!supabaseUrl || !supabaseServiceKey) {
-    throw new Error('Variáveis de ambiente do Supabase não configuradas');
-  }
-  
-  return createClient(supabaseUrl, supabaseServiceKey);
+  return getSupabaseServiceClient();
 };
 
 // Função auxiliar para extrair userId do token usando Supabase Auth

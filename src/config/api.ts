@@ -12,7 +12,7 @@ const isDevelopment = () => {
 const getApiConfig = () => {
   const isDev = isDevelopment();
   const apiBaseUrl = isDev
-    ? (import.meta.env.VITE_API_URL || 'http://localhost:3001')
+    ? (import.meta.env.VITE_API_URL || 'http://localhost:3003')
     : import.meta.env.VITE_PROD_API_URL;
 
   if (!apiBaseUrl && !isDev) {
@@ -22,7 +22,7 @@ const getApiConfig = () => {
 
   return {
     isDevelopment: isDev,
-    apiBaseUrl: apiBaseUrl || 'http://localhost:3001' // fallback para desenvolvimento
+    apiBaseUrl: apiBaseUrl || 'http://localhost:3003' // fallback para desenvolvimento
   };
 };
 
@@ -113,6 +113,12 @@ export const apiRequest = async <T = unknown>(
       'Content-Type': 'application/json',
       ...headers
     };
+    
+    // Sempre incluir o deviceId em todas as requisições
+    const deviceId = localStorage.getItem('deviceId');
+    if (deviceId) {
+      requestHeaders['X-Device-ID'] = deviceId;
+    }
     
     if (isLoggedIn && token) {
       // Usuário autenticado: usar token de autorização

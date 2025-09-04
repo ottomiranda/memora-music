@@ -4,6 +4,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { ToastContainer } from "@/components/ui/toast";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { v4 as uuidv4 } from 'uuid';
 import Navbar from "./components/memora/Navbar";
 import Footer from "./components/memora/Footer";
 import Layout from "./components/Layout";
@@ -14,6 +15,16 @@ import MinhasMusicas from "./pages/MinhasMusicas";
 import NotFound from "./pages/NotFound";
 import { useScrollToTop } from "./hooks/useScrollToTop";
 import { useUiStore } from "./store/uiStore";
+
+// Gerar e persistir deviceId único
+let deviceId = localStorage.getItem('deviceId');
+if (!deviceId) {
+  deviceId = uuidv4();
+  localStorage.setItem('deviceId', deviceId);
+  console.log('[DeviceFingerprint] Novo deviceId gerado:', deviceId);
+} else {
+  console.log('[DeviceFingerprint] DeviceId existente carregado:', deviceId);
+}
 
 const queryClient = new QueryClient();
 

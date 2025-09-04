@@ -1,13 +1,14 @@
-import { Router, Request, Response } from 'express';
-import { createClient } from '@supabase/supabase-js';
+import { Router, type Request, type Response } from 'express';
+import { z } from 'zod';
+import { executeSupabaseQuery, getSupabaseServiceClient } from '../../src/lib/supabase-client.js';
 
+// Criar router
 const router = Router();
 
-// Configuração do Supabase
-const supabaseUrl = process.env.SUPABASE_URL || 'https://uelfqxpfwzywmxdxegpe.supabase.co';
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVlbGZxeHBmd3p5d214ZHhlZ3BlIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1NjE2MDg2MiwiZXhwIjoyMDcxNzM2ODYyfQ.yvHjiH6TcOXMmwt_o3ffG8ZjjM1S8iGS2mIZqGiAwvs';
-
-const supabase = createClient(supabaseUrl, supabaseServiceKey);
+// Função para obter cliente Supabase (lazy loading)
+function getSupabase() {
+  return getSupabaseServiceClient();
+}
 
 // Interface para os dados do feedback
 interface FeedbackData {
@@ -80,6 +81,7 @@ router.post('/', async (req: Request, res: Response) => {
     const priceAsNumber = parsePriceWillingness(feedbackData.priceWillingness);
 
     // Salvar no Supabase
+    const supabase = getSupabase();
     const { data, error } = await supabase
       .from('mvp_feedback')
       .insert({

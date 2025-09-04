@@ -15,7 +15,9 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Play, Download, RotateCcw, ArrowLeft, ArrowRight, Music, Sparkles, Edit, Volume2, Loader2, Wand2, RefreshCw, Pause } from "lucide-react";
 import { useMusicStore } from '@/store/musicStore';
+import { useAuthStore } from '@/store/authStore';
 import { useUiStore } from '@/store/uiStore';
+import { useNavigate } from 'react-router-dom';
 import { musicGenres } from '@/data/musicGenres';
 import { validateStep, getValidationErrors } from '@/lib/validations';
 import { z } from 'zod';
@@ -96,6 +98,9 @@ export default function Criar() {
     // Nova função centralizada
     startNewCreationFlow,
   } = musicStore;
+
+  // Hook de navegação
+  const navigate = useNavigate();
 
   // Estado de bloqueio centralizado
   const { isCreationFlowBlocked } = useUiStore();
@@ -762,11 +767,10 @@ export default function Criar() {
                     </Button>
                   )
                 ) : (
-                  <Button variant="secondary" onClick={async () => {
-                    console.log('[RESET_FLOW] Limpando o estado antes de criar uma nova música.');
+                  <Button variant="secondary" onClick={() => {
+                    const musicStore = useMusicStore.getState();
                     const { token } = useAuthStore.getState(); // Pega o token mais atualizado
-                    reset();
-                    await startNewCreationFlow(() => setCurrentStep(0), token);
+                    musicStore.startNewCreationFlow(navigate, token);
                   }}>
                     Criar Nova Música
                   </Button>

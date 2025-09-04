@@ -3,7 +3,7 @@
  * Verifica configurações sem expor chaves sensíveis
  */
 import type { Request, Response } from 'express';
-import { createClient } from '@supabase/supabase-js';
+import { testSupabaseConnection, getSupabaseServiceClient } from '../src/lib/supabase-client.js';
 
 // Configurar CORS
 function setCorsHeaders(res: Response) {
@@ -44,39 +44,12 @@ function checkEnvironmentVariables() {
   return status;
 }
 
-// Testar conexão com Supabase
-async function testSupabaseConnection() {
+// Testar conexão com Supabase usando cliente importado
+async function testSupabaseConnectionInternal() {
   try {
-    const supabaseUrl = process.env.SUPABASE_URL;
-    const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-
-    if (!supabaseUrl || !supabaseServiceKey) {
-      return {
-        success: false,
-        error: 'Missing environment variables'
-      };
-    }
-
-    const supabase = createClient(supabaseUrl, supabaseServiceKey);
-    
-    // Testar uma query simples
-    const { data, error } = await supabase
-      .from('mvp_feedback')
-      .select('count')
-      .limit(1);
-
-    if (error) {
-      return {
-        success: false,
-        error: error.message,
-        code: error.code
-      };
-    }
-
-    return {
-      success: true,
-      message: 'Connection successful'
-    };
+    // Usar o cliente importado do módulo
+    const result = await testSupabaseConnection();
+    return result;
   } catch (error) {
     return {
       success: false,
@@ -114,7 +87,7 @@ export default async function handler(req: Request, res: Response) {
 
     // Testar conexão com Supabase
     console.log('🔗 Testing Supabase connection...');
-    const connectionTest = await testSupabaseConnection();
+    const connectionTest = await testSupabaseConnectionInternal();
     console.log('✅ Supabase connection tested');
 
     // Informações do sistema
