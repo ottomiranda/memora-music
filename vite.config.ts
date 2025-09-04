@@ -7,6 +7,17 @@ export default defineConfig({
     react(),
     tsconfigPaths(),
   ],
+  build: {
+    minify: 'terser',
+    terserOptions: {
+      compress: {
+        // Remove todos os console.* do código de produção
+        drop_console: true,
+        // Opcional: remove também os 'debugger'
+        drop_debugger: true,
+      },
+    },
+  },
   server: {
     port: 5173,
     strictPort: true,

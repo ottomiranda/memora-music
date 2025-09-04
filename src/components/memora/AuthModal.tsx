@@ -1,10 +1,13 @@
-import { useState } from "react";
+import React, { useState } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { X, Mail, Eye, EyeOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useAuthStore } from "@/store/authStore";
 import { useUiStore } from "@/store/uiStore";
+import { getAuthSchema, type AuthFormData } from "@/schemas/authSchema";
 
 interface AuthModalProps {
   isOpen: boolean;
@@ -12,20 +15,36 @@ interface AuthModalProps {
 }
 
 const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
-  const [isLogin, setIsLogin] = useState(true);
+  // Estados locais
   const [showPassword, setShowPassword] = useState(false);
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [name, setName] = useState("");
+  const [isLogin, setIsLogin] = useState(true);
   
-  const { login, signup, isLoading, error, clearError } = useAuthStore();
+  const { login, signup, isLoading, error, clearError } = useAuthStore()
   const { hideAuthPopup, executeAuthCallback } = useUiStore();
+
+  // Configuração do react-hook-form com validação zod
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+    reset,
+    watch
+  } = useForm<AuthFormData>({
+    resolver: zodResolver(getAuthSchema(isLogin)),
+    mode: 'onChange',
+    defaultValues: {
+      email: '',
+      password: '',
+      ...(isLogin ? {} : { name: '' })
+    }
+  });
+
+
 
   if (!isOpen) return null;
 
   const handleGoogleAuth = async () => {
     // TODO: Implementar autenticação com Google
-    console.log("Autenticação com Google");
     // Por enquanto, simular login bem-sucedido
     const success = await login({ email: "google@user.com", password: "google" });
     if (success) {
@@ -35,28 +54,33 @@ const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
     }
   };
 
-  const handleEmailAuth = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleEmailAuth = async (data: AuthFormData) => {
     clearError();
     
-    let success = false;
-    
-    if (isLogin) {
-      console.log('[DEBUG] Enviando para login:', { email, password });
-      success = await login({ email, password });
-    } else {
-      console.log('[DEBUG] Enviando para signup:', { email, password, name });
-      success = await signup({ email, password, name });
-    }
-    
-    if (success) {
+    try {
+      if (isLogin) {
+        await login({ 
+          email: data.email, 
+          password: data.password 
+        });
+      } else {
+        const signupData = data as { name: string; email: string; password: string };
+        await signup({ 
+          email: signupData.email, 
+          password: signupData.password, 
+          name: signupData.name 
+        });
+      }
+      
+      // Se chegou até aqui, a autenticação foi bem-sucedida
       executeAuthCallback();
       hideAuthPopup();
       onClose();
       // Limpar formulário
-      setEmail("");
-      setPassword("");
-      setName("");
+      reset();
+    } catch (error) {
+      // O erro já foi tratado pelo authStore e está no estado 'error'
+      // Não precisamos fazer nada aqui, pois o erro será exibido automaticamente
     }
   };
 
@@ -140,7 +164,7 @@ const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
         )}
 
         {/* Email Form */}
-        <form onSubmit={handleEmailAuth} className="space-y-4">
+        <form onSubmit={handleSubmit(handleEmailAuth)} className="space-y-4">
           {!isLogin && (
             <div>
               <Label htmlFor="name" className="text-memora-black font-medium">
@@ -149,12 +173,13 @@ const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
               <Input
                 id="name"
                 type="text"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
+                {...register('name')}
                 className="mt-1 h-12 border-2 border-memora-gray-light focus:border-memora-primary rounded-2xl"
                 placeholder="Seu nome"
-                required={!isLogin}
               />
+              {errors.name && (
+                <p className="text-red-500 text-sm mt-1">{errors.name.message}</p>
+              )}
             </div>
           )}
           
@@ -166,14 +191,15 @@ const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
               <Input
                 id="email"
                 type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                {...register('email')}
                 className="h-12 border-2 border-memora-gray-light focus:border-memora-primary rounded-2xl pl-10"
                 placeholder="seu@email.com"
-                required
               />
               <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-memora-gray" />
             </div>
+            {errors.email && (
+              <p className="text-red-500 text-sm mt-1">{errors.email.message}</p>
+            )}
           </div>
 
           <div>
@@ -184,11 +210,9 @@ const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
               <Input
                 id="password"
                 type={showPassword ? "text" : "password"}
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
+                {...register('password')}
                 className="h-12 border-2 border-memora-gray-light focus:border-memora-primary rounded-2xl pr-10"
                 placeholder="Sua senha"
-                required
               />
               <Button
                 type="button"
@@ -205,6 +229,9 @@ const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
                 )}
               </Button>
             </div>
+            {errors.password && (
+              <p className="text-red-500 text-sm mt-1">{errors.password.message}</p>
+            )}
           </div>
 
           <Button
@@ -229,7 +256,17 @@ const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
           <p className="text-memora-gray">
             {isLogin ? "Não tem uma conta?" : "Já tem uma conta?"}
             <Button
-              onClick={() => setIsLogin(!isLogin)}
+              onClick={() => {
+                const newIsLogin = !isLogin;
+                setIsLogin(newIsLogin);
+                clearError();
+                // Reset do formulário com novos valores padrão baseados no modo
+                reset({
+                  email: '',
+                  password: '',
+                  ...(newIsLogin ? {} : { name: '' })
+                });
+              }}
               variant="link"
               className="ml-1 text-memora-primary hover:text-memora-primary/80 font-medium p-0 h-auto"
             >

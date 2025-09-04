@@ -1,5 +1,6 @@
 import React from 'react';
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { toast } from 'sonner';
 
 import StepIndicator from "@/components/StepIndicator";
 import MusicPreview from "@/components/MusicPreview";
@@ -14,6 +15,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Play, Download, RotateCcw, ArrowLeft, ArrowRight, Music, Sparkles, Edit, Volume2, Loader2, Wand2, RefreshCw, Pause } from "lucide-react";
 import { useMusicStore } from '@/store/musicStore';
+import { useUiStore } from '@/store/uiStore';
 import { musicGenres } from '@/data/musicGenres';
 import { validateStep, getValidationErrors } from '@/lib/validations';
 import { z } from 'zod';
@@ -80,7 +82,9 @@ export default function Criar() {
     generateMusic,
     regenerateLyrics,
     resetForm,
+    reset,
     setError,
+    clearError,
     // Novos estados para polling progressivo
     currentTaskId,
     isPolling,
@@ -89,13 +93,41 @@ export default function Criar() {
     totalExpected,
     // Estados MVP
     isValidationPopupVisible,
+    // Nova função centralizada
+    startNewCreationFlow,
   } = musicStore;
+
+  // Estado de bloqueio centralizado
+  const { isCreationFlowBlocked } = useUiStore();
 
   // Estados locais apenas para UI
   const [validationErrors, setValidationErrors] = useState({});
 
+
+
+
+
+  // useEffect para exibir toasts com mensagens de erro da API
+  useEffect(() => {
+    if (error) {
+      toast.error(error, {
+        description: 'Tente novamente em alguns instantes.',
+      });
+      // Limpa o erro do store após exibi-lo
+      clearError();
+    }
+  }, [error, clearError]);
+
   // Função para validar e avançar para o próximo passo
   const handleNextStep = async () => {
+    // Guarda de bloqueio global
+    const { showPaymentPopup } = useUiStore.getState();
+    if (isCreationFlowBlocked) {
+      console.log('[PAYWALL] Ação bloqueada. Re-exibindo modal.');
+      showPaymentPopup();
+      return;
+    }
+
     console.log('=== DEBUG HANDLE NEXT STEP ===');
     console.log('Current step:', currentStep);
     console.log('FormData antes da validação:', JSON.stringify(formData, null, 2));
@@ -685,6 +717,8 @@ export default function Criar() {
     }
   };
 
+
+
   return (
     <div className="min-h-screen flex flex-col">
       <main className="flex-1 pt-20 pb-12">
@@ -728,7 +762,12 @@ export default function Criar() {
                     </Button>
                   )
                 ) : (
-                  <Button variant="secondary" onClick={() => setCurrentStep(0)}>
+                  <Button variant="secondary" onClick={async () => {
+                    console.log('[RESET_FLOW] Limpando o estado antes de criar uma nova música.');
+                    const { token } = useAuthStore.getState(); // Pega o token mais atualizado
+                    reset();
+                    await startNewCreationFlow(() => setCurrentStep(0), token);
+                  }}>
                     Criar Nova Música
                   </Button>
                 )}

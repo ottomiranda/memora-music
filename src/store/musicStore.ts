@@ -2,6 +2,8 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { toast } from 'sonner';
 import { API_ENDPOINTS, apiRequest } from '../config/api';
+import { useAuthStore } from './authStore';
+import { useUiStore } from './uiStore';
 
 // Tipos para o formulário
 export interface FormData {
@@ -100,6 +102,7 @@ interface MusicStore {
   setPreviewLoading: (loading: boolean) => void;
   setLoading: (loading: boolean) => void;
   setError: (error: string | null) => void;
+  clearError: () => void;
   
   // Ações para navegar entre passos
   nextStep: () => void;
@@ -124,6 +127,9 @@ interface MusicStore {
   // Funções de reset
   resetForm: () => void;
   reset: () => void;
+  
+  // Nova função centralizada para iniciar fluxo de criação
+  startNewCreationFlow: (navigate: (path: string) => void, token: string | null) => Promise<void>;
 }
 
 // Variável global para o intervalo de polling
@@ -178,6 +184,10 @@ export const useMusicStore = create<MusicStore>()(
     set({ error });
   },
   
+  clearError: () => {
+    set({ error: null });
+  },
+  
   nextStep: () => {
     set((state) => ({ currentStep: state.currentStep + 1 }));
   },
@@ -217,24 +227,11 @@ export const useMusicStore = create<MusicStore>()(
     set({ isLoading: true, error: null });
     
     try {
-      const response = await apiRequest(API_ENDPOINTS.GENERATE_PREVIEW, {
+      const result = await apiRequest(API_ENDPOINTS.GENERATE_PREVIEW, {
         method: 'POST',
-        body: JSON.stringify(payload),
+        body: payload,
       });
       
-      console.log('📡 Response status:', response.status);
-      
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.log('❌ Response não OK:', {
-          status: response.status,
-          statusText: response.statusText,
-          body: errorText
-        });
-        throw new Error(`HTTP ${response.status}: ${response.statusText} - ${errorText}`);
-      }
-      
-      const result = await response.json();
       console.log('📥 Response JSON:', JSON.stringify(result, null, 2));
       
       if (result.success && result.lyrics && result.songTitle) {
@@ -264,10 +261,9 @@ export const useMusicStore = create<MusicStore>()(
       console.error('❌ Erro ao gerar letra (catch):', error);
       console.error('❌ Stack trace:', error instanceof Error ? error.stack : 'N/A');
       const errorMsg = error instanceof Error ? 
-        `Erro: ${error.message}` : 
+        error.message : 
         'Erro de conexão. Verifique sua internet e tente novamente.';
       set({ error: errorMsg });
-      toast.error(errorMsg);
     } finally {
       // Garante que o loading seja sempre resetado
       set({ isLoading: false });
@@ -289,15 +285,19 @@ export const useMusicStore = create<MusicStore>()(
       return;
     }
     
+    // Preparar payload para envio
+    const payload = {
+      ...formData,
+      lyricsOnly: false
+    };
+    
     set({ isPreviewLoading: true, error: null });
     
     try {
-      const response = await apiRequest(API_ENDPOINTS.GENERATE_PREVIEW, {
+      const result: GeneratePreviewResponse = await apiRequest(API_ENDPOINTS.GENERATE_PREVIEW, {
         method: 'POST',
-        body: JSON.stringify(payload),
+        body: payload,
       });
-      
-      const result: GeneratePreviewResponse = await response.json();
       
       if (result.success && result.data) {
         set({
@@ -378,24 +378,11 @@ export const useMusicStore = create<MusicStore>()(
     });
     
     try {
-      const response = await apiRequest(API_ENDPOINTS.GENERATE_PREVIEW, {
+      const result = await apiRequest(API_ENDPOINTS.GENERATE_PREVIEW, {
         method: 'POST',
-        body: JSON.stringify(payload),
+        body: payload,
       });
       
-      console.log('📡 Response status:', response.status);
-      
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.log('❌ Response não OK:', {
-          status: response.status,
-          statusText: response.statusText,
-          body: errorText
-        });
-        throw new Error(`HTTP ${response.status}: ${response.statusText} - ${errorText}`);
-      }
-      
-      const result = await response.json();
       console.log('📥 Response JSON:', JSON.stringify(result, null, 2));
       
       if (result.success && result.taskId) {
@@ -451,8 +438,9 @@ export const useMusicStore = create<MusicStore>()(
       
     } catch (error) {
       console.error('❌ Erro ao gerar música (catch):', error);
+      
       const errorMsg = error instanceof Error ? 
-        `Erro: ${error.message}` : 
+        error.message : 
         'Erro de conexão. Verifique sua internet e tente novamente.';
       set({ 
         error: errorMsg, 
@@ -460,7 +448,6 @@ export const useMusicStore = create<MusicStore>()(
         isLoading: false,
         musicGenerationStatus: 'failed'
       });
-      toast.error(errorMsg);
     }
     
     console.log('=== FIM DEBUG GENERATE MUSIC (PROGRESSIVO) ===');
@@ -478,10 +465,9 @@ export const useMusicStore = create<MusicStore>()(
     try {
       console.log('[DEBUG] Verificando status para taskId:', currentTaskId);
       
-      const response = await apiRequest(`${API_ENDPOINTS.CHECK_MUSIC_STATUS}/${currentTaskId}`, {
+      const result = await apiRequest(`${API_ENDPOINTS.CHECK_MUSIC_STATUS}/${currentTaskId}`, {
         method: 'GET',
       });
-      const result = await response.json();
       
       console.log('[DEBUG STATUS CHECK] Resposta recebida:', result);
       
@@ -580,6 +566,50 @@ export const useMusicStore = create<MusicStore>()(
       isMvpFlowComplete: true,
       isValidationPopupVisible: false 
     });
+  },
+
+  // Nova função centralizada para iniciar fluxo de criação
+  startNewCreationFlow: async (navigate, token) => {
+    console.log('[PAYWALL] Iniciando fluxo de criação centralizado');
+    
+    // Desbloquear o fluxo no início para garantir estado limpo
+    useUiStore.getState().unblockCreationFlow();
+    
+    console.log('[PAYWALL] Token recebido:', token ? 'presente' : 'ausente');
+    
+    // Se usuário não estiver logado (sem token), tem direito à primeira música
+    if (!token) {
+      console.log('[PAYWALL] Usuário não logado - permitindo criação gratuita');
+      navigate('/criar');
+      return;
+    }
+    
+    // Se usuário estiver logado, verificar status via API
+    try {
+      console.log('[PAYWALL] Usuário logado - verificando status de criação via API');
+      
+      const response = await apiRequest('/api/user/creation-status', {
+        method: 'GET'
+      });
+      
+      console.log('[PAYWALL] Resposta da API:', response);
+      
+      // Verificar se pode criar música gratuitamente
+      if (response.data && response.data.isFree === true) {
+        console.log('[PAYWALL] Usuário pode criar música gratuitamente');
+        navigate('/criar');
+      } else {
+        console.log('[PAYWALL] Usuário atingiu limite - mostrando paywall');
+        useUiStore.getState().showPaymentPopup();
+        useUiStore.getState().blockCreationFlow();
+      }
+      
+    } catch (error) {
+      console.error('[PAYWALL] Erro ao verificar status - mostrando paywall por segurança:', error);
+      // Por segurança, mostrar paywall em caso de erro
+      useUiStore.getState().showPaymentPopup();
+      useUiStore.getState().blockCreationFlow();
+    }
   },
 
   // Função para resetar apenas o formulário

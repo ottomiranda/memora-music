@@ -7,17 +7,20 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Navbar from "./components/memora/Navbar";
 import Footer from "./components/memora/Footer";
 import Layout from "./components/Layout";
+import PaymentModal from "./components/PaymentModal";
 import Index from "./pages/Index";
 import Criar from "./pages/Criar";
 import MinhasMusicas from "./pages/MinhasMusicas";
 import NotFound from "./pages/NotFound";
 import { useScrollToTop } from "./hooks/useScrollToTop";
+import { useUiStore } from "./store/uiStore";
 
 const queryClient = new QueryClient();
 
 // Componente interno que usa o hook de scroll
 const AppContent = () => {
   useScrollToTop(); // Hook que faz scroll para o topo em mudanças de rota
+  const { isPaymentPopupVisible, hidePaymentPopup, handleUpgrade } = useUiStore();
   
   return (
     <Layout>
@@ -30,6 +33,13 @@ const AppContent = () => {
         <Route path="*" element={<NotFound />} />
       </Routes>
       <Footer />
+      
+      {/* Payment Modal */}
+      <PaymentModal 
+        isOpen={isPaymentPopupVisible} 
+        onClose={hidePaymentPopup}
+        onConfirm={handleUpgrade}
+      />
     </Layout>
   );
 };

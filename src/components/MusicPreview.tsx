@@ -1,6 +1,10 @@
 import React, { useRef, useEffect } from 'react';
 import { Download } from 'lucide-react';
 import { useMusicStore } from '@/store/musicStore';
+import { useAuthStore } from '@/store/authStore';
+import { useUiStore } from '@/store/uiStore';
+import { triggerDownload } from '@/utils/download';
+import { API_BASE_URL } from '@/config/api';
 import { AudioClip } from '@/store/musicStore';
 
 interface MusicPreviewProps {
@@ -12,6 +16,8 @@ const MusicPreview: React.FC<MusicPreviewProps> = ({ clip, index }) => {
   const audioRef = useRef<HTMLAudioElement>(null);
   const fadeOutIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const { isMvpFlowComplete, setValidationPopupVisible } = useMusicStore();
+  const { isLoggedIn } = useAuthStore();
+  const { showAuthPopup } = useUiStore();
 
   const handleTimeUpdate = () => {
     const audio = audioRef.current;
@@ -76,6 +82,29 @@ const MusicPreview: React.FC<MusicPreviewProps> = ({ clip, index }) => {
     return clip.title || `Musica_Personalizada_${index + 1}.mp3`;
   };
 
+  const handleDownloadClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    
+    const startDownload = () => {
+      if (clip.audio_url) {
+        console.log(`[DOWNLOAD] Iniciando download via proxy para: ${clip.audio_url}`);
+        const friendlyFilename = getFileName();
+        
+        // Constrói a URL do nosso próprio backend para proxy
+        const proxyUrl = `${API_BASE_URL}/api/download?url=${encodeURIComponent(clip.audio_url)}&filename=${encodeURIComponent(friendlyFilename)}`;
+        
+        // Chama a função de download com a nossa URL de proxy
+        triggerDownload(proxyUrl, friendlyFilename);
+      }
+    };
+
+    if (isLoggedIn) {
+      startDownload();
+    } else {
+      showAuthPopup(startDownload);
+    }
+  };
+
   return (
     <div className="bg-white rounded-lg shadow-md p-6 border border-gray-200">
       <div className="flex items-center justify-between mb-4">
@@ -109,14 +138,13 @@ const MusicPreview: React.FC<MusicPreviewProps> = ({ clip, index }) => {
 
           {/* Botão de download - só aparece se MVP flow estiver completo */}
           {isMvpFlowComplete && (
-            <a
-              href={clip.audio_url}
-              download={getFileName()}
+            <button
+              onClick={handleDownloadClick}
               className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors duration-200 font-medium"
             >
               <Download className="w-4 h-4" />
               Baixar Opção
-            </a>
+            </button>
           )}
 
           {/* Mensagem quando MVP flow não está completo */}

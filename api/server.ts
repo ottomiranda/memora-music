@@ -16,9 +16,11 @@ dotenv.config({ path: path.resolve(__dirname, '../.env') });
 import generatePreviewRoute from './routes/generate-preview.js';
 import authRoute from './routes/auth.js';
 import checkMusicStatusRoute from './routes/check-music-status.js';
-import saveFeedbackRoute from './routes/save-feedback.js';
+import saveFeedbackRoute from './routes/save-feedback.ts';
 import songsRoute from './routes/songs.js';
 import migrateGuestDataRoute from './routes/migrate-guest-data.js';
+import paywallRoute from './routes/paywall.js';
+import downloadRoute from './routes/download.js';
 
 // Criar rota de health check como Express Router
 import { Router } from 'express';
@@ -144,6 +146,8 @@ app.use('/api/check-music-status', checkMusicStatusRoute);
 app.use('/api/save-feedback', saveFeedbackRoute);
 app.use('/api/songs', songsRoute);
 app.use('/api/migrate-guest-data', migrateGuestDataRoute);
+app.use('/api/user', paywallRoute);
+app.use('/api/download', downloadRoute);
 
 console.log('📋 Rotas registradas:');
 console.log('  - /api/health');
@@ -153,6 +157,8 @@ console.log('  - /api/check-music-status');
 console.log('  - /api/save-feedback');
 console.log('  - /api/songs');
 console.log('  - /api/migrate-guest-data');
+console.log('  - /api/user (paywall)');
+console.log('  - /api/download');
 console.log('🔄 Sistema de salvamento automático ativo');
 
 // Rota de teste simples

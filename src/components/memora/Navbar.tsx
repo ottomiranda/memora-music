@@ -2,12 +2,18 @@ import { useState, useEffect } from "react";
 import { Heart, Menu, X } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { Button } from "../ui/button";
+import { useAuthStore } from "../../store/authStore";
+import { useUiStore } from "../../store/uiStore";
 
 const Navbar = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const location = useLocation();
   const isHomePage = location.pathname === '/';
+  
+  // Auth state
+  const { isLoggedIn, user, logout } = useAuthStore();
+  const { showAuthPopup } = useUiStore();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -74,12 +80,41 @@ const Navbar = () => {
             >
               Artistas
             </Button>
-            <Link
-              to="/criar"
-              className="bg-memora-primary text-white px-6 py-2 rounded-2xl hover:bg-memora-primary/90 transition-all duration-200 font-medium shadow-lg hover:shadow-xl hover:-translate-y-0.5"
-            >
-              Criar Música
-            </Link>
+            {/* Auth Section */}
+            <div className="flex items-center gap-4">
+              {isLoggedIn ? (
+                // --- Estado Logado ---
+                <div className="flex items-center gap-4">
+                  <span className={`${isHomePage && !isScrolled ? 'text-white' : 'text-memora-gray'} font-medium`}>
+                    Olá, {user?.name || 'usuário'}!
+                  </span>
+                  <Button 
+                    variant="outline" 
+                    onClick={logout}
+                    className={`${isHomePage && !isScrolled ? 'border-white text-white hover:bg-white hover:text-memora-primary' : 'border-memora-primary text-memora-primary hover:bg-memora-primary hover:text-white'} transition-all duration-200`}
+                  >
+                    Sair
+                  </Button>
+                </div>
+              ) : (
+                // --- Estado Deslogado ---
+                <>
+                  <Button 
+                    variant="ghost" 
+                    onClick={() => showAuthPopup()}
+                    className={`${isHomePage && !isScrolled ? 'text-white hover:text-memora-gold' : 'text-memora-gray hover:text-memora-primary'} transition-colors duration-200 font-medium`}
+                  >
+                    Entrar
+                  </Button>
+                  <Button 
+                    onClick={() => showAuthPopup()}
+                    className="bg-memora-primary text-white px-6 py-2 rounded-2xl hover:bg-memora-primary/90 transition-all duration-200 font-medium shadow-lg hover:shadow-xl hover:-translate-y-0.5"
+                  >
+                    Criar Conta
+                  </Button>
+                </>
+              )}
+            </div>
           </div>
 
           {/* Mobile Menu Button */}
@@ -132,13 +167,48 @@ const Navbar = () => {
               >
                 Artistas
               </Button>
-              <Link
-                to="/criar"
-                onClick={() => setIsMobileMenuOpen(false)}
-                className="block w-full text-left px-3 py-2 bg-memora-primary text-white rounded-2xl hover:bg-memora-primary/90 transition-all duration-200 font-medium mt-2"
-              >
-                Criar Música
-              </Link>
+              {/* Auth Section Mobile */}
+              {isLoggedIn ? (
+                // --- Estado Logado Mobile ---
+                <div className="mt-2 space-y-2">
+                  <div className="px-3 py-2 text-memora-gray font-medium">
+                    Olá, {user?.name || 'usuário'}!
+                  </div>
+                  <Button
+                    onClick={() => {
+                      logout();
+                      setIsMobileMenuOpen(false);
+                    }}
+                    variant="outline"
+                    className="block w-full text-left px-3 py-2 border-memora-primary text-memora-primary hover:bg-memora-primary hover:text-white transition-all duration-200 font-medium"
+                  >
+                    Sair
+                  </Button>
+                </div>
+              ) : (
+                // --- Estado Deslogado Mobile ---
+                <div className="mt-2 space-y-2">
+                  <Button
+                    onClick={() => {
+                      showAuthPopup();
+                      setIsMobileMenuOpen(false);
+                    }}
+                    variant="ghost"
+                    className="block w-full text-left px-3 py-2 text-memora-gray hover:text-memora-primary transition-colors duration-200 font-medium h-auto justify-start"
+                  >
+                    Entrar
+                  </Button>
+                  <Button
+                    onClick={() => {
+                      showAuthPopup();
+                      setIsMobileMenuOpen(false);
+                    }}
+                    className="block w-full text-left px-3 py-2 bg-memora-primary text-white rounded-2xl hover:bg-memora-primary/90 transition-all duration-200 font-medium"
+                  >
+                    Criar Conta
+                  </Button>
+                </div>
+              )}
             </div>
           </div>
         )}

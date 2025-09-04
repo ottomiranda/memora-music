@@ -1,9 +1,19 @@
 import { Button } from "@/components/ui/button";
 import { Play, Sparkles, Heart } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { useMusicStore } from "@/store/musicStore";
 import heroImage from "@/assets/hero-music.jpg";
 
 export default function HeroSection() {
+  const navigate = useNavigate();
+  const reset = useMusicStore((state) => state.reset);
+
+  const handleCreateSongClick = () => {
+    console.log('[RESET_FLOW] Limpando o estado antes de criar uma nova música.');
+    reset();
+    navigate('/criar');
+  };
+
   return (
     <section className="relative min-h-screen bg-gradient-to-br from-slate-700 via-slate-800 to-purple-900 overflow-hidden flex items-center justify-center">
       {/* Background Image with Overlay */}
@@ -49,12 +59,10 @@ export default function HeroSection() {
         </div>
 
         <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-          <Link to="/criar">
-            <Button variant="hero" size="xl" className="group">
-              <Heart className="w-5 h-5 group-hover:scale-110 transition-transform" />
-              Criar Minha Canção Agora
-            </Button>
-          </Link>
+          <Button variant="hero" size="xl" className="group" onClick={handleCreateSongClick}>
+            <Heart className="w-5 h-5 group-hover:scale-110 transition-transform" />
+            Criar Minha Canção Agora
+          </Button>
           
           <Button variant="outline" size="xl" className="group">
             <Play className="w-5 h-5 group-hover:scale-110 transition-transform" />

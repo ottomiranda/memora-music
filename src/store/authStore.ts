@@ -1,33 +1,24 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { API_BASE_URL } from '../config/api';
+import { authApi, migrationApi } from '../config/api';
+import { getCurrentGuestId, clearGuestId } from '../utils/guest';
+import { LoginResponse, SignupResponse, SignupData, MigrationResult } from '../types/guest';
 
 /**
  * Função para migrar dados do convidado para o usuário logado
  */
-const migrateGuestData = async (guestId: string, userId: string): Promise<void> => {
+const migrateGuestData = async (guestId: string): Promise<MigrationResult | null> => {
   try {
-    console.log('Iniciando migração de dados do convidado:', { guestId, userId });
+    console.log('[AuthStore] Iniciando migração de dados do convidado:', guestId);
     
-    const response = await fetch(`${API_BASE_URL}/api/migrate-guest-data`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ guestId, userId }),
-    });
+    const result = await migrationApi.migrateGuestData(guestId);
     
-    if (response.ok) {
-      const result = await response.json();
-      console.log('Migração concluída com sucesso:', result);
-    } else {
-      const error = await response.json();
-      console.error('Erro na migração:', error);
-      // Não falha o login/cadastro por causa da migração
-    }
+    console.log('[AuthStore] Migração concluída com sucesso:', result);
+    return result;
   } catch (error) {
-    console.error('Erro ao migrar dados do convidado:', error);
+    console.error('[AuthStore] Erro ao migrar dados do convidado:', error);
     // Não falha o login/cadastro por causa da migração
+    return null;
   }
 };
 
@@ -62,142 +53,98 @@ export const useAuthStore = create<AuthState>()(
         set({ isLoading: true, error: null });
         
         // Captura o guestId antes do login (se existir)
-        const { getCurrentGuestId, clearGuestId } = await import('../utils/guest');
         const guestId = getCurrentGuestId();
+        console.log('[AuthStore] Login iniciado. GuestId atual:', guestId);
         
         try {
-          // Simular chamada de API para login
-          // TODO: Substituir por chamada real para o backend
-          const response = await fetch('/api/auth/login', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(credentials),
-          });
-
-          if (response.ok) {
-            const userData = await response.json();
-            set({ 
-              user: userData.user,
-              token: userData.token,
-              isLoggedIn: true, 
-              isLoading: false,
-              error: null 
-            });
-            
-            // Migrar dados do convidado se existir guestId
-            if (guestId) {
-              await migrateGuestData(guestId, userData.user.id);
-              clearGuestId();
-            }
-            
-            return true;
-          } else {
-            const errorData = await response.json();
-            set({ 
-              error: errorData.message || 'Erro ao fazer login', 
-              isLoading: false 
-            });
-            return false;
-          }
-        } catch (error) {
-          // Por enquanto, simular login bem-sucedido para desenvolvimento
-          console.log('Simulando login bem-sucedido:', credentials.email);
-          const simulatedToken = `token_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-          const simulatedUserId = `user_${Date.now()}`;
+          const response: LoginResponse = await authApi.login(credentials.email, credentials.password);
           
+          console.log('[AuthStore] Login bem-sucedido:', response.user.email);
+          
+          // Atualizar estado com dados do usuário
           set({ 
-            user: { 
-              id: simulatedUserId, 
-              email: credentials.email, 
-              name: credentials.email.split('@')[0] 
-            },
-            token: simulatedToken,
-            isLoggedIn: true, 
-            isLoading: false,
+            user: response.user,
+            token: response.token,
+            isLoggedIn: true,
             error: null 
           });
           
           // Migrar dados do convidado se existir guestId
           if (guestId) {
-            await migrateGuestData(guestId, simulatedUserId);
+            console.log('[AuthStore] Iniciando migração de dados do convidado');
+            const migrationResult = await migrateGuestData(guestId);
+            
+            if (migrationResult) {
+              console.log('[AuthStore] Migração concluída:', migrationResult);
+            }
+            
+            // Limpar guestId após migração (independente do resultado)
             clearGuestId();
+            console.log('[AuthStore] GuestId removido do localStorage');
           }
           
           return true;
+        } catch (error: unknown) {
+          console.error('[AuthStore] Erro no login:', error);
+          
+          const errorMessage = error instanceof Error ? error.message : 'Email ou senha inválidos.';
+          set({ error: errorMessage });
+          
+          // Re-lançar o erro para que o componente UI também possa reagir
+          throw error;
+        } finally {
+          // Garantir que isLoading seja sempre resetado
+          set({ isLoading: false });
         }
       },
 
       signup: async (data) => {
-        console.log('[DEBUG] authStore.signup recebido. Payload:', data);
+        console.log('[AuthStore] Signup iniciado. Payload:', data);
         set({ isLoading: true, error: null });
         
         // Captura o guestId antes do cadastro (se existir)
-        const { getCurrentGuestId, clearGuestId } = await import('../utils/guest');
         const guestId = getCurrentGuestId();
+        console.log('[AuthStore] Signup iniciado. GuestId atual:', guestId);
         
         try {
-          // Simular chamada de API para cadastro
-          // TODO: Substituir por chamada real para o backend
-          const response = await fetch('/api/auth/signup', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(data),
-          });
-
-          if (response.ok) {
-            const userData = await response.json();
-            set({ 
-              user: userData.user,
-              token: userData.token,
-              isLoggedIn: true, 
-              isLoading: false,
-              error: null 
-            });
-            
-            // Migrar dados do convidado se existir guestId
-            if (guestId) {
-              await migrateGuestData(guestId, userData.user.id);
-              clearGuestId();
-            }
-            
-            return true;
-          } else {
-            const errorData = await response.json();
-            set({ 
-              error: errorData.message || 'Erro ao criar conta', 
-              isLoading: false 
-            });
-            return false;
-          }
-        } catch (error) {
-          // Por enquanto, simular cadastro bem-sucedido para desenvolvimento
-          console.log('Simulando cadastro bem-sucedido:', data.email);
-          const simulatedToken = `token_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-          const simulatedUserId = `user_${Date.now()}`;
+          const response: SignupResponse = await authApi.signup(data as SignupData);
           
+          console.log('[AuthStore] Signup bem-sucedido:', response.user.email);
+          
+          // Atualizar estado com dados do usuário
           set({ 
-            user: { 
-              id: simulatedUserId, 
-              email: data.email, 
-              name: data.name || data.email.split('@')[0] 
-            },
-            token: simulatedToken,
-            isLoggedIn: true, 
-            isLoading: false,
+            user: response.user,
+            token: response.token,
+            isLoggedIn: true,
             error: null 
           });
           
           // Migrar dados do convidado se existir guestId
           if (guestId) {
-            await migrateGuestData(guestId, simulatedUserId);
+            console.log('[AuthStore] Iniciando migração de dados do convidado');
+            const migrationResult = await migrateGuestData(guestId);
+            
+            if (migrationResult) {
+              console.log('[AuthStore] Migração concluída:', migrationResult);
+            }
+            
+            // Limpar guestId após migração (independente do resultado)
             clearGuestId();
+            console.log('[AuthStore] GuestId removido do localStorage');
           }
           
           return true;
+        } catch (error: unknown) {
+          console.error('[AuthStore] Erro no signup:', error);
+          
+          const errorMessage = error instanceof Error ? error.message : 'Erro desconhecido ao criar conta.';
+          set({ error: errorMessage });
+          
+          // Re-lançar o erro para que o componente UI também possa reagir
+          throw error;
+        } finally {
+          // Garantir que isLoading seja sempre resetado
+          set({ isLoading: false });
         }
       },
 

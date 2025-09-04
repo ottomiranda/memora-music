@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useMusicStore } from '@/store/musicStore';
 import { X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { apiRequest } from '../config/api';
 
 interface ValidationFormData {
   difficulty: number;
@@ -82,20 +83,12 @@ const ValidationPopup: React.FC = () => {
 
       console.log('[MVP] Enviando dados do formulário de validação:', feedbackData);
       
-      // Enviar dados para o backend
-      const response = await fetch('/api/save-feedback', {
+      // Enviar dados para o backend usando apiRequest centralizada
+      const result = await apiRequest('/api/save-feedback', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
         body: JSON.stringify(feedbackData)
       });
-
-      if (!response.ok) {
-        throw new Error(`Erro HTTP: ${response.status}`);
-      }
-
-      const result = await response.json();
+      
       console.log('[MVP] Feedback salvo com sucesso:', result);
       
       // Completar o fluxo MVP (marca como completo e fecha o popup)

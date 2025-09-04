@@ -1,65 +1,50 @@
-const GUEST_ID_KEY = 'memora_guest_id';
+import { v4 as uuidv4 } from 'uuid';
+import { GuestIdentity, GUEST_ID_KEY } from '../types/guest';
 
 /**
- * Gera um UUID v4 usando a API nativa do browser
- */
-function generateUUID(): string {
-  if (typeof crypto !== 'undefined' && crypto.randomUUID) {
-    return crypto.randomUUID();
-  }
-  // Fallback para ambientes que não suportam crypto.randomUUID
-  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
-    const r = Math.random() * 16 | 0;
-    const v = c === 'x' ? r : (r & 0x3 | 0x8);
-    return v.toString(16);
-  });
-}
-
-/**
- * Obtém ou cria um ID único para usuários convidados (não logados).
- * O ID é persistido no localStorage para manter a identidade entre sessões.
- * 
- * @returns {string} O guestId único do usuário
+ * Gera ou recupera o guestId do localStorage
+ * @returns string - UUID único para o usuário convidado
  */
 export function getOrCreateGuestId(): string {
   try {
-    // Tenta ler o guestId do localStorage
-    const existingGuestId = localStorage.getItem(GUEST_ID_KEY);
-    
-    if (existingGuestId) {
-      return existingGuestId;
+    const existingId = localStorage.getItem(GUEST_ID_KEY);
+    if (existingId) {
+      return existingId;
     }
     
-    // Se não existir, gera um novo UUID
-    const newGuestId = generateUUID();
-    
-    // Salva no localStorage
+    const newGuestId = uuidv4();
     localStorage.setItem(GUEST_ID_KEY, newGuestId);
+    
+    // Log para desenvolvimento
+    console.debug('[Guest Identity] Novo guestId gerado:', newGuestId);
     
     return newGuestId;
   } catch (error) {
-    // Fallback caso localStorage não esteja disponível (SSR, etc.)
-    console.warn('Erro ao acessar localStorage para guestId:', error);
-    return generateUUID(); // Retorna um ID temporário
+    // Fallback para quando localStorage não está disponível
+    console.warn('[Guest Identity] localStorage não disponível, usando ID de sessão');
+    return `session-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
   }
 }
 
 /**
- * Remove o guestId do localStorage.
- * Deve ser chamado após a migração bem-sucedida dos dados do convidado.
+ * Remove o guestId do localStorage
+ * Usado após migração bem-sucedida
  */
 export function clearGuestId(): void {
   try {
-    localStorage.removeItem(GUEST_ID_KEY);
+    const existingId = localStorage.getItem(GUEST_ID_KEY);
+    if (existingId) {
+      localStorage.removeItem(GUEST_ID_KEY);
+      console.debug('[Guest Identity] GuestId removido:', existingId);
+    }
   } catch (error) {
-    console.warn('Erro ao limpar guestId do localStorage:', error);
+    console.warn('[Guest Identity] Erro ao limpar guestId:', error);
   }
 }
 
 /**
- * Verifica se existe um guestId armazenado.
- * 
- * @returns {boolean} True se existe um guestId, false caso contrário
+ * Verifica se existe um guestId no localStorage
+ * @returns boolean - true se existe guestId
  */
 export function hasGuestId(): boolean {
   try {
@@ -70,9 +55,8 @@ export function hasGuestId(): boolean {
 }
 
 /**
- * Obtém o guestId atual sem criar um novo se não existir.
- * 
- * @returns {string | null} O guestId atual ou null se não existir
+ * Recupera o guestId atual sem criar um novo
+ * @returns string | null - guestId existente ou null
  */
 export function getCurrentGuestId(): string | null {
   try {
@@ -80,4 +64,39 @@ export function getCurrentGuestId(): string | null {
   } catch (error) {
     return null;
   }
+}
+
+/**
+ * Cria um objeto GuestIdentity com informações completas
+ * @returns GuestIdentity | null
+ */
+export function getGuestIdentity(): GuestIdentity | null {
+  const guestId = getCurrentGuestId();
+  if (!guestId) {
+    return null;
+  }
+  
+  return {
+    guestId,
+    createdAt: new Date() // Aproximação, pois não armazenamos a data de criação
+  };
+}
+
+/**
+ * Valida se um guestId tem formato válido (UUID v4)
+ * @param guestId - ID a ser validado
+ * @returns boolean - true se é um UUID válido
+ */
+export function isValidGuestId(guestId: string): boolean {
+  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+  return uuidRegex.test(guestId) || guestId.startsWith('session-');
+}
+
+/**
+ * Força a regeneração do guestId
+ * Útil para testes ou casos especiais
+ */
+export function regenerateGuestId(): string {
+  clearGuestId();
+  return getOrCreateGuestId();
 }

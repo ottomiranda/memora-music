@@ -1,9 +1,18 @@
-import { Play, Headphones, Music, Music2, Music3, Music4, Heart, Gift } from "lucide-react";
+import { Play, Headphones, Music, Music2, Music3, Music4, Heart, Gift, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
+import { useMusicStore } from "@/store/musicStore";
 import HeroSlideshow from "./HeroSlideshow";
 
 const Hero = () => {
+  const navigate = useNavigate();
+  const resetMusicFlow = useMusicStore((state) => state.reset);
+
+  const handleCreateMusicClick = () => {
+    resetMusicFlow();
+    navigate('/criar');
+  };
+
   const scrollToExamples = () => {
     const element = document.getElementById("exemplos");
     if (element) {
@@ -40,15 +49,15 @@ const Hero = () => {
 
             {/* CTAs */}
             <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
-              <Link to="/criar">
-                <Button
-                  size="lg"
-                  className="bg-[#FEC641] hover:bg-[#FEC641]/90 text-[#101010] px-8 py-4 rounded-2xl font-semibold text-lg shadow-2xl hover:shadow-[#FEC641]/25 hover:-translate-y-1 transition-all duration-300 border-0"
-                  data-attr="hero-cta-primary"
-                >
-                  Crie sua música grátis agora
-                </Button>
-              </Link>
+              <Button
+                size="lg"
+                className="bg-[#FEC641] hover:bg-[#FEC641]/90 text-[#101010] px-8 py-4 rounded-2xl font-semibold text-lg shadow-2xl hover:shadow-[#FEC641]/25 hover:-translate-y-1 transition-all duration-300 border-0"
+                data-attr="hero-cta-primary"
+                onClick={handleCreateMusicClick}
+              >
+                <Sparkles className="mr-2 h-5 w-5" />
+                Crie sua música grátis agora
+              </Button>
               
               <Button
                 variant="outline"

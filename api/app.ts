@@ -11,13 +11,14 @@ import authRoutes from './routes/auth';
 import generatePreviewRoutes from './routes/generate-preview';
 import checkMusicStatusRoutes from './routes/check-music-status';
 import saveFeedbackRoutes from './routes/save-feedback';
+import paywallRoutes from './routes/paywall';
 
 // for esm mode
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 // load env
-dotenv.config();
+dotenv.config({ path: path.join(__dirname, '../.env') });
 
 
 const app: express.Application = express();
@@ -40,6 +41,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/generate-preview', generatePreviewRoutes);
 app.use('/api/check-music-status', checkMusicStatusRoutes);
 app.use('/api/save-feedback', saveFeedbackRoutes);
+app.use('/api/user', paywallRoutes);
 
 /**
  * health

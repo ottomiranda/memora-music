@@ -2,6 +2,20 @@ import express, { type Request, type Response } from 'express';
 import { z } from 'zod';
 import OpenAI from 'openai';
 import fetch from 'node-fetch';
+import { SongService } from '../../src/lib/services/songService.js';
+import { createClient } from '@supabase/supabase-js';
+
+// Função para obter cliente Supabase
+function getSupabaseClient() {
+  const supabaseUrl = process.env.SUPABASE_URL;
+  const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  
+  if (!supabaseUrl || !supabaseServiceKey) {
+    throw new Error('Variáveis de ambiente do Supabase não configuradas');
+  }
+  
+  return createClient(supabaseUrl, supabaseServiceKey);
+}
 
 const router = express.Router();
 
@@ -158,6 +172,119 @@ class SunoAPI {
 
 // Inicializar cliente Suno
 const sunoClient = new SunoAPI(SUNO_API_KEY || '');
+
+// Função para salvamento automático de músicas no banco de dados
+async function autoSaveSongToDatabase(task: Record<string, unknown>, userId?: string, guestId?: string) {
+  try {
+    // --- INÍCIO DA INSTRUMENTAÇÃO ---
+    console.log(`[DB_SAVE] Iniciando salvamento para taskId: ${task.taskId}`);
+    console.log(`[DB_SAVE] UserID: ${userId}, GuestID: ${guestId}`);
+    console.log(`[DB_SAVE] Parâmetros recebidos:`, {
+      taskId: task.taskId,
+      userId: userId,
+      guestId: guestId,
+      hasAudioClips: !!task.audioClips,
+      audioClipsLength: task.audioClips?.length || 0,
+      hasMetadata: !!task.metadata
+    });
+    
+    // Verificar se há clipes de áudio para salvar
+    if (!task.audioClips || task.audioClips.length === 0) {
+      console.log(`[DB_SAVE] ⚠️ Nenhum clipe de áudio encontrado para salvar - taskId: ${task.taskId}`);
+      return;
+    }
+    
+    // Preparar dados da música
+    const songData = {
+      userId: userId || null,
+      guestId: guestId || null,
+      title: task.metadata?.songTitle || 'Música Gerada',
+      lyrics: task.lyrics || null,
+      prompt: `Música para ${task.metadata?.recipientName} na ocasião: ${task.metadata?.occasion}. Relacionamento: ${task.metadata?.relationship}. Tom emocional: ${task.metadata?.emotionalTone}`,
+      genre: task.metadata?.genre || null,
+      mood: task.metadata?.mood || task.metadata?.emotionalTone || null,
+      audioUrlOption1: task.audioClips[0]?.audio_url || null,
+      audioUrlOption2: task.audioClips[1]?.audio_url || null,
+      sunoTaskId: task.taskId
+    };
+    
+    console.log('[DB_SAVE] Dados a serem inseridos:', songData);
+    
+    // Salvar no banco de dados
+    const savedSong = await SongService.createSong(songData);
+    
+    if (!savedSong || !savedSong.id) {
+      console.error(`[DB_SAVE_ERROR] Falha ao inserir música no DB para taskId ${task.taskId}: savedSong é null ou sem ID`);
+      return; // Interrompe a função se o salvamento falhar
+    }
+    
+    console.log(`[DB_SAVE] Música para taskId ${task.taskId} inserida com sucesso. ID: ${savedSong.id}`);
+    
+    // Lógica de incremento do paywall
+    if (userId) {
+      console.log(`[PAYWALL] Verificando e atualizando contador para userId: ${userId}`);
+      
+      try {
+        const supabase = getSupabaseClient();
+        
+        // Primeiro, buscar o valor atual
+        console.log(`[PAYWALL] Executando SELECT para buscar dados do usuário ${userId}`);
+        const { data: userData, error: selectError } = await supabase
+          .from('users')
+          .select('freesongsused')
+          .eq('id', userId)
+          .single();
+        
+        if (selectError) {
+          console.error(`[PAYWALL_ERROR] Falha ao buscar usuário ${userId}:`, selectError);
+          return;
+        }
+        
+        console.log(`[PAYWALL] Dados do usuário encontrados:`, userData);
+        const currentCount = userData?.freesongsused || 0;
+        console.log(`[PAYWALL] Contagem atual de músicas gratuitas: ${currentCount}`);
+        
+        // Incrementar o contador APENAS quando for a primeira música (currentCount === 0)
+        if (currentCount === 0) {
+          const newCount = currentCount + 1;
+          console.log(`[PAYWALL] Primeira música detectada - incrementando contador para: ${newCount}`);
+          
+          console.log(`[PAYWALL] Executando UPDATE para usuário ${userId} com novo valor: ${newCount}`);
+          const { error: updateError } = await supabase
+            .from('users')
+            .update({ freesongsused: newCount })
+            .eq('id', userId);
+
+          if (updateError) {
+            console.error(`[PAYWALL_ERROR] Falha ao atualizar contador para usuário ${userId}:`, updateError);
+          } else {
+            console.log(`[PAYWALL] Contador para usuário ${userId} atualizado com sucesso de ${currentCount} para ${newCount}`);
+          }
+        } else {
+          console.log(`[PAYWALL] Usuário ${userId} já tem ${currentCount} música(s) - não incrementando contador`);
+        }
+
+
+      } catch (error) {
+        console.error(`[PAYWALL_ERROR] Erro geral ao atualizar contador de músicas para usuário ${userId}:`, error);
+      }
+    } else {
+      console.log(`[PAYWALL] Usuário não logado (userId é null/undefined) - não incrementando contador`);
+    }
+    
+    // Adicionar informação do salvamento à tarefa
+    task.metadata.savedToDatabase = true;
+    task.metadata.savedSongId = savedSong.id;
+    console.log(`[DB_SAVE] Metadados da tarefa atualizados - savedToDatabase: true, savedSongId: ${savedSong.id}`);
+    // --- FIM DA INSTRUMENTAÇÃO ---
+    
+  } catch (error) {
+    console.error(`[DB_SAVE_ERROR] Erro geral ao salvar música no banco de dados para taskId ${task.taskId}:`, error.message);
+    console.error(`[DB_SAVE_ERROR] Stack trace:`, error.stack);
+    // Não interromper o fluxo principal em caso de erro no salvamento
+    task.metadata.saveError = error.message;
+  }
+}
 
 // Função auxiliar para fetch com retry e logs detalhados
 async function fetchWithRetry(url: string, options: RequestInit, maxRetries: number = 3): Promise<Response> {
@@ -406,9 +533,126 @@ router.post('/', async (req: Request, res: Response) => {
     const formData = validationResult.data;
     const lyricsOnly = req.body.lyricsOnly === true;
     
+    // Extrair userId e guestId da requisição
+    const authHeader = req.headers.authorization;
+    const guestId = req.headers['x-guest-id'] as string;
+    let userId: string | null = null;
+    
+    // Se há token de autorização, extrair userId usando Supabase Auth
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+      const jwt = authHeader.substring(7);
+      console.log('[AUTH] Token JWT recebido:', jwt.substring(0, 20) + '...');
+      
+      try {
+        const supabase = getSupabaseClient();
+        const { data: { user }, error: userError } = await supabase.auth.getUser(jwt);
+        
+        if (userError) {
+          console.error('[AUTH_ERROR] Erro ao obter usuário do token:', userError);
+          console.error('[AUTH_ERROR] Detalhes:', {
+            message: userError.message,
+            status: userError.status
+          });
+          // Não retornar erro aqui - continuar como usuário não autenticado
+        } else if (user) {
+          userId = user.id;
+          console.log('[AUTH] Usuário autenticado com UUID:', userId);
+          console.log('[AUTH] Email do usuário:', user.email);
+        } else {
+          console.log('[AUTH] Token válido mas usuário não encontrado');
+        }
+      } catch (authError) {
+        console.error('[AUTH_EXCEPTION] Exceção ao validar token:', authError);
+        // Continuar como usuário não autenticado
+      }
+    }
+    
     console.log('🔍 FormData validado:', JSON.stringify(formData, null, 2));
     console.log('🔍 LyricsOnly flag:', lyricsOnly);
     console.log('🔍 Modo de operação:', lyricsOnly ? 'APENAS LETRAS' : 'LETRA + ÁUDIO');
+    console.log('🔍 UserId extraído:', userId);
+    console.log('🔍 GuestId extraído:', guestId);
+
+    // ===== PROTEÇÃO DO PAYWALL =====
+    // Definir limite de músicas gratuitas
+    const FREE_SONG_LIMIT = 1;
+    
+    // Verificar se o usuário pode criar uma nova música
+    if (userId && !lyricsOnly) {
+      console.log('[PAYWALL] Verificando proteção do paywall para usuário:', userId);
+      console.log('[PAYWALL] Tipo do userId:', typeof userId);
+      console.log('[PAYWALL] Valor do userId:', JSON.stringify(userId));
+      
+      try {
+        // Buscar dados do usuário no Supabase
+        console.log('[PAYWALL] Executando query para contar músicas do userId:', userId);
+        const supabase = getSupabaseClient();
+        
+        const { data: userData, error: userError } = await supabase
+          .from('users')
+          .select('freesongsused')
+          .eq('id', userId)
+          .single();
+
+        console.log('[PAYWALL] Resultado da query - userData:', userData);
+        console.log('[PAYWALL] Resultado da query - userError:', userError);
+
+        if (userError) {
+          console.error('[PAYWALL_ERROR] Erro ao buscar dados do usuário:', userError);
+          console.error('[PAYWALL_ERROR] Detalhes do erro:', {
+            message: userError.message,
+            details: userError.details,
+            hint: userError.hint,
+            code: userError.code
+          });
+          return res.status(500).json({
+            success: false,
+            error: 'Erro interno do servidor',
+            message: 'Não foi possível verificar seu status de usuário.',
+            debug: process.env.NODE_ENV === 'development' ? userError : undefined
+          });
+        }
+
+        const freeSongsUsed = userData?.freesongsused || 0;
+        console.log('[PAYWALL] Músicas gratuitas usadas:', freeSongsUsed);
+        console.log('[PAYWALL] Status do usuário:', {
+          userId,
+          freeSongsUsed,
+          maxFreeSongs: FREE_SONG_LIMIT,
+          canCreateMore: freeSongsUsed < FREE_SONG_LIMIT
+        });
+
+        // Verificar se excedeu o limite de músicas gratuitas
+        if (freeSongsUsed >= FREE_SONG_LIMIT) {
+          console.log(`[PAYWALL_BLOCK] Acesso bloqueado para o usuário ${userId}. Limite de ${FREE_SONG_LIMIT} música(s) gratuita(s) atingido.`);
+          
+          // A palavra-chave 'return' é essencial e não negociável.
+          // Ela interrompe a função aqui e envia a resposta.
+          return res.status(402).json({
+            success: false,
+            error: 'PAYMENT_REQUIRED',
+            message: 'Você já usou sua criação de música gratuita. Por favor, faça um upgrade para criar mais.',
+            freeSongsUsed,
+            maxFreeSongs: FREE_SONG_LIMIT,
+            requiresPayment: true
+          });
+        }
+
+        // O código abaixo só pode ser executado se a condição acima for falsa.
+        console.log(`[PAYWALL_ALLOW] Acesso permitido para o usuário ${userId}.`);
+        console.log('[PAYWALL] Usuário pode criar música - prosseguindo. Músicas restantes:', FREE_SONG_LIMIT - freeSongsUsed);
+      } catch (error) {
+        console.error('[PAYWALL_DB_ERROR] Erro na verificação do paywall:', error);
+        console.error('[PAYWALL_DB_ERROR] Stack trace:', error instanceof Error ? error.stack : 'N/A');
+        return res.status(500).json({
+          success: false,
+          error: 'Erro interno do servidor',
+          message: 'Não foi possível verificar seu status de usuário.',
+          debug: process.env.NODE_ENV === 'development' ? error : undefined
+        });
+      }
+    }
+    // ===== FIM DA PROTEÇÃO DO PAYWALL =====
 
     if (lyricsOnly) {
       console.log('✅ Modo lyricsOnly: Gerando letra e título...');
@@ -421,21 +665,65 @@ router.post('/', async (req: Request, res: Response) => {
         });
       }
       
-      const prompt = createLyricsAndTitlePrompt(formData);
-      const aiResponse = await getOpenAIClient().chat.completions.create({
-        model: "gpt-4",
-        messages: [{ role: "user", content: prompt }],
-        max_tokens: 1000,
-        temperature: 0.7,
-      });
-      
-      const content = aiResponse.choices[0].message.content;
-      const { songTitle, lyrics } = parseAIResponse(content);
-      
-      console.log(`🎶 Título Gerado: ${songTitle}`);
-      console.log(`📝 Letra Gerada: ${lyrics.substring(0, 100)}...`);
-      
-      return res.json({ success: true, songTitle, lyrics });
+      try {
+        const prompt = createLyricsAndTitlePrompt(formData);
+        console.log('🎵 Fazendo chamada para OpenAI (lyricsOnly)...');
+        
+        const aiResponse = await getOpenAIClient().chat.completions.create({
+          model: "gpt-4",
+          messages: [{ role: "user", content: prompt }],
+          max_tokens: 1000,
+          temperature: 0.7,
+        });
+        
+        const content = aiResponse.choices[0].message.content;
+        const { songTitle, lyrics } = parseAIResponse(content);
+        
+        console.log(`🎶 Título Gerado: ${songTitle}`);
+        console.log(`📝 Letra Gerada: ${lyrics.substring(0, 100)}...`);
+        
+        return res.json({ success: true, songTitle, lyrics });
+        
+      } catch (error) {
+        console.error('[OPENAI_ERROR] Erro na geração de letra (lyricsOnly):', error);
+        
+        // Verificar se é um erro da API da OpenAI
+        if (error instanceof OpenAI.APIError) {
+          if (error.status === 429) {
+            // Erro de cota/faturamento
+            console.error('[OPENAI_QUOTA] Cota da OpenAI excedida! Verificar faturamento.');
+            return res.status(503).json({
+              success: false,
+              error: 'SERVICE_UNAVAILABLE',
+              message: 'Nosso serviço de criação está com uma demanda muito alta no momento. Por favor, tente novamente em alguns minutos.'
+            });
+          } else if (error.status === 401) {
+            // Erro de autenticação
+            console.error('[OPENAI_AUTH] Erro de autenticação da OpenAI:', error.message);
+            return res.status(500).json({
+              success: false,
+              error: 'INTERNAL_SERVER_ERROR',
+              message: 'Ocorreu um erro de configuração. Nossa equipe já foi notificada.'
+            });
+          } else {
+            // Outros erros da API da OpenAI
+            console.error('[OPENAI_API] Erro da API OpenAI:', error.status, error.message);
+            return res.status(500).json({
+              success: false,
+              error: 'INTERNAL_SERVER_ERROR',
+              message: 'Ocorreu um erro inesperado ao gerar a letra. Nossa equipe já foi notificada.'
+            });
+          }
+        } else {
+          // Outros tipos de erro (rede, timeout, etc.)
+          console.error('[OPENAI_NETWORK] Erro de rede ou timeout:', error.message);
+          return res.status(500).json({
+            success: false,
+            error: 'INTERNAL_SERVER_ERROR',
+            message: 'Ocorreu um erro inesperado ao gerar a letra. Nossa equipe já foi notificada.'
+          });
+        }
+      }
       
     } else {
       // Verificar se as chaves de API estão configuradas
@@ -463,46 +751,90 @@ router.post('/', async (req: Request, res: Response) => {
 
       // Gerar letra com OpenAI
       console.log('🎵 Iniciando geração de letra com OpenAI...');
-      const prompt = createLyricsPrompt(formData);
       
-      console.log('🎵 Prompt criado para OpenAI:');
-      console.log('---START PROMPT---');
-      console.log(prompt);
-      console.log('---END PROMPT---');
-      
-      console.log('🎵 Fazendo chamada para OpenAI...');
-      const completion = await getOpenAIClient().chat.completions.create({
-        model: 'gpt-4',
-        messages: [
-          {
-            role: 'system',
-            content: 'Você é um compositor profissional especializado em criar letras de música personalizadas e emocionais.'
-          },
-          {
-            role: 'user',
-            content: prompt
-          }
-        ],
-        max_tokens: 1000,
-        temperature: 0.8
-      });
-      
-      console.log('🎵 Resposta completa da OpenAI:', JSON.stringify(completion, null, 2));
-      const lyrics = completion.choices[0]?.message?.content;
-      console.log('🎵 Letra extraída:', lyrics);
-      console.log('🎵 Tamanho da letra:', lyrics?.length || 0, 'caracteres');
-      
-      console.log('=== RESPOSTA DA OPENAI ===');
-      console.log('Prompt enviado:', prompt.substring(0, 200) + '...');
-      console.log('Letra gerada:', lyrics?.substring(0, 300) + '...');
-      console.log('Tokens usados:', completion.usage?.total_tokens);
-      console.log('========================');
-      
-      if (!lyrics) {
-        return res.status(500).json({
-          success: false,
-          error: 'Não foi possível gerar a letra da música. Tente novamente.'
+      let lyrics;
+      try {
+        const prompt = createLyricsPrompt(formData);
+        
+        console.log('🎵 Prompt criado para OpenAI:');
+        console.log('---START PROMPT---');
+        console.log(prompt);
+        console.log('---END PROMPT---');
+        
+        console.log('🎵 Fazendo chamada para OpenAI...');
+        const completion = await getOpenAIClient().chat.completions.create({
+          model: 'gpt-4',
+          messages: [
+            {
+              role: 'system',
+              content: 'Você é um compositor profissional especializado em criar letras de música personalizadas e emocionais.'
+            },
+            {
+              role: 'user',
+              content: prompt
+            }
+          ],
+          max_tokens: 1000,
+          temperature: 0.8
         });
+        
+        console.log('🎵 Resposta completa da OpenAI:', JSON.stringify(completion, null, 2));
+        lyrics = completion.choices[0]?.message?.content;
+        console.log('🎵 Letra extraída:', lyrics);
+        console.log('🎵 Tamanho da letra:', lyrics?.length || 0, 'caracteres');
+        
+        console.log('=== RESPOSTA DA OPENAI ===');
+        console.log('Prompt enviado:', prompt.substring(0, 200) + '...');
+        console.log('Letra gerada:', lyrics?.substring(0, 300) + '...');
+        console.log('Tokens usados:', completion.usage?.total_tokens);
+        console.log('========================');
+        
+        if (!lyrics) {
+          return res.status(500).json({
+            success: false,
+            error: 'Não foi possível gerar a letra da música. Tente novamente.'
+          });
+        }
+        
+      } catch (error) {
+        console.error('[OPENAI_ERROR] Erro na geração de letra (modo completo):', error);
+        
+        // Verificar se é um erro da API da OpenAI
+        if (error instanceof OpenAI.APIError) {
+          if (error.status === 429) {
+            // Erro de cota/faturamento
+            console.error('[OPENAI_QUOTA] Cota da OpenAI excedida! Verificar faturamento.');
+            return res.status(503).json({
+              success: false,
+              error: 'SERVICE_UNAVAILABLE',
+              message: 'Nosso serviço de criação está com uma demanda muito alta no momento. Por favor, tente novamente em alguns minutos.'
+            });
+          } else if (error.status === 401) {
+            // Erro de autenticação
+            console.error('[OPENAI_AUTH] Erro de autenticação da OpenAI:', error.message);
+            return res.status(500).json({
+              success: false,
+              error: 'INTERNAL_SERVER_ERROR',
+              message: 'Ocorreu um erro de configuração. Nossa equipe já foi notificada.'
+            });
+          } else {
+            // Outros erros da API da OpenAI
+            console.error('[OPENAI_API] Erro da API OpenAI:', error.status, error.message);
+            return res.status(500).json({
+              success: false,
+              error: 'INTERNAL_SERVER_ERROR',
+              message: 'Ocorreu um erro inesperado ao gerar a letra. Nossa equipe já foi notificada.'
+            });
+          }
+        } else {
+          // Outros tipos de erro (rede, timeout, etc.)
+          console.error('[OPENAI_NETWORK] Erro de rede ou timeout:', error.message);
+          return res.status(500).json({
+            success: false,
+            error: 'INTERNAL_SERVER_ERROR',
+            message: 'Ocorreu um erro inesperado ao gerar a letra. Nossa equipe já foi notificada.'
+          });
+        }
       }
 
       // === PARTE A: INICIAR GERAÇÃO COM SUNO API ===
@@ -625,7 +957,15 @@ router.post('/', async (req: Request, res: Response) => {
           occasion: formData.occasion,
           genre: formData.genre,
           duration: formData.duration,
-          model: 'V4_5PLUS'
+          model: 'V4_5PLUS',
+          userId: userId,
+          guestId: guestId,
+          // Dados adicionais para o salvamento
+          senderName: formData.senderName,
+          relationship: formData.relationship,
+          emotionalTone: formData.emotionalTone,
+          mood: formData.mood,
+          tempo: formData.tempo
         },
         startTime: Date.now(),
         lastUpdate: Date.now()
@@ -862,6 +1202,10 @@ async function processTaskInBackground(taskId: string) {
             task.metadata.totalClips = task.audioClips.length;
             task.metadata.processingTime = `${attempts} tentativas`;
             console.log(`🎉 [${taskId}] Todas as músicas foram processadas!`);
+            
+            // Salvar automaticamente no banco de dados
+            await autoSaveSongToDatabase(task, task.metadata.userId, task.metadata.guestId);
+            
             break;
           }
           
@@ -896,6 +1240,9 @@ async function processTaskInBackground(taskId: string) {
         task.metadata.totalClips = task.audioClips.length;
         task.metadata.processingTime = `${attempts} tentativas (parcial)`;
         console.log(`⚠️ [${taskId}] Timeout, mas ${task.audioClips.length} músicas foram processadas`);
+        
+        // Salvar automaticamente no banco de dados mesmo com resultado parcial
+        await autoSaveSongToDatabase(task, task.metadata.userId, task.metadata.guestId);
       } else {
         // Nenhuma música foi processada
         task.status = 'FAILED';
