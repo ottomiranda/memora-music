@@ -2,16 +2,16 @@ import { Button } from "@/components/ui/button";
 import { Play, Sparkles, Heart } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { useMusicStore } from "@/store/musicStore";
+import { useAuthStore } from "@/store/authStore";
 import heroImage from "@/assets/hero-music.jpg";
 
 export default function HeroSection() {
   const navigate = useNavigate();
-  const reset = useMusicStore((state) => state.reset);
+  const { startNewCreationFlow } = useMusicStore();
 
-  const handleCreateSongClick = () => {
-    console.log('[RESET_FLOW] Limpando o estado antes de criar uma nova música.');
-    reset();
-    navigate('/criar');
+  const handleCreateSongClick = async () => {
+    const { token } = useAuthStore.getState();
+    await startNewCreationFlow(navigate, token);
   };
 
   return (

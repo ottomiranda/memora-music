@@ -24,8 +24,6 @@ const MinhasMusicas: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
 
   const handleCreateFirstSong = async () => {
-    console.log('[RESET_FLOW] Limpando o estado antes de criar uma nova música.');
-    reset();
     const { token } = useAuthStore.getState();
     await startNewCreationFlow(navigate, token);
   };

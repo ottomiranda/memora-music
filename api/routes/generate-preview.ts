@@ -213,83 +213,8 @@ async function autoSaveSongToDatabase(task: Record<string, unknown>, userId?: st
     
     console.log(`[DB_SAVE] Música para taskId ${task.taskId} inserida com sucesso. ID: ${savedSong.id}`);
     
-    // Lógica de incremento do paywall - funciona para usuários autenticados e anônimos
-    const deviceId = task.metadata?.deviceId;
-    const clientIp = task.metadata?.clientIp;
-    
-    if (userId || deviceId) {
-      const identifier = userId ? `userId: ${userId}` : `deviceId: ${deviceId}`;
-      console.log(`[PAYWALL] Verificando e atualizando contador para ${identifier}`);
-      
-      try {
-        const supabase = getSupabaseClient();
-        let userData = null;
-        let selectError = null;
-        
-        if (userId) {
-          // Usuário autenticado - buscar por user_id
-          console.log(`[PAYWALL] Executando SELECT para buscar dados do usuário ${userId}`);
-          const result = await supabase
-            .from('users')
-            .select('id, freesongsused, device_id, last_used_ip')
-            .eq('id', userId)
-            .single();
-          
-          userData = result.data;
-          selectError = result.error;
-        } else if (deviceId) {
-          // Usuário anônimo - buscar por device_id
-          console.log(`[PAYWALL] Executando SELECT para buscar dados do dispositivo ${deviceId}`);
-          const result = await supabase
-            .from('users')
-            .select('id, freesongsused, device_id, last_used_ip')
-            .eq('device_id', deviceId)
-            .is('email', null) // Usuários anônimos não têm email
-            .single();
-          
-          userData = result.data;
-          selectError = result.error;
-        }
-        
-        if (selectError) {
-          console.error(`[PAYWALL_ERROR] Falha ao buscar ${identifier}:`, selectError);
-          return;
-        }
-        
-        console.log(`[PAYWALL] Dados encontrados:`, userData);
-        const currentCount = userData?.freesongsused || 0;
-        console.log(`[PAYWALL] Contagem atual de músicas gratuitas: ${currentCount}`);
-        
-        // Incrementar o contador sempre que uma música for salva com sucesso
-        const newCount = currentCount + 1;
-        console.log(`[PAYWALL] Incrementando contador de ${currentCount} para ${newCount}`);
-        
-        // Preparar dados para atualização incluindo clientIp para usuários anônimos
-        const updateData: any = { freesongsused: newCount };
-        if (!userId && clientIp) {
-          updateData.last_used_ip = clientIp;
-          console.log(`[PAYWALL] Incluindo clientIp na atualização: ${clientIp}`);
-        }
-        
-        const updateQuery = userId 
-          ? supabase.from('users').update(updateData).eq('id', userId)
-          : supabase.from('users').update(updateData).eq('device_id', deviceId).is('email', null);
-        
-        console.log(`[PAYWALL] Executando UPDATE para ${identifier} com novo valor: ${newCount}`);
-        const { error: updateError } = await updateQuery;
-
-        if (updateError) {
-          console.error(`[PAYWALL_ERROR] Falha ao atualizar contador para ${identifier}:`, updateError);
-        } else {
-          console.log(`[PAYWALL] Contador para ${identifier} atualizado com sucesso de ${currentCount} para ${newCount}`);
-        }
-
-      } catch (error) {
-        console.error(`[PAYWALL_ERROR] Erro geral ao atualizar contador de músicas para ${identifier}:`, error);
-      }
-    } else {
-      console.log(`[PAYWALL] Nem userId nem deviceId disponível - não incrementando contador`);
-    }
+    // NOTA: A lógica de incremento do paywall foi movida para após o sucesso da geração
+    // (Passo 4 da nova ordem de operações)
     
     // Adicionar informação do salvamento à tarefa
     task.metadata.savedToDatabase = true;
@@ -630,42 +555,35 @@ router.post('/', async (req: Request, res: Response) => {
     console.log('🔍 UserId extraído:', userId);
     console.log('🔍 GuestId extraído:', guestId);
 
-    // ===== PROTEÇÃO DO PAYWALL =====
+    // ===== NOVA ORDEM DE OPERAÇÕES DO PAYWALL =====
     // Definir limite de músicas gratuitas
     const FREE_SONG_LIMIT = 1;
+    let existingUser = null;
     
     // Verificar se o usuário pode criar uma nova música (apenas para modo completo, não lyricsOnly)
     if (!lyricsOnly) {
-      console.log('[PAYWALL] Verificando proteção do paywall');
+      console.log('[PAYWALL] Iniciando nova ordem de operações do paywall');
       console.log('[PAYWALL] UserId:', userId);
       console.log('[PAYWALL] DeviceId:', deviceId);
       
       try {
         const supabase = getSupabaseClient();
-        let freeSongsUsed = 0;
-        let userRecord = null;
+        
+        // ===== PASSO 1: CONSULTAR USUÁRIO (SEM MODIFICAR) =====
+        console.log('[PAYWALL_STEP1] Consultando usuário existente...');
         
         if (userId) {
-          // Usuário autenticado - verificar por user_id
-          console.log('[PAYWALL] Verificando limite para usuário autenticado:', userId);
+          // Usuário autenticado - buscar por user_id
+          console.log('[PAYWALL_STEP1] Buscando usuário autenticado:', userId);
           
           const { data: userData, error: userError } = await supabase
             .from('users')
-            .select('freesongsused, device_id')
+            .select('id, freesongsused, device_id, last_used_ip')
             .eq('id', userId)
             .single();
 
-          console.log('[PAYWALL] Resultado da query - userData:', userData);
-          console.log('[PAYWALL] Resultado da query - userError:', userError);
-
-          if (userError) {
-            console.error('[PAYWALL_ERROR] Erro ao buscar dados do usuário:', userError);
-            console.error('[PAYWALL_ERROR] Detalhes do erro:', {
-              message: userError.message,
-              details: userError.details,
-              hint: userError.hint,
-              code: userError.code
-            });
+          if (userError && userError.code !== 'PGRST116') { // PGRST116 = not found
+            console.error('[PAYWALL_ERROR] Erro ao buscar usuário autenticado:', userError);
             return res.status(500).json({
               success: false,
               error: 'Erro interno do servidor',
@@ -674,64 +592,25 @@ router.post('/', async (req: Request, res: Response) => {
             });
           }
 
-          freeSongsUsed = userData?.freesongsused || 0;
-          userRecord = userData;
+          existingUser = userData;
+          console.log('[PAYWALL_STEP1] Usuário autenticado encontrado:', existingUser);
           
         } else if (deviceId || clientIp) {
-          // Usuário não autenticado - verificar por device_id OU IP
-          console.log('[PAYWALL] Verificando limite para usuário não autenticado');
-          console.log('[PAYWALL] DeviceId:', deviceId);
-          console.log('[PAYWALL] ClientIp:', clientIp);
+          // Usuário não autenticado - buscar por device_id ou IP
+          console.log('[PAYWALL_STEP1] Buscando usuário anônimo por deviceId ou IP');
+          console.log('[PAYWALL_STEP1] DeviceId:', deviceId);
+          console.log('[PAYWALL_STEP1] ClientIp:', clientIp);
           
-          // NOVA CONSULTA: Verificar se deviceId OU IP já foram usados
-          const { data: deviceOrIpCheck, error: deviceOrIpError } = await supabase
+          // Buscar por deviceId OU IP
+          const { data: anonymousUsers, error: searchError } = await supabase
             .from('users')
             .select('id, freesongsused, device_id, last_used_ip')
             .or(`device_id.eq.${deviceId},last_used_ip.eq.${clientIp}`)
-            .gte('freesongsused', 1)
-            .limit(1)
-            .maybeSingle();
-
-          console.log('[PAYWALL] Verificação deviceId OU IP - resultado:', deviceOrIpCheck);
-          console.log('[PAYWALL] Verificação deviceId OU IP - erro:', deviceOrIpError);
-
-          if (deviceOrIpError) {
-            console.error('[PAYWALL_ERROR] Erro ao verificar deviceId/IP:', deviceOrIpError);
-            return res.status(500).json({
-              success: false,
-              error: 'Erro interno do servidor',
-              message: 'Não foi possível verificar seu status de dispositivo ou rede.',
-              debug: process.env.NODE_ENV === 'development' ? deviceOrIpError : undefined
-            });
-          }
-
-          if (deviceOrIpCheck) {
-            // Se encontrou um registro, o limite foi atingido
-            console.log('[PAYWALL_BLOCK] Limite atingido - deviceId ou IP já usado:', {
-              foundRecord: deviceOrIpCheck.id,
-              deviceId: deviceOrIpCheck.device_id,
-              lastUsedIp: deviceOrIpCheck.last_used_ip,
-              freeSongsUsed: deviceOrIpCheck.freesongsused
-            });
-            
-            return res.status(402).json({
-              success: false,
-              error: 'PAYMENT_REQUIRED',
-              message: 'Limite de músicas gratuitas atingido para este dispositivo ou rede.',
-              requiresPayment: true
-            });
-          }
-
-          // Se chegou aqui, pode criar nova música - buscar ou criar usuário
-          const { data: existingUsers, error: searchError } = await supabase
-            .from('users')
-            .select('id, freesongsused, device_id, last_used_ip')
-            .eq('device_id', deviceId)
             .is('email', null)
             .limit(1);
 
           if (searchError) {
-            console.error('[PAYWALL_ERROR] Erro ao buscar usuário existente:', searchError);
+            console.error('[PAYWALL_ERROR] Erro ao buscar usuário anônimo:', searchError);
             return res.status(500).json({
               success: false,
               error: 'Erro interno do servidor',
@@ -740,44 +619,11 @@ router.post('/', async (req: Request, res: Response) => {
             });
           }
 
-          if (existingUsers && existingUsers.length > 0) {
-            // Usuário anônimo existente encontrado
-            userRecord = existingUsers[0];
-            freeSongsUsed = userRecord.freesongsused || 0;
-            console.log('[PAYWALL] Usuário anônimo existente encontrado:', userRecord.id);
-          } else {
-            // Criar novo usuário anônimo com deviceId e IP
-            console.log('[PAYWALL] Criando novo usuário anônimo');
-            console.log('[PAYWALL] DeviceId:', deviceId);
-            console.log('[PAYWALL] ClientIp:', clientIp);
-            
-            const { data: newUser, error: createError } = await supabase
-              .from('users')
-              .insert({
-                device_id: deviceId,
-                last_used_ip: clientIp,
-                freesongsused: 0
-              })
-              .select()
-              .single();
-
-            if (createError) {
-              console.error('[PAYWALL_ERROR] Erro ao criar usuário anônimo:', createError);
-              return res.status(500).json({
-                success: false,
-                error: 'Erro interno do servidor',
-                message: 'Não foi possível criar registro de dispositivo.',
-                debug: process.env.NODE_ENV === 'development' ? createError : undefined
-              });
-            }
-
-            userRecord = newUser;
-            freeSongsUsed = 0;
-            console.log('[PAYWALL] Novo usuário anônimo criado:', newUser.id);
-          }
+          existingUser = anonymousUsers && anonymousUsers.length > 0 ? anonymousUsers[0] : null;
+          console.log('[PAYWALL_STEP1] Usuário anônimo encontrado:', existingUser);
+          
         } else {
-          // Nem userId nem deviceId fornecidos
-          console.log('[PAYWALL_BLOCK] Nem userId nem deviceId fornecidos');
+          console.log('[PAYWALL_ERROR] Nem userId nem deviceId fornecidos');
           return res.status(400).json({
             success: false,
             error: 'BAD_REQUEST',
@@ -785,34 +631,26 @@ router.post('/', async (req: Request, res: Response) => {
           });
         }
 
-        console.log('[PAYWALL] Músicas gratuitas usadas:', freeSongsUsed);
-        console.log('[PAYWALL] Status do usuário/dispositivo:', {
-          userId: userId || 'anônimo',
-          deviceId,
-          recordId: userRecord?.id,
-          freeSongsUsed,
-          maxFreeSongs: FREE_SONG_LIMIT,
-          canCreateMore: freeSongsUsed < FREE_SONG_LIMIT
-        });
-
-        // Verificar se excedeu o limite de músicas gratuitas
-        if (freeSongsUsed >= FREE_SONG_LIMIT) {
+        // ===== PASSO 2: VERIFICAR PERMISSÃO =====
+        console.log('[PAYWALL_STEP2] Verificando permissões...');
+        
+        if (existingUser && existingUser.freesongsused >= FREE_SONG_LIMIT) {
           const identifier = userId ? `usuário ${userId}` : `dispositivo ${deviceId}`;
-          console.log(`[PAYWALL_BLOCK] Acesso bloqueado para ${identifier}. Limite de ${FREE_SONG_LIMIT} música(s) gratuita(s) atingido.`);
+          console.log(`[PAYWALL_BLOCK] Limite atingido para ${identifier}. FreeSongsUsed: ${existingUser.freesongsused}`);
           
           return res.status(402).json({
             success: false,
             error: 'PAYMENT_REQUIRED',
             message: 'Você já usou sua criação de música gratuita. Por favor, faça um upgrade para criar mais.',
-            freeSongsUsed,
+            freeSongsUsed: existingUser.freesongsused,
             maxFreeSongs: FREE_SONG_LIMIT,
             requiresPayment: true
           });
         }
 
         const identifier = userId ? `usuário ${userId}` : `dispositivo ${deviceId}`;
-        console.log(`[PAYWALL_ALLOW] Acesso permitido para ${identifier}.`);
-        console.log('[PAYWALL] Pode criar música - prosseguindo. Músicas restantes:', FREE_SONG_LIMIT - freeSongsUsed);
+        const currentCount = existingUser?.freesongsused || 0;
+        console.log(`[PAYWALL_ALLOW] Permissão concedida para ${identifier}. Músicas usadas: ${currentCount}/${FREE_SONG_LIMIT}`);
         
       } catch (error) {
         console.error('[PAYWALL_DB_ERROR] Erro na verificação do paywall:', error);
@@ -825,7 +663,7 @@ router.post('/', async (req: Request, res: Response) => {
         });
       }
     }
-    // ===== FIM DA PROTEÇÃO DO PAYWALL =====
+    // ===== FIM DA NOVA ORDEM DE OPERAÇÕES DO PAYWALL =====
 
     if (lyricsOnly) {
       console.log('✅ Modo lyricsOnly: Gerando letra e título...');
@@ -1091,6 +929,52 @@ router.post('/', async (req: Request, res: Response) => {
       
       console.log('🎵 TaskId extraído:', taskId);
       
+      // =================================================================
+      // INÍCIO DA LÓGICA CRÍTICA DE ATUALIZAÇÃO DO PAYWALL
+      // =================================================================
+      console.log('[PAYWALL_UPDATE] Iniciando processo de atualização do banco de dados...');
+      
+      // Obter cliente Supabase para operações de banco de dados
+      const supabase = getSupabaseClient();
+      
+      // Usamos a variável 'existingUser' que foi recuperada no início da rota.
+      // E as variáveis 'deviceId' e 'clientIp' dos headers/request.
+      
+      if (existingUser) {
+        console.log(`[PAYWALL_UPDATE] Usuário existente encontrado (${existingUser.id}). Incrementando contador.`);
+        const { error: incrementError } = await supabase
+          .from('users')
+          .update({ freesongsused: existingUser.freesongsused + 1 })
+          .eq('id', existingUser.id);
+          
+        if (incrementError) {
+          console.error(`[PAYWALL_UPDATE_ERROR] Falha ao incrementar contador para usuário ${existingUser.id}:`, incrementError);
+        } else {
+          console.log(`[PAYWALL_UPDATE] Sucesso ao incrementar contador para usuário ${existingUser.id}.`);
+        }
+      } else {
+        console.log(`[PAYWALL_UPDATE] Nenhum usuário existente. Criando registro anônimo para deviceId: ${deviceId}`);
+        const { data: newUser, error: createError } = await supabase
+          .from('users')
+          .insert([{
+            device_id: deviceId,
+            last_used_ip: clientIp,
+            freesongsused: 1 // Começa em 1 pois a música acabou de ser usada
+          }])
+          .select()
+          .single();
+          
+        if (createError) {
+          console.error(`[PAYWALL_UPDATE_ERROR] Falha ao criar registro anônimo:`, createError);
+        } else {
+          console.log(`[PAYWALL_UPDATE] Sucesso ao criar registro anônimo. Novo ID: ${newUser?.id}`);
+        }
+      }
+      console.log('[PAYWALL_UPDATE] Processo de atualização do banco de dados finalizado.');
+      // =================================================================
+      // FIM DA LÓGICA CRÍTICA DE ATUALIZAÇÃO DO PAYWALL
+      // =================================================================
+      
       // Para o polling, usaremos o taskId
       const jobIds = [taskId];
       console.log('🎵 IDs dos jobs extraídos:', jobIds);
@@ -1144,6 +1028,65 @@ router.post('/', async (req: Request, res: Response) => {
         startTime: Date.now(),
         lastUpdate: Date.now()
       });
+      
+      // === PASSO 4: ATUALIZAR BANCO DE DADOS (APENAS APÓS SUCESSO) ===
+      console.log('🎵 Passo 4: Atualizando banco de dados após sucesso da geração...');
+      
+      // Obter cliente Supabase para operações de banco de dados
+      const supabaseClient = getSupabaseClient();
+      
+      try {
+        if (!existingUser) {
+          // Novo usuário: criar registro com freesongsused = 1
+          console.log('🎵 Criando novo usuário anônimo com contador = 1');
+          
+          const insertData: any = {
+            freesongsused: 1,
+            last_used_ip: clientIp
+          };
+          
+          if (userId) {
+            insertData.user_id = userId;
+          } else {
+            insertData.device_id = deviceId;
+          }
+          
+          const { error: insertError } = await supabaseClient
+            .from('anonymous_users')
+            .insert([insertData]);
+          
+          if (insertError) {
+            console.error('❌ Erro ao criar usuário anônimo:', insertError);
+            // Log do erro mas não falha a operação pois música já foi gerada
+          } else {
+            console.log('✅ Usuário anônimo criado com sucesso');
+          }
+        } else {
+          // Usuário existente: incrementar contador
+          console.log('🎵 Incrementando contador do usuário existente');
+          
+          const newCount = (existingUser.freesongsused || 0) + 1;
+          const updateData: any = {
+            freesongsused: newCount,
+            last_used_ip: clientIp
+          };
+          
+          const { error: updateError } = await supabaseClient
+            .from('anonymous_users')
+            .update(updateData)
+            .eq('id', existingUser.id);
+          
+          if (updateError) {
+            console.error('❌ Erro ao incrementar contador:', updateError);
+            // Log do erro mas não falha a operação pois música já foi gerada
+          } else {
+            console.log(`✅ Contador incrementado para ${newCount}`);
+          }
+        }
+      } catch (dbError) {
+        console.error('❌ Erro na atualização do banco de dados:', dbError);
+        // Log do erro mas não falha a operação pois música já foi gerada
+      }
       
       // Iniciar processamento em background
       processTaskInBackground(backgroundTaskId);

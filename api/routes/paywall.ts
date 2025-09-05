@@ -7,6 +7,7 @@ import { z } from 'zod';
 import Stripe from 'stripe';
 import jwt from 'jsonwebtoken';
 import { executeSupabaseQuery, getSupabaseServiceClient } from '../../src/lib/supabase-client.js';
+import { optionalAuthMiddleware } from '../middleware/optionalAuth.js';
 
 const router = Router();
 
@@ -46,69 +47,87 @@ const generateTransactionId = (): string => {
 /**
  * Get User Creation Status
  * GET /api/user/creation-status
+ * Public route - works for both authenticated and guest users
+ * Robust implementation with fallback logic for guest users
  */
-router.get('/creation-status', async (req: Request, res: Response): Promise<void> => {
+router.get('/creation-status', optionalAuthMiddleware, async (req: Request, res: Response): Promise<void> => {
   try {
     console.log('[DEBUG] Rota /creation-status atingida');
     
-    // Verificar token de autenticação
-    const authHeader = req.headers.authorization;
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      console.log('[DEBUG] Token de autenticação ausente');
-      res.status(401).json({
-        success: false,
-        message: 'Token de autenticação necessário'
-      });
-      return;
-    }
+    // Extrair userId de forma segura usando optional chaining
+    const userId = (req as any).user?.id;
+    const deviceId = req.headers['x-device-id'] as string;
+    const clientIp = req.ip;
     
-    const token = authHeader.split(' ')[1];
-    const userId = await extractUserIdFromToken(token);
+    console.log('[DEBUG] Dados de identificação:', { userId, deviceId, clientIp });
     
-    if (!userId) {
-      console.log('[DEBUG] Token inválido');
-      res.status(401).json({
-        success: false,
-        message: 'Token inválido'
-      });
-      return;
-    }
-    
-    console.log('[DEBUG] Verificando status para userId:', userId);
-    
-    // Buscar dados do usuário no banco
     const supabase = getSupabaseClient();
-    const { data: user, error } = await supabase
-      .from('users')
-      .select('freesongsused')
-      .eq('id', userId)
-      .single();
+    let userQuery = supabase.from('users').select('freesongsused');
     
-    if (error) {
-      console.error('[ERROR] Erro ao buscar usuário:', error);
-      // Se usuário não existe, assumir que é novo (0 músicas usadas)
-      const freeSongsUsed = 0;
-      const isFree = freeSongsUsed < 1;
-      
+    if (userId) {
+      // Se o usuário está logado, a busca principal é pelo ID dele
+      console.log('[DEBUG] Verificando status para usuário autenticado:', userId);
+      userQuery = userQuery.eq('id', userId);
+    } else if (deviceId || clientIp) {
+      // Se não está logado, construímos a busca por deviceId OU IP
+      console.log('[DEBUG] Usuário convidado - buscando por deviceId ou IP');
+      const filters = [];
+      if (deviceId) filters.push(`device_id.eq.${deviceId}`);
+      if (clientIp) filters.push(`last_used_ip.eq.${clientIp}`);
+      userQuery = userQuery.or(filters.join(','));
+    } else {
+      // Se não temos NENHUMA informação (raro), consideramos um novo usuário
+      console.log('[DEBUG] Nenhuma informação de identificação - novo usuário');
       res.status(200).json({
         success: true,
-        isFree,
-        freeSongsUsed,
-        message: isFree ? 'Próxima música é gratuita' : 'Próxima música será paga'
+        isFree: true,
+        freeSongsUsed: 0,
+        message: 'Primeira música é gratuita para novos usuários',
+        userType: 'new_guest'
       });
       return;
     }
     
+    const { data: user, error } = await userQuery.limit(1).maybeSingle();
+    
+    if (error) {
+      console.error('[ERROR] Erro ao buscar usuário no Supabase:', error);
+      // Em caso de erro, assumir novo usuário para não bloquear o fluxo
+      res.status(200).json({
+        success: true,
+        isFree: true,
+        freeSongsUsed: 0,
+        message: 'Primeira música é gratuita (fallback por erro)',
+        userType: userId ? 'authenticated' : 'guest'
+      });
+      return;
+    }
+    
+    if (!user) {
+      // Se NENHUM usuário foi encontrado com os critérios, é um novo convidado
+      console.log('[DEBUG] Nenhum usuário encontrado - novo convidado');
+      res.status(200).json({
+        success: true,
+        isFree: true,
+        freeSongsUsed: 0,
+        message: 'Primeira música é gratuita para convidados',
+        userType: userId ? 'new_authenticated' : 'new_guest'
+      });
+      return;
+    }
+    
+    // Se um usuário foi encontrado, verifique sua cota
     const freeSongsUsed = user.freesongsused || 0;
     const isFree = freeSongsUsed < 1;
     
-    console.log('[DEBUG] Status do usuário:', { freeSongsUsed, isFree });
+    console.log('[DEBUG] Status do usuário encontrado:', { freeSongsUsed, isFree, userType: userId ? 'authenticated' : 'guest' });
     
     res.status(200).json({
       success: true,
       isFree,
       freeSongsUsed,
-      message: isFree ? 'Próxima música é gratuita' : 'Próxima música será paga'
+      message: isFree ? 'Próxima música é gratuita' : 'Próxima música será paga',
+      userType: userId ? 'authenticated' : 'guest'
     });
     
   } catch (error) {

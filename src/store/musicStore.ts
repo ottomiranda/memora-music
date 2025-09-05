@@ -66,6 +66,26 @@ const initialFormData: FormData = {
   vocalPreference: ''
 };
 
+// Estado inicial completo do store
+const initialState = {
+  formData: initialFormData,
+  currentStep: 0,
+  isPreviewLoading: false,
+  isLoading: false,
+  error: null,
+  generatedAudioUrl: null,
+  generatedLyrics: null,
+  audioClips: [],
+  currentTaskId: null,
+  isPolling: false,
+  musicGenerationStatus: 'idle' as const,
+  completedClips: 0,
+  totalExpected: 2,
+  pollingInterval: null,
+  isMvpFlowComplete: false,
+  isValidationPopupVisible: false,
+};
+
 // Interface do store
 interface MusicStore {
   // Estados do formulário
@@ -139,27 +159,8 @@ let pollingInterval: NodeJS.Timeout | null = null;
 export const useMusicStore = create<MusicStore>()(
   persist(
     (set, get) => ({
-  // Estados iniciais
-  formData: initialFormData,
-  currentStep: 0,
-  isPreviewLoading: false,
-  isLoading: false,
-  error: null,
-  generatedAudioUrl: null,
-  generatedLyrics: null,
-  audioClips: [],
-  
-  // Novos estados para polling progressivo
-  currentTaskId: null,
-  isPolling: false,
-  musicGenerationStatus: 'idle',
-  completedClips: 0,
-  totalExpected: 2,
-  pollingInterval: null,
-  
-  // Estados para fluxo de validação MVP
-  isMvpFlowComplete: false,
-  isValidationPopupVisible: false,
+  // Estados iniciais usando o objeto initialState
+  ...initialState,
   
   // Implementações das ações
   updateFormData: (data) => {
@@ -570,45 +571,45 @@ export const useMusicStore = create<MusicStore>()(
 
   // Nova função centralizada para iniciar fluxo de criação
   startNewCreationFlow: async (navigate, token) => {
-    console.log('[PAYWALL] Iniciando fluxo de criação centralizado');
+    console.log('[startNewCreationFlow] INÍCIO. Verificando permissões...');
+    const musicStore = useMusicStore.getState();
+    const uiStore = useUiStore.getState();
+
+    // Passo 1: Limpa qualquer estado de um fluxo anterior.
+    musicStore.reset();
     
-    // Desbloquear o fluxo no início para garantir estado limpo
-    useUiStore.getState().unblockCreationFlow();
-    
-    console.log('[PAYWALL] Token recebido:', token ? 'presente' : 'ausente');
-    
-    // Se usuário não estiver logado (sem token), tem direito à primeira música
-    if (!token) {
-      console.log('[PAYWALL] Usuário não logado - permitindo criação gratuita');
-      navigate('/criar');
-      return;
-    }
-    
-    // Se usuário estiver logado, verificar status via API
     try {
-      console.log('[PAYWALL] Usuário logado - verificando status de criação via API');
-      
-      const response = await apiRequest('/api/user/creation-status', {
-        method: 'GET'
+      // Passo 2: SEMPRE verifica o status no backend.
+      // A API já sabe lidar com token vs. deviceId/IP.
+      // LÓGICA TEMPORÁRIA PARA TESTE: Forçamos a chamada a agir como um "convidado"
+      // mesmo que o authStore pense que está logado. Isso nos permite testar o fluxo de deviceId/IP.
+      const response = await apiRequest('/api/user/creation-status', { 
+        method: 'GET',
+        headers: {
+          'Authorization': '' // Envia um header de autorização vazio
+        }
       });
-      
-      console.log('[PAYWALL] Resposta da API:', response);
-      
-      // Verificar se pode criar música gratuitamente
-      if (response.data && response.data.isFree === true) {
-        console.log('[PAYWALL] Usuário pode criar música gratuitamente');
+
+      // NOVA LÓGICA (Robusta): Verifica se a propriedade 'isFree' existe diretamente no objeto de resposta
+      // OU dentro de uma propriedade 'data' usando optional chaining
+      const isFree = response.isFree || response.data?.isFree;
+
+      if (isFree === true) {
+        // Se o usuário tem direito (novo convidado OU usuário logado com cota)
+        console.log('[PAYWALL] Acesso permitido. Navegando para /criar.');
         navigate('/criar');
       } else {
-        console.log('[PAYWALL] Usuário atingiu limite - mostrando paywall');
-        useUiStore.getState().showPaymentPopup();
-        useUiStore.getState().blockCreationFlow();
+        // Isso agora vai pegar os casos isFree === false, undefined, ou null
+        console.log('[PAYWALL] Acesso negado. Mostrando modal de pagamento.');
+        uiStore.blockCreationFlow();
+        uiStore.showPaymentPopup();
+        // IMPORTANTE: Não navegamos para lugar nenhum. O usuário fica onde está.
       }
-      
     } catch (error) {
+      // Fail-safe: Se a API falhar, bloqueamos por segurança.
       console.error('[PAYWALL] Erro ao verificar status - mostrando paywall por segurança:', error);
-      // Por segurança, mostrar paywall em caso de erro
-      useUiStore.getState().showPaymentPopup();
-      useUiStore.getState().blockCreationFlow();
+      uiStore.blockCreationFlow();
+      uiStore.showPaymentPopup();
     }
   },
 
@@ -621,8 +622,9 @@ export const useMusicStore = create<MusicStore>()(
     });
   },
 
-  // Função para resetar o store completamente
-  reset: () => {
+  // Função para resetar o fluxo (equivalente ao resetFlow mencionado)
+  resetFlow: () => {
+    console.log('[resetFlow] Estado da música sendo resetado.');
     // Para o polling se estiver ativo
     get().stopPolling();
     
@@ -644,6 +646,16 @@ export const useMusicStore = create<MusicStore>()(
       isMvpFlowComplete: false,
       isValidationPopupVisible: false,
     });
+  },
+
+  // Função para resetar o store completamente
+  reset: () => {
+    console.log('[reset] Resetando store para estado inicial. currentStep será definido como 0.');
+    // Para o polling se estiver ativo
+    get().stopPolling();
+    
+    // Usa o objeto initialState para garantir reset completo
+    set(initialState);
   },
 }),
 {

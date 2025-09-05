@@ -84,7 +84,7 @@ export default function Criar() {
     generateMusic,
     regenerateLyrics,
     resetForm,
-    reset,
+    reset: resetMusicFlow,
     setError,
     clearError,
     // Novos estados para polling progressivo
@@ -122,6 +122,13 @@ export default function Criar() {
       clearError();
     }
   }, [error, clearError]);
+
+  // useEffect para monitorar mudanças no currentStep (debug)
+  useEffect(() => {
+    console.log(`[Criar.tsx] Componente re-renderizado. currentStep agora é: ${currentStep}`);
+  }, [currentStep]);
+
+
 
   // Função para validar e avançar para o próximo passo
   const handleNextStep = async () => {
@@ -770,6 +777,7 @@ export default function Criar() {
                   <Button variant="secondary" onClick={() => {
                     const musicStore = useMusicStore.getState();
                     const { token } = useAuthStore.getState(); // Pega o token mais atualizado
+                    
                     musicStore.startNewCreationFlow(navigate, token);
                   }}>
                     Criar Nova Música

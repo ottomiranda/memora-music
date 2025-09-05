@@ -2,15 +2,16 @@ import { Play, Headphones, Music, Music2, Music3, Music4, Heart, Gift, Sparkles 
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { useMusicStore } from "@/store/musicStore";
+import { useAuthStore } from "@/store/authStore";
 import HeroSlideshow from "./HeroSlideshow";
 
 const Hero = () => {
   const navigate = useNavigate();
-  const resetMusicFlow = useMusicStore((state) => state.reset);
+  const { startNewCreationFlow } = useMusicStore();
 
-  const handleCreateMusicClick = () => {
-    resetMusicFlow();
-    navigate('/criar');
+  const handleCreateMusicClick = async () => {
+    const { token } = useAuthStore.getState();
+    await startNewCreationFlow(navigate, token);
   };
 
   const scrollToExamples = () => {
