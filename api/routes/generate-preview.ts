@@ -481,20 +481,8 @@ router.post('/', async (req: Request, res: Response) => {
     const authHeader = req.headers.authorization;
     const guestId = req.headers['x-guest-id'] as string;
     const deviceId = req.headers['x-device-id'] as string;
-    // MODIFICAÇÃO TEMPORÁRIA PARA TESTES: Simular IPs únicos em desenvolvimento
-    let clientIp = req.ip; // Graças ao 'trust proxy'
-    
-    // Em desenvolvimento, simular IPs únicos baseados no deviceId para testar bloqueio
-    if (process.env.NODE_ENV === 'development' && deviceId) {
-      // Gerar IP único baseado no deviceId para simular diferentes redes
-      const hash = deviceId.split('').reduce((a, b) => {
-        a = ((a << 5) - a) + b.charCodeAt(0);
-        return a & a;
-      }, 0);
-      const ipSuffix = Math.abs(hash) % 254 + 1; // 1-254
-      clientIp = `192.168.1.${ipSuffix}`;
-      console.log('[DEV_MODE] IP simulado baseado no deviceId:', clientIp);
-    }
+    // Obter IP real do cliente
+    const clientIp = req.ip; // Graças ao 'trust proxy'
     
     let userId: string | null = null;
     
