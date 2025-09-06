@@ -1,0 +1,87 @@
+services:
+  # Backend Service (Node.js/Express)
+  - type: web
+    name: memora-music-backend
+    env: node
+    plan: starter
+    buildCommand: npm install
+    startCommand: npx tsx api/server.ts
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 3337
+      - key: FRONTEND_PROD_URL
+        fromService:
+          type: web
+          name: memora-music-frontend
+          property: url
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_ANON_KEY
+        sync: false
+      - key: SUPABASE_SERVICE_ROLE_KEY
+        sync: false
+      - key: STRIPE_SECRET_KEY
+        sync: false
+      - key: STRIPE_PUBLISHABLE_KEY
+        sync: false
+      - key: STRIPE_WEBHOOK_SECRET
+        sync: false
+      - key: OPENAI_API_KEY
+        sync: false
+    domains:
+      - memora.music
+    
+  # Frontend Service (React/Vite)
+  - type: static
+    name: memora-music-frontend
+    env: node
+    plan: starter
+    buildCommand: npm install && npm run build
+    staticPublishPath: ./dist
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: VITE_API_URL
+        fromService:
+          type: web
+          name: memora-music-backend
+          property: url
+      - key: VITE_SUPABASE_URL
+        sync: false
+      - key: VITE_SUPABASE_ANON_KEY
+        sync: false
+      - key: VITE_STRIPE_PUBLISHABLE_KEY
+        sync: false
+
+# Database (se necessário)
+databases:
+  - name: memora-music-db
+    plan: starter
+    
+# Environment Groups (opcional para organizar variáveis)
+envVarGroups:
+  - name: supabase-config
+    envVars:
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_ANON_KEY
+        sync: false
+      - key: SUPABASE_SERVICE_ROLE_KEY
+        sync: false
+        
+  - name: stripe-config
+    envVars:
+      - key: STRIPE_SECRET_KEY
+        sync: false
+      - key: STRIPE_PUBLISHABLE_KEY
+        sync: false
+      - key: STRIPE_WEBHOOK_SECRET
+        sync: false
+        
+  - name: openai-config
+    envVars:
+      - key: OPENAI_API_KEY
+        sync: false
