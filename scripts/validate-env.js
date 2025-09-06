@@ -6,6 +6,10 @@
  * This script validates that all required environment variables are set
  * and have valid values. It should be run before starting the application.
  */
+if (process.env.SKIP_ENV_VALIDATION === '1') {
+  console.log('Skipping env validation at build time');
+  process.exit(0);
+}
 
 import fs from 'fs';
 import path from 'path';

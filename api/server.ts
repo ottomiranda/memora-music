@@ -212,33 +212,31 @@ app.use('*', (req, res) => {
   });
 });
 
-const port = Number(process.env.PORT ?? 3337);
-const host = "0.0.0.0";
-const server = http.createServer(app);
-
-server.on("error", (err: Error & { code?: string }) => {
-  if (err?.code === "EADDRINUSE") {
-    console.error(`Porta ${port} em uso. Saindo com código 1.`);
-    process.exit(1);
-  }
-  throw err;
-});
+const port = Number(process.env.PORT) || 3337;
 
 declare global { var __memoraServerStarted: boolean | undefined; }
 if (!global.__memoraServerStarted) {
   global.__memoraServerStarted = true;
-  server.listen(port, host, () => {
-    console.log(`Backend em http://localhost:${port}`);
+  const server = app.listen(port, () => {
+    console.log(`🚀 Backend rodando em http://localhost:${port}`);
   });
-} else {
-  console.log("Servidor já iniciado. Ignorando novo listen.");
-}
 
-function shutdown(sig: string) {
-  console.log(`Recebido ${sig}. Encerrando...`);
-  server.close(() => process.exit(0));
+  server.on("error", (err: Error & { code?: string }) => {
+    if (err?.code === "EADDRINUSE") {
+      console.error(`❌ Porta ${port} em uso. Saindo com código 1.`);
+      process.exit(1);
+    }
+    throw err;
+  });
+
+  function shutdown(sig: string) {
+    console.log(`📴 Recebido ${sig}. Encerrando servidor...`);
+    server.close(() => process.exit(0));
+  }
+  process.once("SIGINT", () => shutdown("SIGINT"));
+  process.once("SIGTERM", () => shutdown("SIGTERM"));
+} else {
+  console.log("⚠️ Servidor já iniciado. Ignorando novo listen.");
 }
-process.once("SIGINT", () => shutdown("SIGINT"));
-process.once("SIGTERM", () => shutdown("SIGTERM"));
 
 export default app;

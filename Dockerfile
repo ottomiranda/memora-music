@@ -80,6 +80,8 @@ VITE_STRIPE_PUBLISHABLE_KEY=your_stripe_publishable_key_here" > .env.example
 RUN npm run validate-env || echo "Warning: Environment validation failed, continuing with build..."
 
 # Build da aplicação frontend
+ENV NODE_ENV=production
+ENV SKIP_ENV_VALIDATION=1
 RUN npm run build
 
 # Stage 4: Produção - imagem final otimizada
@@ -131,7 +133,7 @@ EXPOSE 3003 5173
 USER nodejs
 
 # Comando de inicialização com dumb-init para gerenciamento de processos
-CMD ["dumb-init", "npm", "run", "dev"]
+CMD ["dumb-init", "npm", "run", "start"]
 
 # Labels para metadados
 LABEL maintainer="Memora Music Team"
