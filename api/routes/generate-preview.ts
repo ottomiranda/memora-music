@@ -3,7 +3,7 @@ import { z } from 'zod';
 import OpenAI from 'openai';
 import fetch from 'node-fetch';
 import { SongService } from '../../src/lib/services/songService.js';
-import { executeSupabaseQuery, getSupabaseServiceClient, testSupabaseConnection } from '../../src/lib/supabase-client.js';
+import { executeSupabaseQuery, getSupabaseServiceClient, testSupabaseConnection } from '../../src/lib/supabase-client';
 
 // Função para obter cliente Supabase (compatibilidade)
 function getSupabaseClient() {

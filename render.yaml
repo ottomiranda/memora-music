@@ -10,26 +10,21 @@ services:
     envVars:
       - key: NODE_ENV
         value: production
-      - key: PORT
-        value: 3337
-      - key: FRONTEND_PROD_URL
-        fromService:
-          type: web
-          name: memora-music-frontend
-          property: url
-      - key: SUPABASE_URL
         sync: false
-      - key: SUPABASE_ANON_KEY
-        sync: false
+      - key: NEXT_PUBLIC_SUPABASE_URL
+        fromGroup: supabase-config
+      - key: NEXT_PUBLIC_SUPABASE_ANON_KEY
+        fromGroup: supabase-config
       - key: SUPABASE_SERVICE_ROLE_KEY
+        fromGroup: supabase-config
+      - key: NEXTAUTH_SECRET
+        generateValue: true
         sync: false
-      - key: STRIPE_SECRET_KEY
+      - key: NEXTAUTH_URL
+        value: https://memora-music.onrender.com
         sync: false
-      - key: STRIPE_PUBLISHABLE_KEY
-        sync: false
-      - key: STRIPE_WEBHOOK_SECRET
-        sync: false
-      - key: OPENAI_API_KEY
+      - key: NEXT_PUBLIC_APP_URL
+        value: https://memora-music.onrender.com
         sync: false
     domains:
       - memora.music

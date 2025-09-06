@@ -6,7 +6,7 @@ import * as express from 'express';
 import { Router, type Request, type Response } from 'express';
 import { z } from 'zod';
 import Stripe from 'stripe';
-import { executeSupabaseQuery, getSupabaseServiceClient } from '../../src/lib/supabase-client.js';
+import { executeSupabaseQuery, getSupabaseServiceClient } from '../../src/lib/supabase-client';
 import { optionalAuthMiddleware } from '../middleware/optionalAuth.js';
 import rateLimit from 'express-rate-limit';
 

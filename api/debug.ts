@@ -3,7 +3,7 @@
  * Verifica configurações sem expor chaves sensíveis
  */
 import type { Request, Response } from 'express';
-import { testSupabaseConnection, getSupabaseServiceClient } from '../src/lib/supabase-client.js';
+import { testSupabaseConnection, getSupabaseServiceClient } from '../src/lib/supabase-client';
 
 // Configurar CORS
 function setCorsHeaders(res: Response) {
