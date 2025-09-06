@@ -1,0 +1,55 @@
+version: '3.8'
+
+services:
+  memora-music:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: memora-music-app
+    ports:
+      - "3003:3003"  # Backend API
+      - "5173:5173"  # Frontend Vite dev server
+    env_file:
+      - .env
+    environment:
+      - NODE_ENV=production
+      - PORT=3003
+      - FRONTEND_PORT=5173
+    volumes:
+      # Volume para logs (opcional)
+      - ./logs:/app/logs
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3003/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    networks:
+      - memora-network
+
+  # Opcional: Nginx como reverse proxy
+  nginx:
+    image: nginx:alpine
+    container_name: memora-nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./ssl:/etc/nginx/ssl:ro  # Para certificados SSL
+    depends_on:
+      - memora-music
+    restart: unless-stopped
+    networks:
+      - memora-network
+    profiles:
+      - production  # Só ativa com --profile production
+
+networks:
+  memora-network:
+    driver: bridge
+
+volumes:
+  logs:
+    driver: local
