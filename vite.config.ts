@@ -18,6 +18,42 @@ export default defineConfig({
         drop_debugger: true,
       },
     },
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          // Separar React e React DOM em chunk próprio
+          'react-vendor': ['react', 'react-dom'],
+          // Separar Radix UI components
+          'radix-vendor': [
+            '@radix-ui/react-dialog',
+            '@radix-ui/react-dropdown-menu',
+            '@radix-ui/react-select',
+            '@radix-ui/react-tabs',
+            '@radix-ui/react-toast',
+            '@radix-ui/react-popover',
+            '@radix-ui/react-accordion',
+            '@radix-ui/react-navigation-menu'
+          ],
+          // Separar outras bibliotecas grandes
+          'utils-vendor': [
+            'axios',
+            'date-fns',
+            'zod',
+            'zustand',
+            '@tanstack/react-query'
+          ],
+          // Separar componentes de UI
+          'ui-vendor': [
+            'lucide-react',
+            'recharts',
+            'embla-carousel-react',
+            'react-hook-form',
+            '@hookform/resolvers'
+          ]
+        }
+      }
+    },
+    chunkSizeWarningLimit: 1000
   },
   server: {
     port: 5173,

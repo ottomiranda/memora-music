@@ -9,6 +9,7 @@
     "server:dev": "nodemon",
     "client:dev": "vite",
     "dev": "npm run dev:kill && concurrently -k -p name -n BACKEND,FRONTEND \"npm:server:dev\" \"npm:client:dev\"",
+    "start": "npx tsx api/server.ts",
     "lint": "eslint .",
     "lint:legacy": "eslint .",
     "dev:legacy": "concurrently \"npm run client:dev\" \"npm run server:dev\"",
