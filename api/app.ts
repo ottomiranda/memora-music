@@ -12,6 +12,7 @@ import generatePreviewRoutes from './routes/generate-preview';
 import checkMusicStatusRoutes from './routes/check-music-status';
 import saveFeedbackRoutes from './routes/save-feedback';
 import paywallRoutes from './routes/paywall';
+import stripeRoutes from './routes/stripe';
 
 // for esm mode
 const __filename = fileURLToPath(import.meta.url);
@@ -31,6 +32,9 @@ app.use(cors({
   ],
   credentials: true
 }));
+
+// Raw body parsing for Stripe webhook, JSON for everything else
+app.use('/api/stripe/webhook', express.raw({ type: 'application/json' }));
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
@@ -42,6 +46,7 @@ app.use('/api/generate-preview', generatePreviewRoutes);
 app.use('/api/check-music-status', checkMusicStatusRoutes);
 app.use('/api/save-feedback', saveFeedbackRoutes);
 app.use('/api/user', paywallRoutes);
+app.use('/api/stripe', stripeRoutes);
 
 /**
  * health

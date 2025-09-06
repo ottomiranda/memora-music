@@ -1,4 +1,4 @@
-import { useState } from "react";
+import React, { useState } from "react";
 import Hero from "@/components/memora/Hero";
 import HowItWorks from "@/components/memora/HowItWorks";
 import PlanSection from "@/components/memora/PlanSection";
@@ -10,12 +10,17 @@ import FinalCTA from "@/components/memora/FinalCTA";
 
 import CookieBanner from "@/components/memora/CookieBanner";
 import AuthModal from "@/components/memora/AuthModal";
+import { useUiStore } from "@/store/uiStore";
 
 const Index = () => {
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const { showPaymentPopup } = useUiStore();
+  
+
 
   return (
     <div className="min-h-screen bg-white font-body">
+
       <main>
         <Hero />
         <HowItWorks />

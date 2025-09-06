@@ -7,6 +7,7 @@ export default defineConfig({
     react(),
     tsconfigPaths(),
   ],
+  envPrefix: ['VITE_'],
   build: {
     minify: 'terser',
     terserOptions: {

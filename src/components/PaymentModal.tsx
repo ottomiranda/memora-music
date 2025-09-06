@@ -1,6 +1,14 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useUiStore } from '../store/uiStore';
 import { X, CreditCard, Star, Zap } from 'lucide-react';
+import { Elements } from '@stripe/react-stripe-js';
+import { loadStripe } from '@stripe/stripe-js';
+import StripePaymentForm from './StripePaymentForm';
+import { toast } from 'sonner';
+import { useAuthStore } from '@/store/authStore';
+
+// Carregar Stripe com a chave pública
+const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY || '');
 
 interface PaymentModalProps {
   isOpen: boolean;
@@ -9,6 +17,123 @@ interface PaymentModalProps {
 }
 
 export const PaymentModal: React.FC<PaymentModalProps> = ({ isOpen, onClose, onConfirm }) => {
+  const { user, token } = useAuthStore();
+  const [showPaymentForm, setShowPaymentForm] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  
+  // Estados para gerenciar o clientSecret
+  const [clientSecret, setClientSecret] = useState<string | null>(null);
+  const [isLoadingPayment, setIsLoadingPayment] = useState(false);
+  
+  // Verificação robusta da configuração do Stripe
+  const publishableKey = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY;
+  const isStripeConfigured = publishableKey && publishableKey.startsWith('pk_');
+  
+  // Função para criar Payment Intent e obter clientSecret
+  const createPaymentIntent = async () => {
+    try {
+      setIsLoadingPayment(true);
+      setErrorMessage(null);
+      
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+      };
+      
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/stripe/create-payment-intent`, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({
+          amount: 1490, // R$ 14,90 em centavos
+          currency: 'brl',
+          metadata: {
+            userId: user?.id || undefined,
+            productType: 'music_generation',
+            description: 'Geração de música premium'
+          }
+        })
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Falha ao criar o Payment Intent');
+      }
+
+      const data = await response.json();
+      setClientSecret(data.clientSecret);
+      console.debug('[PAYMENT_MODAL] ClientSecret obtido com sucesso');
+    } catch (error) {
+      console.error('[PAYMENT_MODAL] Erro ao buscar clientSecret:', error);
+      const errorMsg = error instanceof Error ? error.message : 'Erro ao carregar formulário de pagamento';
+      setErrorMessage(errorMsg);
+      toast.error(errorMsg);
+    } finally {
+      setIsLoadingPayment(false);
+    }
+  };
+
+  // Debug logs para troubleshooting
+  useEffect(() => {
+    if (isOpen) {
+      console.debug('[PAYMENT_MODAL] Modal aberto');
+      console.debug('[PAYMENT_MODAL] Chave pública configurada:', !!publishableKey);
+      console.debug('[PAYMENT_MODAL] Chave válida:', isStripeConfigured);
+      
+      if (!isStripeConfigured && publishableKey) {
+        console.warn('[PAYMENT_MODAL] Chave pública inválida:', publishableKey.substring(0, 10) + '...');
+      }
+    }
+  }, [isOpen, publishableKey, isStripeConfigured]);
+  
+  const handleUpgradeClick = async () => {
+    if (isStripeConfigured) {
+      setShowPaymentForm(true);
+      // Buscar clientSecret quando o usuário decidir pagar
+      await createPaymentIntent();
+    } else {
+      // Fallback para pagamento simulado
+      handleSimulatedPayment();
+    }
+  };
+  
+  const handleSimulatedPayment = () => {
+    setIsProcessing(true);
+    // Simula processamento de pagamento
+    setTimeout(() => {
+      setIsProcessing(false);
+      toast.success('Pagamento simulado realizado com sucesso!');
+      onConfirm();
+    }, 2000);
+  };
+  
+  const handleStripeSuccess = (paymentIntentId: string) => {
+    toast.success('Upgrade realizado com sucesso!');
+    onConfirm();
+  };
+  
+  const handleStripeError = (error: string) => {
+    setErrorMessage(`Erro no pagamento: ${error}`);
+    setShowPaymentForm(false);
+  };
+
+  // useEffect para exibir notificações de erro
+  useEffect(() => {
+    if (errorMessage) {
+      toast.error(errorMessage);
+      setErrorMessage(null);
+    }
+  }, [errorMessage]);
+  
+  const handleBackToPlans = () => {
+    setShowPaymentForm(false);
+    setClientSecret(null); // Limpar clientSecret ao voltar
+    setIsLoadingPayment(false);
+  };
+
   if (!isOpen) return null;
 
   return (
@@ -69,26 +194,92 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({ isOpen, onClose, onC
           {/* Pricing */}
           <div className="bg-gradient-to-r from-purple-50 to-pink-50 rounded-lg p-4 mb-6">
             <div className="text-center">
-              <div className="text-2xl font-bold text-gray-800">R$ 19,90</div>
-              <div className="text-sm text-gray-600">por mês</div>
+              <div className="text-2xl font-bold text-gray-800">R$ 14,90</div>
+              <div className="text-sm text-gray-600">pagamento único</div>
             </div>
           </div>
 
-          {/* Actions */}
-          <div className="space-y-3">
-            <button 
-              onClick={onConfirm}
-              className="w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white py-3 px-4 rounded-lg font-medium hover:from-purple-700 hover:to-pink-700 transition-all duration-200 shadow-lg hover:shadow-xl"
-            >
-              Fazer Upgrade Agora
-            </button>
-            <button
-              onClick={onClose}
-              className="w-full bg-gray-100 text-gray-700 py-3 px-4 rounded-lg font-medium hover:bg-gray-200 transition-colors"
-            >
-              Talvez mais tarde
-            </button>
-          </div>
+          {/* Payment Form or Actions */}
+          {showPaymentForm && isStripeConfigured ? (
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <h3 className="text-lg font-semibold text-gray-800">Finalizar Pagamento</h3>
+                <button
+                  onClick={handleBackToPlans}
+                  className="text-gray-500 hover:text-gray-700 text-sm"
+                >
+                  ← Voltar
+                </button>
+              </div>
+              
+              {/* Loading state enquanto busca clientSecret */}
+              {isLoadingPayment && (
+                <div className="flex items-center justify-center py-8">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600"></div>
+                  <span className="ml-3 text-gray-600">Carregando pagamento...</span>
+                </div>
+              )}
+              
+              {/* Erro ao carregar clientSecret */}
+              {!isLoadingPayment && !clientSecret && errorMessage && (
+                <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                  <p className="text-red-800 text-sm">Ocorreu um erro ao carregar o formulário. Tente novamente.</p>
+                </div>
+              )}
+              
+              {/* Formulário de pagamento com Elements provider local */}
+              {!isLoadingPayment && clientSecret && (
+                <Elements 
+                  stripe={stripePromise}
+                  options={{
+                    clientSecret,
+                    appearance: {
+                      theme: 'stripe' as const,
+                      variables: {
+                        colorPrimary: '#7c3aed',
+                        colorBackground: '#ffffff',
+                        colorText: '#1f2937',
+                        colorDanger: '#ef4444',
+                        fontFamily: 'system-ui, sans-serif',
+                        spacingUnit: '4px',
+                        borderRadius: '8px',
+                      },
+                    },
+                    locale: 'pt-BR',
+                  }}
+                >
+                  <StripePaymentForm
+                    amount={1490}
+                    onSuccess={handleStripeSuccess}
+                    onError={handleStripeError}
+                    disabled={isProcessing}
+                  />
+                </Elements>
+              )}
+            </div>
+          ) : (
+            <div className="space-y-3">
+              <button 
+                onClick={handleUpgradeClick}
+                disabled={isProcessing}
+                className="w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white py-3 px-4 rounded-lg font-medium hover:from-purple-700 hover:to-pink-700 transition-all duration-200 shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isProcessing ? 'Processando...' : 'Fazer Upgrade Agora'}
+                {!isStripeConfigured && (
+                  <span className="text-xs block mt-1 opacity-75">
+                    (Modo simulado)
+                  </span>
+                )}
+              </button>
+              <button
+                onClick={onClose}
+                disabled={isProcessing}
+                className="w-full bg-gray-100 text-gray-700 py-3 px-4 rounded-lg font-medium hover:bg-gray-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Talvez mais tarde
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </div>

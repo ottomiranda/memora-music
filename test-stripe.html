@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teste Stripe</title>
+    <script src="https://js.stripe.com/v3/"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 50px auto;
+            padding: 20px;
+        }
+        .card-element {
+            border: 1px solid #ccc;
+            padding: 10px;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+        button {
+            background: #5469d4;
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+        .result {
+            margin-top: 20px;
+            padding: 10px;
+            border-radius: 4px;
+        }
+        .success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+    </style>
+</head>
+<body>
+    <h1>Teste de Integração Stripe</h1>
+    
+    <div id="stripe-info">
+        <h3>Informações do Stripe:</h3>
+        <p><strong>Chave Pública:</strong> <span id="public-key"></span></p>
+        <p><strong>Status:</strong> <span id="stripe-status"></span></p>
+    </div>
+
+    <form id="payment-form">
+        <h3>Teste de Pagamento</h3>
+        <div id="card-element" class="card-element">
+            <!-- Stripe Elements will create form elements here -->
+        </div>
+        <div id="card-errors" role="alert"></div>
+        <button type="submit" id="submit-button">Pagar R$ 14,90</button>
+    </form>
+
+    <div id="result"></div>
+
+    <script>
+        // Chave pública do Stripe (mesma do .env)
+        const STRIPE_PUBLIC_KEY = 'pk_test_51S3bc9EvFDhB29Vj2KiIjS4u4lx34XhWundGJERrA1LZWT3aeBftRE9mKzaKmSSAxpu18RUrKhULLkhqz4W0TshV00mr8mIpZZ';
+        
+        // Mostrar informações
+        document.getElementById('public-key').textContent = STRIPE_PUBLIC_KEY;
+        
+        // Inicializar Stripe
+        const stripe = Stripe(STRIPE_PUBLIC_KEY);
+        const elements = stripe.elements();
+        
+        // Verificar se o Stripe foi inicializado
+        if (stripe) {
+            document.getElementById('stripe-status').textContent = 'Inicializado com sucesso';
+            document.getElementById('stripe-status').style.color = 'green';
+        } else {
+            document.getElementById('stripe-status').textContent = 'Erro na inicialização';
+            document.getElementById('stripe-status').style.color = 'red';
+        }
+        
+        // Criar elemento do cartão
+        const cardElement = elements.create('card', {
+            style: {
+                base: {
+                    fontSize: '16px',
+                    color: '#424770',
+                    '::placeholder': {
+                        color: '#aab7c4',
+                    },
+                },
+                invalid: {
+                    color: '#9e2146',
+                },
+            },
+        });
+        
+        cardElement.mount('#card-element');
+        
+        // Lidar com erros em tempo real
+        cardElement.on('change', ({error}) => {
+            const displayError = document.getElementById('card-errors');
+            if (error) {
+                displayError.textContent = error.message;
+            } else {
+                displayError.textContent = '';
+            }
+        });
+        
+        // Lidar com o envio do formulário
+        const form = document.getElementById('payment-form');
+        form.addEventListener('submit', async (event) => {
+            event.preventDefault();
+            
+            const submitButton = document.getElementById('submit-button');
+            const resultDiv = document.getElementById('result');
+            
+            submitButton.disabled = true;
+            submitButton.textContent = 'Processando...';
+            
+            try {
+                // Teste simples: criar um token de pagamento
+                const {token, error} = await stripe.createToken(cardElement);
+                
+                if (error) {
+                    console.error('Erro do Stripe:', error);
+                    resultDiv.innerHTML = `<div class="result error"><strong>Erro:</strong> ${error.message}</div>`;
+                } else {
+                    console.log('Token criado com sucesso:', token);
+                    resultDiv.innerHTML = `<div class="result success"><strong>Sucesso!</strong> Token criado: ${token.id}<br>Chave pública válida e funcionando!</div>`;
+                }
+            } catch (err) {
+                console.error('Erro geral:', err);
+                resultDiv.innerHTML = `<div class="result error"><strong>Erro:</strong> ${err.message}</div>`;
+            } finally {
+                submitButton.disabled = false;
+                submitButton.textContent = 'Pagar R$ 14,90';
+            }
+        });
+        
+        // Log adicional para debug
+        console.log('Stripe inicializado:', !!stripe);
+        console.log('Chave pública:', STRIPE_PUBLIC_KEY);
+    </script>
+</body>
+</html>

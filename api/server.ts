@@ -21,6 +21,7 @@ import songsRoute from './routes/songs.js';
 import migrateGuestDataRoute from './routes/migrate-guest-data.js';
 import paywallRoute from './routes/paywall.js';
 import downloadRoute from './routes/download.js';
+import stripeRoute from './routes/stripe.js';
 
 // Criar rota de health check como Express Router
 import { Router } from 'express';
@@ -133,6 +134,9 @@ const corsOptions = {
 // Configurar CORS com a nova lógica dinâmica
 app.use(cors(corsOptions));
 
+// Middleware específico para webhook do Stripe (deve vir ANTES do express.json)
+app.use('/api/stripe/webhook', express.raw({ type: 'application/json' }));
+
 // Middleware para parsing de JSON
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
@@ -153,6 +157,7 @@ app.use('/api/songs', songsRoute);
 app.use('/api/migrate-guest-data', migrateGuestDataRoute);
 app.use('/api/user', paywallRoute);
 app.use('/api/download', downloadRoute);
+app.use('/api/stripe', stripeRoute);
 
 console.log('📋 Rotas registradas:');
 console.log('  - /api/health');
@@ -164,6 +169,7 @@ console.log('  - /api/songs');
 console.log('  - /api/migrate-guest-data');
 console.log('  - /api/user (paywall)');
 console.log('  - /api/download');
+console.log('  - /api/stripe');
 console.log('🔄 Sistema de salvamento automático ativo');
 
 // Rota de teste simples
