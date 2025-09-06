@@ -143,7 +143,6 @@ temp/
 supabase/
 
 # Scripts de desenvolvimento
-scripts/
 apply-device-id-migration.cjs
 supabase-diagnosis.js
 test-*.js
