@@ -1,6 +1,6 @@
 import { Router } from 'express';
-import { SongService } from '../../src/lib/services/songService.js';
-import { MigrateGuestDataSchema } from '../../src/lib/schemas/song.js';
+import { SongService } from '../../src/lib/services/songService';
+import { MigrateGuestDataSchema } from '../../src/lib/schemas/song';
 
 const router = Router();
 

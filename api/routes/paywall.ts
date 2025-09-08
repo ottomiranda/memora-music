@@ -7,7 +7,7 @@ import { z } from 'zod';
 import Stripe from 'stripe';
 import jwt from 'jsonwebtoken';
 import { executeSupabaseQuery, getSupabaseServiceClient } from '../../src/lib/supabase-client';
-import { optionalAuthMiddleware } from '../middleware/optionalAuth.js';
+import { optionalAuthMiddleware } from '../middleware/optionalAuth';
 
 const router = Router();
 
