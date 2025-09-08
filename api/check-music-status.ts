@@ -1,5 +1,5 @@
 import type { Request, Response } from 'express';
-import { SongService } from '../src/lib/services/songService';
+import { SongService } from '../src/lib/services/songService.js';
 import { CheckStatusQuerySchema } from '../src/lib/schemas/song';
 
 // Interface para o status da tarefa

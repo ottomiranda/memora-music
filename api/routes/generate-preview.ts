@@ -2,7 +2,7 @@ import express, { type Request, type Response } from 'express';
 import { z } from 'zod';
 import OpenAI from 'openai';
 import fetch from 'node-fetch';
-import { SongService } from '../../src/lib/services/songService';
+import { SongService } from '../../src/lib/services/songService.js';
 import { executeSupabaseQuery, getSupabaseServiceClient, testSupabaseConnection } from '../../src/lib/supabase-client';
 
 // Função para obter cliente Supabase (compatibilidade)

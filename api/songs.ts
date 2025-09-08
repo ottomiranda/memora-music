@@ -1,5 +1,5 @@
 import type { Request, Response } from 'express';
-import { SongService } from '../src/lib/services/songService';
+import { SongService } from '../src/lib/services/songService.js';
 import { ListSongsQuerySchema } from '../src/lib/schemas/song';
 
 export default async function handler(req: Request, res: Response) {
