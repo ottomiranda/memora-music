@@ -5,11 +5,8 @@
 import { loadStripe, Stripe } from '@stripe/stripe-js';
 
 // Get Stripe publishable key from environment
-// Use import.meta.env for Vite (browser) or process.env for Node.js (server)
-const stripePublishableKey = 
-  typeof import.meta !== 'undefined' && import.meta.env 
-    ? import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY 
-    : process.env.VITE_STRIPE_PUBLISHABLE_KEY;
+// Use process.env for Node.js compatibility
+const stripePublishableKey = process.env.VITE_STRIPE_PUBLISHABLE_KEY;
 
 if (!stripePublishableKey) {
   console.warn('[STRIPE_CLIENT] VITE_STRIPE_PUBLISHABLE_KEY não encontrada nas variáveis de ambiente');

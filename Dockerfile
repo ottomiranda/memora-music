@@ -84,6 +84,9 @@ ENV NODE_ENV=production
 ENV SKIP_ENV_VALIDATION=1
 RUN npm run build
 
+# Build do backend
+RUN npm run build:server
+
 # Stage 4: Produção - imagem final otimizada
 FROM node:20-alpine AS production
 
@@ -105,12 +108,11 @@ COPY --chown=nodejs:nodejs tsconfig*.json ./
 # Copiar apenas dependências de produção
 COPY --from=deps --chown=nodejs:nodejs /app/node_modules ./node_modules
 
-# Copiar código fonte do backend
-COPY --chown=nodejs:nodejs api/ ./api/
-COPY --chown=nodejs:nodejs server.ts ./
-
 # Copiar build do frontend
 COPY --from=builder --chown=nodejs:nodejs /app/dist ./dist
+
+# Copiar backend compilado
+COPY --from=builder --chown=nodejs:nodejs /app/dist-server ./dist-server
 
 # Copiar arquivos públicos
 COPY --chown=nodejs:nodejs public/ ./public/

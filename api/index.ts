@@ -1,7 +1,7 @@
 /**
  * Express server entry point
  */
-import app from './app';
+import app from './app.js';
 
 const PORT = process.env.PORT || 3337;
 

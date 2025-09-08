@@ -3,7 +3,7 @@
  * Decodes user token if present but doesn't block requests without token
  */
 import { Request, Response, NextFunction } from 'express';
-import { getSupabaseServiceClient } from '../../src/lib/supabase-client';
+import { getSupabaseServiceClient } from '../../src/lib/supabase-client.js';
 
 // Extend Request interface to include optional user
 declare global {

@@ -7,12 +7,12 @@ import cors from 'cors';
 import path from 'path';
 import dotenv from 'dotenv';
 import { fileURLToPath } from 'url';
-import authRoutes from './routes/auth';
-import generatePreviewRoutes from './routes/generate-preview';
-import checkMusicStatusRoutes from './routes/check-music-status';
-import saveFeedbackRoutes from './routes/save-feedback';
-import paywallRoutes from './routes/paywall';
-import stripeRoutes from './routes/stripe';
+import authRoutes from './routes/auth.js';
+import generatePreviewRoutes from './routes/generate-preview.js';
+import checkMusicStatusRoutes from './routes/check-music-status.js';
+import saveFeedbackRoutes from './routes/save-feedback.js';
+import paywallRoutes from './routes/paywall.js';
+import stripeRoutes from './routes/stripe.js';
 
 // for esm mode
 const __filename = fileURLToPath(import.meta.url);

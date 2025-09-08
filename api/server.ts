@@ -3,25 +3,23 @@ import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import path from 'path';
-import { fileURLToPath } from 'url';
 
-// Obter __dirname equivalente para módulos ES
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+// Usar __dirname do CommonJS
+const __dirname = path.resolve();
 
 // Carregar variáveis de ambiente
 dotenv.config({ path: path.resolve(__dirname, '../.env') });
 
 // Importar rotas
-import generatePreviewRoute from './routes/generate-preview';
-import authRoute from './routes/auth';
-import checkMusicStatusRoute from './routes/check-music-status';
-import saveFeedbackRoute from './routes/save-feedback.ts';
-import songsRoute from './routes/songs';
-import migrateGuestDataRoute from './routes/migrate-guest-data';
-import paywallRoute from './routes/paywall';
-import downloadRoute from './routes/download';
-import stripeRoute from './routes/stripe';
+import generatePreviewRoute from './routes/generate-preview.js';
+import authRoute from './routes/auth.js';
+import checkMusicStatusRoute from './routes/check-music-status.js';
+import saveFeedbackRoute from './routes/save-feedback.js';
+import songsRoute from './routes/songs.js';
+import migrateGuestDataRoute from './routes/migrate-guest-data.js';
+import paywallRoute from './routes/paywall.js';
+import downloadRoute from './routes/download.js';
+import stripeRoute from './routes/stripe.js';
 
 // Criar rota de health check como Express Router
 import { Router } from 'express';

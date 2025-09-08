@@ -3,7 +3,7 @@
  * Permite que rotas funcionem com ou sem autenticação
  */
 
-import { getSupabaseServiceClient } from '../../src/lib/supabase-client';
+import { getSupabaseServiceClient } from '../../src/lib/supabase-client.js';
 
 /**
  * Middleware de autenticação opcional

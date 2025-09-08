@@ -1,6 +1,6 @@
 import { Router, type Request, type Response } from 'express';
 import { z } from 'zod';
-import { executeSupabaseQuery, getSupabaseServiceClient } from '../../src/lib/supabase-client';
+import { executeSupabaseQuery, getSupabaseServiceClient } from '../../src/lib/supabase-client.js';
 
 // Criar router
 const router = Router();

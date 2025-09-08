@@ -1,5 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
-import { DatabaseSongSchema, sanitizeSongTitle } from '../schemas/song';
+import { DatabaseSongSchema, sanitizeSongTitle } from '../schemas/song.js';
 
 // Lazy initialization of Supabase client
 let supabase = null;
