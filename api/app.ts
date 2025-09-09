@@ -24,14 +24,13 @@ dotenv.config({ path: path.join(__dirname, '../.env') });
 
 const app: express.Application = express();
 
-// ==================== SEÇÃO CORS ROBUSTA COM DEPURAÇÃO ====================
-
-// 1. Crie uma lista base com a sua URL de desenvolvimento local.
+// ==================== TESTE NUCLEAR (TEMPORÁRIO) ====================
+// Comentando toda a lógica de corsOptions para diagnóstico
+/*
 const allowedOrigins = [
-  'http://localhost:5180' // Confirme a porta do seu ambiente de dev
+  'http://localhost:5173' // Corrigido para a porta 5173
 ];
 
-// 2. Em produção, a Render define a variável FRONTEND_URL.
 if (process.env.FRONTEND_URL) {
   console.log(`Variável FRONTEND_URL encontrada: ${process.env.FRONTEND_URL}`);
   allowedOrigins.push(process.env.FRONTEND_URL);
@@ -39,12 +38,10 @@ if (process.env.FRONTEND_URL) {
   console.warn('AVISO: Variável de ambiente FRONTEND_URL não foi encontrada.');
 }
 
-// 3. Adiciona a URL de "Deploy Previews" da Render, se existir.
 if (process.env.RENDER_EXTERNAL_URL) {
   allowedOrigins.push(process.env.RENDER_EXTERNAL_URL);
 }
 
-// 4. A linha de log mais importante para depuração:
 console.log('✅ Origens CORS permitidas para este ambiente:', allowedOrigins);
 
 const corsOptions: cors.CorsOptions = {
@@ -58,10 +55,13 @@ const corsOptions: cors.CorsOptions = {
   },
   credentials: true,
 };
+*/
 
-app.use(cors(corsOptions));
+// TESTE NUCLEAR: CORS totalmente aberto para diagnóstico
+console.log('🚨 TESTE NUCLEAR: CORS totalmente aberto ativado!');
+app.use(cors());
 
-// ==================== FIM DA SEÇÃO CORS ====================
+// =================================================================
 
 // Raw body parsing for Stripe webhook, JSON for everything else
 app.use('/api/stripe/webhook', express.raw({ type: 'application/json' }));

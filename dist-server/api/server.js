@@ -1,13 +1,11 @@
 import express from 'express';
-import cors from 'cors';
 import dotenv from 'dotenv';
 import path from 'path';
-import { fileURLToPath } from 'url';
-// Para ES Modules, precisamos derivar __dirname
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-// Carregar variáveis de ambiente
-dotenv.config({ path: path.resolve(__dirname, '../.env') });
+// Define o caminho raiz do projeto de forma robusta
+// Usa a variável de ambiente da Render se disponível, senão, usa /app como padrão.
+const projectRoot = process.env.RENDER_ROOT || '/app';
+// Carrega as variáveis de ambiente a partir da raiz do projeto
+dotenv.config({ path: path.join(projectRoot, '.env') });
 // Importar rotas
 import generatePreviewRoute from './routes/generate-preview.js';
 import authRoute from './routes/auth.js';
@@ -78,38 +76,6 @@ if (!global.musicTasks) {
     global.musicTasks = new Map();
     console.log('🎵 Mapa global de tarefas de música inicializado');
 }
-// --- INÍCIO DA SOLUÇÃO DEFINITIVA DE CORS ---
-// 1. Defina a URL de produção a partir das variáveis de ambiente
-const productionOrigin = process.env.FRONTEND_PROD_URL;
-// 2. Crie a configuração dinâmica do CORS
-const corsOptions = {
-    origin: (origin, callback) => {
-        // Permite requisições sem 'origin' (como apps mobile ou Postman)
-        if (!origin) {
-            return callback(null, true);
-        }
-        // Em desenvolvimento, permite qualquer localhost
-        if (process.env.NODE_ENV === 'development' && origin.startsWith('http://localhost:')) {
-            console.log(`✅ CORS: Permitindo origin de desenvolvimento: ${origin}`);
-            return callback(null, true);
-        }
-        // Em produção, permite apenas a URL oficial
-        if (process.env.NODE_ENV === 'production' && origin === productionOrigin) {
-            console.log(`✅ CORS: Permitindo origin de produção: ${origin}`);
-            return callback(null, true);
-        }
-        // Bloqueia todos os outros
-        console.log(`❌ CORS: Bloqueando origin não autorizado: ${origin}`);
-        return callback(new Error('Not allowed by CORS'));
-    },
-    credentials: true,
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'x-guest-id', 'X-Device-ID'],
-    optionsSuccessStatus: 200
-};
-// --- FIM DA SOLUÇÃO DEFINITIVA DE CORS ---
-// Configurar CORS com a nova lógica dinâmica
-app.use(cors(corsOptions));
 // Middleware específico para webhook do Stripe (deve vir ANTES do express.json)
 app.use('/api/stripe/webhook', express.raw({ type: 'application/json' }));
 // Middleware para parsing de JSON
@@ -121,7 +87,8 @@ app.use((req, res, next) => {
     next();
 });
 // Servir arquivos estáticos do frontend
-const staticFilesPath = path.join(__dirname, '..', '..', 'dist');
+// Define o caminho para a pasta 'dist' a partir da raiz do projeto
+const staticFilesPath = path.join(projectRoot, 'dist');
 app.use(express.static(staticFilesPath));
 // Configurar rotas
 app.use('/api/health', healthRoute);
@@ -156,7 +123,14 @@ app.get('/api/test', (req, res) => {
 });
 // Rota catch-all: serve o index.html para rotas não-API
 app.get('*', (req, res) => {
-    res.sendFile(path.join(staticFilesPath, 'index.html'));
+    // Verifique se a requisição não é para a API antes de servir o index.html
+    if (!req.originalUrl.startsWith('/api')) {
+        res.sendFile(path.join(staticFilesPath, 'index.html'));
+    }
+    else {
+        // Se for uma rota de API não encontrada, você pode querer um 404 de API
+        res.status(404).json({ error: 'API route not found' });
+    }
 });
 // Middleware de tratamento de erros global
 app.use((err, req, res, next) => {

@@ -1,5 +1,6 @@
 import http from "http";
 import express from 'express';
+import cors from 'cors';
 import dotenv from 'dotenv';
 import path from 'path';
 
@@ -80,6 +81,11 @@ healthRoute.get('/', (req, res) => {
 });
 
 const app = express();
+
+// ==================== TESTE NUCLEAR: CORS DIAGNÓSTICO ====================
+console.log('🚨 TESTE NUCLEAR: CORS totalmente aberto ativado no server.ts!');
+app.use(cors());
+// =================================================================
 
 // Configurar trust proxy para identificar IP do cliente corretamente
 // Necessário para req.ip funcionar com proxies (Vercel, Heroku, etc.)
