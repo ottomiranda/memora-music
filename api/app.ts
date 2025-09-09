@@ -24,14 +24,44 @@ dotenv.config({ path: path.join(__dirname, '../.env') });
 
 const app: express.Application = express();
 
-app.use(cors({
-  origin: [
-    'http://localhost:5173',
-    'http://localhost:3000',
-    'http://localhost:3000'
-  ],
-  credentials: true
-}));
+// ==================== SEÇÃO CORS ROBUSTA COM DEPURAÇÃO ====================
+
+// 1. Crie uma lista base com a sua URL de desenvolvimento local.
+const allowedOrigins = [
+  'http://localhost:5180' // Confirme a porta do seu ambiente de dev
+];
+
+// 2. Em produção, a Render define a variável FRONTEND_URL.
+if (process.env.FRONTEND_URL) {
+  console.log(`Variável FRONTEND_URL encontrada: ${process.env.FRONTEND_URL}`);
+  allowedOrigins.push(process.env.FRONTEND_URL);
+} else {
+  console.warn('AVISO: Variável de ambiente FRONTEND_URL não foi encontrada.');
+}
+
+// 3. Adiciona a URL de "Deploy Previews" da Render, se existir.
+if (process.env.RENDER_EXTERNAL_URL) {
+  allowedOrigins.push(process.env.RENDER_EXTERNAL_URL);
+}
+
+// 4. A linha de log mais importante para depuração:
+console.log('✅ Origens CORS permitidas para este ambiente:', allowedOrigins);
+
+const corsOptions: cors.CorsOptions = {
+  origin: (origin, callback) => {
+    if (!origin || allowedOrigins.indexOf(origin) !== -1) {
+      callback(null, true);
+    } else {
+      console.error(`❌ CORS: Bloqueando origin não autorizado: ${origin}`);
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  credentials: true,
+};
+
+app.use(cors(corsOptions));
+
+// ==================== FIM DA SEÇÃO CORS ====================
 
 // Raw body parsing for Stripe webhook, JSON for everything else
 app.use('/api/stripe/webhook', express.raw({ type: 'application/json' }));

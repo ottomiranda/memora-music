@@ -1,6 +1,5 @@
 import http from "http";
 import express from 'express';
-import cors from 'cors';
 import dotenv from 'dotenv';
 import path from 'path';
 
@@ -93,45 +92,7 @@ if (!global.musicTasks) {
   console.log('🎵 Mapa global de tarefas de música inicializado');
 }
 
-// --- INÍCIO DA SOLUÇÃO DEFINITIVA DE CORS ---
 
-// 1. Defina a URL de produção a partir das variáveis de ambiente
-const productionOrigin = process.env.FRONTEND_PROD_URL;
-
-// 2. Crie a configuração dinâmica do CORS
-const corsOptions = {
-  origin: (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) => {
-    // Permite requisições sem 'origin' (como apps mobile ou Postman)
-    if (!origin) {
-      return callback(null, true);
-    }
-    
-    // Em desenvolvimento, permite qualquer localhost
-    if (process.env.NODE_ENV === 'development' && origin.startsWith('http://localhost:')) {
-      console.log(`✅ CORS: Permitindo origin de desenvolvimento: ${origin}`);
-      return callback(null, true);
-    }
-    
-    // Em produção, permite apenas a URL oficial
-    if (process.env.NODE_ENV === 'production' && origin === productionOrigin) {
-      console.log(`✅ CORS: Permitindo origin de produção: ${origin}`);
-      return callback(null, true);
-    }
-
-    // Bloqueia todos os outros
-    console.log(`❌ CORS: Bloqueando origin não autorizado: ${origin}`);
-    return callback(new Error('Not allowed by CORS'));
-  },
-  credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'x-guest-id', 'X-Device-ID'],
-  optionsSuccessStatus: 200
-};
-
-// --- FIM DA SOLUÇÃO DEFINITIVA DE CORS ---
-
-// Configurar CORS com a nova lógica dinâmica
-app.use(cors(corsOptions));
 
 // Middleware específico para webhook do Stripe (deve vir ANTES do express.json)
 app.use('/api/stripe/webhook', express.raw({ type: 'application/json' }));
