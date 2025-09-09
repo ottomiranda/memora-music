@@ -6,6 +6,7 @@ import { loadStripe } from '@stripe/stripe-js';
 import StripePaymentForm from './StripePaymentForm';
 import { toast } from 'sonner';
 import { useAuthStore } from '@/store/authStore';
+import { useNavigate } from 'react-router-dom';
 
 // Carregar Stripe com a chave pública
 const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY || '');
@@ -18,6 +19,8 @@ interface PaymentModalProps {
 
 export const PaymentModal: React.FC<PaymentModalProps> = ({ isOpen, onClose, onConfirm }) => {
   const { user, token } = useAuthStore();
+  const { unblockCreationFlow, hidePaymentPopup } = useUiStore();
+  const navigate = useNavigate();
   const [showPaymentForm, setShowPaymentForm] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -52,6 +55,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({ isOpen, onClose, onC
           currency: 'brl',
           metadata: {
             userId: user?.id || undefined,
+            deviceId: localStorage.getItem('deviceId') || undefined,
             productType: 'music_generation',
             description: 'Geração de música premium'
           }
@@ -110,9 +114,51 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({ isOpen, onClose, onC
     }, 2000);
   };
   
-  const handleStripeSuccess = (paymentIntentId: string) => {
-    toast.success('Upgrade realizado com sucesso!');
-    onConfirm();
+  const handleStripeSuccess = async (paymentIntentId: string) => {
+    toast.success('Pagamento aprovado! Liberando criação...');
+
+    try {
+      // Desbloquear imediatamente o fluxo na UI
+      unblockCreationFlow();
+      hidePaymentPopup();
+
+      // Revalidar status no backend (pode haver pequena latência do webhook)
+      const headers: Record<string, string> = {
+        'X-Device-ID': localStorage.getItem('deviceId') || '',
+      };
+      if (token) headers['Authorization'] = `Bearer ${token}`;
+
+      const check = await fetch(`${import.meta.env.VITE_API_URL}/api/user/creation-status`, {
+        method: 'GET',
+        headers,
+      });
+      const data = await check.json().catch(() => ({}));
+      const isFree = data?.isFree ?? data?.data?.isFree;
+
+      if (isFree === true) {
+        navigate('/criar');
+      } else {
+        // Tentar novamente após pequena espera (propagação do webhook)
+        setTimeout(async () => {
+          try {
+            const retry = await fetch(`${import.meta.env.VITE_API_URL}/api/user/creation-status`, {
+              method: 'GET',
+              headers,
+            });
+            const retryData = await retry.json().catch(() => ({}));
+            const retryFree = retryData?.isFree ?? retryData?.data?.isFree;
+            if (retryFree === true) {
+              navigate('/criar');
+            }
+          } catch {}
+        }, 1500);
+      }
+    } catch (e) {
+      // Não bloquear o usuário caso a verificação falhe; ele já está desbloqueado
+      console.error('[PAYMENT_MODAL] Erro ao revalidar status após pagamento:', e);
+    } finally {
+      onConfirm();
+    }
   };
   
   const handleStripeError = (error: string) => {

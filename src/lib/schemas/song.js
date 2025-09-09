@@ -14,6 +14,7 @@ export const SongSchema = z.object({
   audioUrlOption2: z.string().url().nullable(),
   sunoTaskId: z.string().nullable(),
   generationStatus: z.enum(['pending', 'processing', 'completed', 'failed']),
+  isPaid: z.boolean().default(false),
   createdAt: z.coerce.date(),
   updatedAt: z.coerce.date()
 });
@@ -85,7 +86,9 @@ export const DatabaseSongSchema = z.object({
   audio_url_option1: z.string().nullable(),
   audio_url_option2: z.string().nullable(),
   task_id: z.string().nullable(),
-  status: z.string().default('COMPLETED'),
+  status: z.string().optional(),
+  generation_status: z.string().default('completed'),
+  ispaid: z.boolean().default(false),
   created_at: z.string(),
   updated_at: z.string()
 });

@@ -329,6 +329,23 @@ async function handlePaymentSuccess(paymentIntent: Stripe.PaymentIntent): Promis
       } else {
         console.log('[STRIPE_WEBHOOK] Contador de músicas resetado para usuário:', userId);
       }
+    } else {
+      // Caso convidado: usar deviceId na metadata para resetar contador
+      const deviceId = (paymentIntent.metadata?.deviceId || paymentIntent.metadata?.device_id) as string | undefined;
+      if (deviceId) {
+        const { error: resetGuestError } = await supabase
+          .from('users')
+          .update({ freesongsused: 0 })
+          .eq('device_id', deviceId);
+
+        if (resetGuestError) {
+          console.error('[STRIPE_WEBHOOK] Erro ao resetar contador (guest por device_id):', resetGuestError);
+        } else {
+          console.log('[STRIPE_WEBHOOK] Contador resetado para guest com device_id:', deviceId);
+        }
+      } else {
+        console.warn('[STRIPE_WEBHOOK] Pagamento sem userId e sem deviceId na metadata. Nenhum reset aplicado.');
+      }
     }
     
     console.log('[STRIPE_WEBHOOK] Pagamento processado com sucesso:', paymentIntent.id);
