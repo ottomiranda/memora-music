@@ -13,9 +13,8 @@ import rateLimit from 'express-rate-limit';
 const router = Router();
 
 // Initialize Stripe with secret key
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: '2025-08-27.basil',
-});
+// Initialize Stripe (use SDK default API version to avoid invalid dates)
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
 
 // Rate limiting for payment endpoints
 const paymentRateLimit = rateLimit({

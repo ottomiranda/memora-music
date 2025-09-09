@@ -6,6 +6,7 @@ import { loadStripe } from '@stripe/stripe-js';
 import StripePaymentForm from './StripePaymentForm';
 import { toast } from 'sonner';
 import { useAuthStore } from '@/store/authStore';
+import { API_BASE_URL } from '@/config/api';
 import { useNavigate } from 'react-router-dom';
 
 // Carregar Stripe com a chave pública
@@ -47,7 +48,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({ isOpen, onClose, onC
         headers['Authorization'] = `Bearer ${token}`;
       }
 
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/stripe/create-payment-intent`, {
+      const response = await fetch(`${API_BASE_URL}/api/stripe/create-payment-intent`, {
         method: 'POST',
         headers,
         body: JSON.stringify({
@@ -128,7 +129,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({ isOpen, onClose, onC
       };
       if (token) headers['Authorization'] = `Bearer ${token}`;
 
-      const check = await fetch(`${import.meta.env.VITE_API_URL}/api/user/creation-status`, {
+      const check = await fetch(`${API_BASE_URL}/api/user/creation-status`, {
         method: 'GET',
         headers,
       });
@@ -141,7 +142,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({ isOpen, onClose, onC
         // Tentar novamente após pequena espera (propagação do webhook)
         setTimeout(async () => {
           try {
-            const retry = await fetch(`${import.meta.env.VITE_API_URL}/api/user/creation-status`, {
+            const retry = await fetch(`${API_BASE_URL}/api/user/creation-status`, {
               method: 'GET',
               headers,
             });
