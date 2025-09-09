@@ -57,7 +57,7 @@ router.post('/finalize', paymentRateLimit, optionalAuthMiddleware, async (req: R
 
     // Retrieve intent from Stripe to verify success
     const pi = await stripe.paymentIntents.retrieve(paymentIntentId);
-    if (pi.status !== 'succeeded') {
+    if (!(pi.status === 'succeeded' || pi.status === 'processing' || pi.status === 'requires_capture')) {
       res.status(400).json({ success: false, message: `Pagamento ainda não concluído (status: ${pi.status})` });
       return;
     }
