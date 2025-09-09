@@ -3,14 +3,9 @@ import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import path from 'path';
-import { fileURLToPath } from 'url';
-
-// Para ES Modules, precisamos derivar __dirname
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
 
 // Carregar variáveis de ambiente
-dotenv.config({ path: path.resolve(__dirname, '../.env') });
+dotenv.config({ path: path.resolve('/app', '.env') });
 
 // Importar rotas
 import generatePreviewRoute from './routes/generate-preview.js';
@@ -148,7 +143,8 @@ app.use((req, res, next) => {
 });
 
 // Servir arquivos estáticos do frontend
-const staticFilesPath = path.join(__dirname, '..', '..', 'dist');
+// Usar caminho absoluto baseado no WORKDIR do Dockerfile (/app)
+const staticFilesPath = path.join('/app', 'dist');
 app.use(express.static(staticFilesPath));
 
 // Configurar rotas
