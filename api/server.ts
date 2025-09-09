@@ -3,9 +3,11 @@ import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import path from 'path';
+import { fileURLToPath } from 'url';
 
-// Usar __dirname do CommonJS
-const __dirname = path.resolve();
+// Para ES Modules, precisamos derivar __dirname
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 // Carregar variáveis de ambiente
 dotenv.config({ path: path.resolve(__dirname, '../.env') });
@@ -145,6 +147,10 @@ app.use((req, res, next) => {
   next();
 });
 
+// Servir arquivos estáticos do frontend
+const staticFilesPath = path.join(__dirname, '..', '..', 'dist');
+app.use(express.static(staticFilesPath));
+
 // Configurar rotas
 app.use('/api/health', healthRoute);
 app.use('/api/generate-preview', generatePreviewRoute);
@@ -179,6 +185,11 @@ app.get('/api/test', (req, res) => {
   });
 });
 
+// Rota catch-all: serve o index.html para rotas não-API
+app.get('*', (req, res) => {
+  res.sendFile(path.join(staticFilesPath, 'index.html'));
+});
+
 // Middleware de tratamento de erros global
 app.use((err: Error & { status?: number }, req: express.Request, res: express.Response, next: express.NextFunction) => {
   console.error('Erro no servidor:', err);
@@ -195,17 +206,6 @@ app.use((err: Error & { status?: number }, req: express.Request, res: express.Re
       status: err.status || 500,
       timestamp: new Date().toISOString(),
       ...(process.env.NODE_ENV === 'development' && { stack: err.stack })
-    }
-  });
-});
-
-// Middleware para rotas não encontradas
-app.use('*', (req, res) => {
-  res.status(404).json({
-    error: {
-      message: `Rota ${req.originalUrl} não encontrada`,
-      status: 404,
-      timestamp: new Date().toISOString()
     }
   });
 });
