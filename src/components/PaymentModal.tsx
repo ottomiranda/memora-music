@@ -2,15 +2,14 @@ import React, { useState, useEffect } from 'react';
 import { useUiStore } from '../store/uiStore';
 import { X, CreditCard, Star, Zap } from 'lucide-react';
 import { Elements } from '@stripe/react-stripe-js';
-import { loadStripe } from '@stripe/stripe-js';
+import { loadStripe, Stripe } from '@stripe/stripe-js';
 import StripePaymentForm from './StripePaymentForm';
 import { toast } from 'sonner';
 import { useAuthStore } from '@/store/authStore';
 import { API_BASE_URL } from '@/config/api';
 import { useNavigate } from 'react-router-dom';
 
-// Carregar Stripe com a chave pública
-const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY || '');
+// Removido carregamento estático para evitar loadStripe('') quando a env não está presente
 
 interface PaymentModalProps {
   isOpen: boolean;
@@ -25,14 +24,51 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({ isOpen, onClose, onC
   const [showPaymentForm, setShowPaymentForm] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [stripePromise, setStripePromise] = useState<Promise<Stripe | null> | null>(null);
+  const [publishableKey, setPublishableKey] = useState<string | null>(null);
   
   // Estados para gerenciar o clientSecret
   const [clientSecret, setClientSecret] = useState<string | null>(null);
   const [isLoadingPayment, setIsLoadingPayment] = useState(false);
   
   // Verificação robusta da configuração do Stripe
-  const publishableKey = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY;
-  const isStripeConfigured = publishableKey && publishableKey.startsWith('pk_');
+  const envPublishable = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY;
+  const envKeyValid = !!envPublishable && envPublishable.startsWith('pk_');
+  const isStripeConfigured = (!!publishableKey && publishableKey.startsWith('pk_')) || envKeyValid;
+
+  // Carregar a chave do Stripe de forma resiliente (env ou endpoint público)
+  useEffect(() => {
+    if (!isOpen) return;
+
+    // Se já carregamos, não repetir
+    if (stripePromise && publishableKey) return;
+
+    const setupStripe = async () => {
+      try {
+        let key = envKeyValid ? envPublishable! : '';
+        if (!key) {
+          const resp = await fetch(`${API_BASE_URL}/api/stripe/public-key`);
+          if (resp.ok) {
+            const data = await resp.json();
+            if (data?.publishableKey && typeof data.publishableKey === 'string') {
+              key = data.publishableKey;
+            }
+          }
+        }
+
+        if (key && key.startsWith('pk_')) {
+          setPublishableKey(key);
+          setStripePromise(loadStripe(key));
+        } else {
+          console.warn('[PAYMENT_MODAL] Publishable key não disponível/ inválida em nenhum lugar');
+        }
+      } catch (e) {
+        console.error('[PAYMENT_MODAL] Erro ao carregar publishable key do Stripe:', e);
+      }
+    };
+
+    void setupStripe();
+  }, [isOpen, envKeyValid, envPublishable, stripePromise, publishableKey]);
   
   // Função para criar Payment Intent e obter clientSecret
   const createPaymentIntent = async () => {
@@ -85,17 +121,14 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({ isOpen, onClose, onC
   useEffect(() => {
     if (isOpen) {
       console.debug('[PAYMENT_MODAL] Modal aberto');
-      console.debug('[PAYMENT_MODAL] Chave pública configurada:', !!publishableKey);
-      console.debug('[PAYMENT_MODAL] Chave válida:', isStripeConfigured);
-      
-      if (!isStripeConfigured && publishableKey) {
-        console.warn('[PAYMENT_MODAL] Chave pública inválida:', publishableKey.substring(0, 10) + '...');
-      }
+      console.debug('[PAYMENT_MODAL] Chave (env):', envPublishable ? envPublishable.substring(0, 10) + '...' : 'N/A');
+      console.debug('[PAYMENT_MODAL] Chave (state):', publishableKey ? publishableKey.substring(0, 10) + '...' : 'N/A');
+      console.debug('[PAYMENT_MODAL] Stripe configurado:', !!stripePromise);
     }
-  }, [isOpen, publishableKey, isStripeConfigured]);
+  }, [isOpen, envPublishable, publishableKey, stripePromise]);
   
   const handleUpgradeClick = async () => {
-    if (isStripeConfigured) {
+    if (isStripeConfigured && stripePromise) {
       setShowPaymentForm(true);
       // Buscar clientSecret quando o usuário decidir pagar
       await createPaymentIntent();
@@ -122,6 +155,21 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({ isOpen, onClose, onC
       // Desbloquear imediatamente o fluxo na UI
       unblockCreationFlow();
       hidePaymentPopup();
+
+      // Finalizar no backend (verifica PaymentIntent e libera cota sem depender do webhook)
+      try {
+        const finalizeHeaders: Record<string, string> = {
+          'Content-Type': 'application/json',
+        };
+        if (token) finalizeHeaders['Authorization'] = `Bearer ${token}`;
+        await fetch(`${API_BASE_URL}/api/stripe/finalize`, {
+          method: 'POST',
+          headers: finalizeHeaders,
+          body: JSON.stringify({ paymentIntentId, deviceId: localStorage.getItem('deviceId') || undefined })
+        });
+      } catch (e) {
+        console.warn('[PAYMENT_MODAL] Não foi possível finalizar pagamento no backend imediatamente. Prosseguindo.');
+      }
 
       // Revalidar status no backend (pode haver pequena latência do webhook)
       const headers: Record<string, string> = {
@@ -247,7 +295,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({ isOpen, onClose, onC
           </div>
 
           {/* Payment Form or Actions */}
-          {showPaymentForm && isStripeConfigured ? (
+          {showPaymentForm && isStripeConfigured && stripePromise ? (
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <h3 className="text-lg font-semibold text-gray-800">Finalizar Pagamento</h3>

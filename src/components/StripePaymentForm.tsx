@@ -4,7 +4,7 @@ import { AlertCircle, CheckCircle, CreditCard } from 'lucide-react';
 
 interface StripePaymentFormProps {
   amount: number;
-  onSuccess: () => void;
+  onSuccess: (paymentIntentId: string) => void;
   onError: (error: string) => void;
   disabled?: boolean;
 }
@@ -52,7 +52,7 @@ const StripePaymentForm: React.FC<StripePaymentFormProps> = ({
       } else if (paymentIntent && paymentIntent.status === 'succeeded') {
         console.log('✅ Pagamento confirmado:', paymentIntent);
         setPaymentStatus('succeeded');
-        onSuccess();
+        onSuccess(paymentIntent.id);
       } else {
         console.log('⚠️ Status do pagamento:', paymentIntent?.status);
         setPaymentStatus('failed');

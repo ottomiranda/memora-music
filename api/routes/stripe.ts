@@ -28,6 +28,106 @@ const paymentRateLimit = rateLimit({
   legacyHeaders: false,
 });
 
+/**
+ * Public publishable key endpoint
+ * GET /api/stripe/public-key
+ * Returns the publishable key for the frontend when not available at build time
+ */
+router.get('/public-key', (req: Request, res: Response): void => {
+  const publishable = process.env.STRIPE_PUBLISHABLE_KEY || process.env.VITE_STRIPE_PUBLISHABLE_KEY;
+  if (!publishable) {
+    res.status(500).json({ success: false, message: 'Stripe publishable key not configured' });
+    return;
+  }
+  res.status(200).json({ success: true, publishableKey: publishable });
+});
+
+/**
+ * Finalize payment and unlock quota (server-side verification)
+ * POST /api/stripe/finalize
+ * Body: { paymentIntentId: string, deviceId?: string }
+ */
+router.post('/finalize', paymentRateLimit, optionalAuthMiddleware, async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { paymentIntentId, deviceId } = req.body as { paymentIntentId?: string; deviceId?: string };
+    if (!paymentIntentId || typeof paymentIntentId !== 'string') {
+      res.status(400).json({ success: false, message: 'paymentIntentId é obrigatório' });
+      return;
+    }
+
+    // Retrieve intent from Stripe to verify success
+    const pi = await stripe.paymentIntents.retrieve(paymentIntentId);
+    if (pi.status !== 'succeeded') {
+      res.status(400).json({ success: false, message: `Pagamento ainda não concluído (status: ${pi.status})` });
+      return;
+    }
+
+    const supabase = getSupabaseServiceClient();
+    const clientIp = req.ip;
+
+    // Update transaction row if exists
+    await supabase
+      .from('stripe_transactions')
+      .update({ status: 'succeeded', stripe_payment_intent_data: pi, updated_at: new Date().toISOString() })
+      .eq('payment_intent_id', paymentIntentId);
+
+    // Determine identity: prefer authenticated user, then metadata.userId, else deviceId
+    let targetUserId: string | null = (req as any).user?.id || null;
+    const metaUserId = (pi.metadata?.userId as string | undefined) || null;
+    const targetDeviceId = deviceId || (pi.metadata?.deviceId as string | undefined) || null;
+
+    if (!targetUserId && metaUserId) {
+      targetUserId = metaUserId;
+    }
+
+    // Reset freesongsused accordingly
+    const results: Array<{ target: string; updated: boolean }> = [];
+
+    try {
+      if (targetUserId) {
+        const { error, data } = await supabase
+          .from('users')
+          .update({ freesongsused: 0 })
+          .eq('id', targetUserId)
+          .select('id');
+        results.push({ target: 'userId', updated: !error });
+      }
+    } catch (e) {
+      console.warn('[STRIPE_FINALIZE] Falha ao resetar por userId', e);
+    }
+
+    try {
+      if (targetDeviceId) {
+        const { error } = await supabase
+          .from('users')
+          .update({ freesongsused: 0 })
+          .eq('device_id', targetDeviceId);
+        results.push({ target: 'deviceId', updated: !error });
+      }
+    } catch (e) {
+      console.warn('[STRIPE_FINALIZE] Falha ao resetar por deviceId', e);
+    }
+
+    // Extra: também resetar por IP para evitar bloqueio pelo filtro OR (device_id OR last_used_ip)
+    try {
+      if (clientIp) {
+        const { error } = await supabase
+          .from('users')
+          .update({ freesongsused: 0 })
+          .eq('last_used_ip', clientIp);
+        results.push({ target: 'last_used_ip', updated: !error });
+      }
+    } catch (e) {
+      console.warn('[STRIPE_FINALIZE] Falha ao resetar por last_used_ip', e);
+    }
+
+    res.status(200).json({ success: true, message: 'Pagamento verificado e cota liberada', results });
+  } catch (err) {
+    console.error('[STRIPE_FINALIZE] Erro:', err);
+    res.status(500).json({ success: false, message: 'Erro ao finalizar pagamento' });
+  }
+});
+
 // Webhook rate limiting
 const webhookRateLimit = rateLimit({
   windowMs: 1 * 60 * 1000, // 1 minute

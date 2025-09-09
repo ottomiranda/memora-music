@@ -1,48 +1,46 @@
-import React, { ReactNode } from 'react';
-import { loadStripe } from '@stripe/stripe-js';
+import React, { ReactNode, useEffect, useState } from 'react';
+import { loadStripe, Stripe } from '@stripe/stripe-js';
 import { Elements } from '@stripe/react-stripe-js';
-
-// Carregar Stripe com a chave pública
-const publishableKey = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY || '';
-
-// Debug logs para verificar configuração
-console.log('[STRIPE_PROVIDER] Chave pública:', publishableKey ? `${publishableKey.substring(0, 12)}...` : 'NÃO CONFIGURADA');
-console.log('[STRIPE_PROVIDER] Ambiente:', import.meta.env.MODE);
-console.log('[STRIPE_PROVIDER] Chave completa para debug:', publishableKey);
-
-const stripePromise = loadStripe(publishableKey);
+import { API_BASE_URL } from '@/config/api';
 
 interface StripeProviderProps {
   children: ReactNode;
 }
 
 export const StripeProvider: React.FC<StripeProviderProps> = ({ children }) => {
-  // Verificar se a chave pública está configurada
-  if (!publishableKey) {
-    console.warn('[STRIPE_PROVIDER] Chave pública do Stripe não configurada. Funcionalidades de pagamento podem não funcionar.');
-  } else {
-    console.log('[STRIPE_PROVIDER] Stripe inicializado com sucesso');
+  const envKey = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY as string | undefined;
+  const [publishableKey, setPublishableKey] = useState<string | null>(envKey && envKey.startsWith('pk_') ? envKey : null);
+  const [stripePromise, setStripePromise] = useState<Promise<Stripe | null> | null>(
+    publishableKey ? loadStripe(publishableKey) : null
+  );
+
+  useEffect(() => {
+    if (publishableKey || stripePromise) return; // já carregado
+    const fetchKey = async () => {
+      try {
+        const resp = await fetch(`${API_BASE_URL}/api/stripe/public-key`);
+        if (!resp.ok) return;
+        const data = await resp.json();
+        const key = data?.publishableKey;
+        if (typeof key === 'string' && key.startsWith('pk_')) {
+          setPublishableKey(key);
+          setStripePromise(loadStripe(key));
+        }
+      } catch (e) {
+        // Evita quebrar o app se o endpoint não estiver disponível
+        console.warn('[StripeProvider] Não foi possível obter a publishable key do backend');
+      }
+    };
+    void fetchKey();
+  }, [publishableKey, stripePromise]);
+
+  // Se não temos Stripe configurado, renderiza a app sem Elements.
+  if (!stripePromise) {
+    return <>{children}</>;
   }
 
-  // Verificar se o Stripe foi carregado corretamente
-  stripePromise.then((stripe) => {
-    if (stripe) {
-      console.log('[STRIPE_PROVIDER] Stripe.js carregado com sucesso');
-      console.log('[STRIPE_PROVIDER] Chave pública completa:', publishableKey);
-      console.log('[STRIPE_PROVIDER] Tipo da chave:', typeof publishableKey);
-      console.log('[STRIPE_PROVIDER] Comprimento da chave:', publishableKey?.length);
-      console.log('[STRIPE_PROVIDER] Inicia com pk_:', publishableKey?.startsWith('pk_'));
-      console.log('[STRIPE_PROVIDER] Instância do Stripe:', stripe);
-    } else {
-      console.error('[STRIPE_PROVIDER] Falha ao carregar Stripe.js');
-    }
-  }).catch((error) => {
-    console.error('[STRIPE_PROVIDER] Erro ao carregar Stripe.js:', error);
-    console.error('[STRIPE_PROVIDER] Detalhes do erro:', error.message);
-  });
-
   return (
-    <Elements 
+    <Elements
       stripe={stripePromise}
       options={{
         appearance: {
