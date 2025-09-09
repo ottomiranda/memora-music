@@ -39,6 +39,12 @@ app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
 /**
+ * Serve static files from React build
+ */
+const staticFilesPath = path.join(__dirname, '..', '..', 'dist');
+app.use(express.static(staticFilesPath));
+
+/**
  * API Routes
  */
 app.use('/api/auth', authRoutes);
@@ -59,22 +65,19 @@ app.use('/api/health', (req: Request, res: Response, next: NextFunction): void =
 });
 
 /**
+ * Catch-all handler: serve React app for non-API routes
+ */
+app.get('*', (req: Request, res: Response) => {
+  res.sendFile(path.join(staticFilesPath, 'index.html'));
+});
+
+/**
  * error handler middleware
  */
 app.use((error: Error, req: Request, res: Response, next: NextFunction) => {
   res.status(500).json({
     success: false,
     error: 'Server internal error'
-  });
-});
-
-/**
- * 404 handler
- */
-app.use((req: Request, res: Response) => {
-  res.status(404).json({
-    success: false,
-    error: 'API not found'
   });
 });
 
