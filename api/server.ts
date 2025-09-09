@@ -4,8 +4,12 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import path from 'path';
 
-// Carregar variáveis de ambiente
-dotenv.config({ path: path.resolve('/app', '.env') });
+// Define o caminho raiz do projeto de forma robusta
+// Usa a variável de ambiente da Render se disponível, senão, usa /app como padrão.
+const projectRoot = process.env.RENDER_ROOT || '/app';
+
+// Carrega as variáveis de ambiente a partir da raiz do projeto
+dotenv.config({ path: path.join(projectRoot, '.env') });
 
 // Importar rotas
 import generatePreviewRoute from './routes/generate-preview.js';
@@ -143,8 +147,8 @@ app.use((req, res, next) => {
 });
 
 // Servir arquivos estáticos do frontend
-// Usar caminho absoluto baseado no WORKDIR do Dockerfile (/app)
-const staticFilesPath = path.join('/app', 'dist');
+// Define o caminho para a pasta 'dist' a partir da raiz do projeto
+const staticFilesPath = path.join(projectRoot, 'dist');
 app.use(express.static(staticFilesPath));
 
 // Configurar rotas
@@ -183,7 +187,13 @@ app.get('/api/test', (req, res) => {
 
 // Rota catch-all: serve o index.html para rotas não-API
 app.get('*', (req, res) => {
-  res.sendFile(path.join(staticFilesPath, 'index.html'));
+  // Verifique se a requisição não é para a API antes de servir o index.html
+  if (!req.originalUrl.startsWith('/api')) {
+    res.sendFile(path.join(staticFilesPath, 'index.html'));
+  } else {
+    // Se for uma rota de API não encontrada, você pode querer um 404 de API
+    res.status(404).json({ error: 'API route not found' });
+  }
 });
 
 // Middleware de tratamento de erros global
