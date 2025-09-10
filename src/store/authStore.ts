@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { authApi, migrationApi } from '../config/api';
+import { migrationApi } from '../config/api';
+import getSupabaseBrowserClient from '@/lib/supabase-browser';
 import { getCurrentGuestId, clearGuestId } from '../utils/guest';
 import { LoginResponse, SignupResponse, SignupData, MigrationResult } from '../types/guest';
 
@@ -38,6 +39,7 @@ interface AuthState {
   signup: (data: { email: string; password: string; name?: string }) => Promise<boolean>;
   logout: () => void;
   clearError: () => void;
+  resetPassword: (email: string) => Promise<boolean>;
 }
 
 export const useAuthStore = create<AuthState>()(
@@ -57,33 +59,37 @@ export const useAuthStore = create<AuthState>()(
         console.log('[AuthStore] Login iniciado. GuestId atual:', guestId);
         
         try {
-          const response: LoginResponse = await authApi.login(credentials.email, credentials.password);
-          
-          console.log('[AuthStore] Login bem-sucedido:', response.user.email);
-          
-          // Salvar token no localStorage
-          localStorage.setItem('authToken', response.token);
-          
-          // Atualizar estado com dados do usuário
-          set({ 
-            user: response.user,
-            token: response.token,
-            isLoggedIn: true,
-            error: null 
+          const supabase = await getSupabaseBrowserClient();
+          if (!supabase) throw new Error('Falha ao inicializar Supabase');
+
+          const { data, error } = await supabase.auth.signInWithPassword({
+            email: credentials.email,
+            password: credentials.password,
           });
+          if (error) throw error;
+
+          const accessToken = data.session?.access_token;
+          const user = data.user ? { id: data.user.id, email: data.user.email || credentials.email } : null;
+          if (!accessToken || !user) throw new Error('Sessão inválida');
+
+          localStorage.setItem('authToken', accessToken);
+          set({ user, token: accessToken, isLoggedIn: true, error: null });
           
           // Migrar dados do convidado se existir guestId
           if (guestId) {
             console.log('[AuthStore] Iniciando migração de dados do convidado');
-            const migrationResult = await migrateGuestData(guestId);
-            
-            if (migrationResult) {
-              console.log('[AuthStore] Migração concluída:', migrationResult);
+            try {
+              const migrationResult = await migrateGuestData(guestId);
+              if (migrationResult && (migrationResult.success === true || migrationResult.data?.migratedCount >= 0)) {
+                console.log('[AuthStore] Migração concluída:', migrationResult);
+                clearGuestId();
+                console.log('[AuthStore] GuestId removido do localStorage');
+              } else {
+                console.warn('[AuthStore] Migração não concluída. GuestId será mantido para nova tentativa.');
+              }
+            } catch (e) {
+              console.warn('[AuthStore] Migração falhou. GuestId será mantido:', e);
             }
-            
-            // Limpar guestId após migração (independente do resultado)
-            clearGuestId();
-            console.log('[AuthStore] GuestId removido do localStorage');
           }
           
           return true;
@@ -110,33 +116,48 @@ export const useAuthStore = create<AuthState>()(
         console.log('[AuthStore] Signup iniciado. GuestId atual:', guestId);
         
         try {
-          const response: SignupResponse = await authApi.signup(data as SignupData);
-          
-          console.log('[AuthStore] Signup bem-sucedido:', response.user.email);
-          
-          // Salvar token no localStorage
-          localStorage.setItem('authToken', response.token);
-          
-          // Atualizar estado com dados do usuário
-          set({ 
-            user: response.user,
-            token: response.token,
-            isLoggedIn: true,
-            error: null 
+          const supabase = await getSupabaseBrowserClient();
+          if (!supabase) throw new Error('Falha ao inicializar Supabase');
+
+          const { data: signUpData, error } = await supabase.auth.signUp({
+            email: data.email,
+            password: data.password,
+            options: {
+              data: { name: data.name },
+              emailRedirectTo: `${window.location.origin}/auth/callback`,
+            },
           });
+          if (error) throw error;
+
+          // Em projetos com confirmação de email, session pode ser null.
+          // Tentar obter sessão atual (se o projeto não exige confirmação).
+          const session = (await supabase.auth.getSession()).data.session;
+          const accessToken = session?.access_token || null;
+          const user = signUpData.user ? { id: signUpData.user.id, email: signUpData.user.email || data.email, name: data.name } : null;
+
+          if (accessToken && user) {
+            localStorage.setItem('authToken', accessToken);
+            set({ user, token: accessToken, isLoggedIn: true, error: null });
+          } else {
+            // Caso de confirmação por email
+            set({ user, token: null, isLoggedIn: false, error: null });
+          }
           
           // Migrar dados do convidado se existir guestId
           if (guestId) {
             console.log('[AuthStore] Iniciando migração de dados do convidado');
-            const migrationResult = await migrateGuestData(guestId);
-            
-            if (migrationResult) {
-              console.log('[AuthStore] Migração concluída:', migrationResult);
+            try {
+              const migrationResult = await migrateGuestData(guestId);
+              if (migrationResult && (migrationResult.success === true || migrationResult.data?.migratedCount >= 0)) {
+                console.log('[AuthStore] Migração concluída:', migrationResult);
+                clearGuestId();
+                console.log('[AuthStore] GuestId removido do localStorage');
+              } else {
+                console.warn('[AuthStore] Migração não concluída. GuestId será mantido para nova tentativa.');
+              }
+            } catch (e) {
+              console.warn('[AuthStore] Migração falhou. GuestId será mantido:', e);
             }
-            
-            // Limpar guestId após migração (independente do resultado)
-            clearGuestId();
-            console.log('[AuthStore] GuestId removido do localStorage');
           }
           
           return true;
@@ -155,19 +176,32 @@ export const useAuthStore = create<AuthState>()(
       },
 
       logout: () => {
-        // Remover token do localStorage
         localStorage.removeItem('authToken');
-        
-        set({ 
-          user: null,
-          token: null,
-          isLoggedIn: false, 
-          error: null 
+        // Sair no Supabase também
+        getSupabaseBrowserClient().then((supabase) => {
+          supabase?.auth.signOut();
         });
+        set({ user: null, token: null, isLoggedIn: false, error: null });
       },
 
       clearError: () => {
         set({ error: null });
+      },
+
+      resetPassword: async (email: string) => {
+        try {
+          const supabase = await getSupabaseBrowserClient();
+          if (!supabase) throw new Error('Falha ao inicializar Supabase');
+          const { error } = await supabase.auth.resetPasswordForEmail(email, {
+            redirectTo: `${window.location.origin}/auth/reset`,
+          });
+          if (error) throw error;
+          return true;
+        } catch (e) {
+          const msg = e instanceof Error ? e.message : 'Erro ao solicitar recuperação de senha';
+          set({ error: msg });
+          return false;
+        }
       },
     }),
     {
@@ -189,5 +223,21 @@ useAuthStore.persist.onFinishHydration((state) => {
   
   useAuthStore.setState({ 
     isLoggedIn: hasValidToken 
+  });
+});
+
+// Sincronizar sessão do Supabase → authStore (renovação de token, refresh etc.)
+getSupabaseBrowserClient().then((supabase) => {
+  supabase?.auth.onAuthStateChange((_event, session) => {
+    const token = session?.access_token || null;
+    if (token) {
+      localStorage.setItem('authToken', token);
+      const current = useAuthStore.getState();
+      useAuthStore.setState({
+        token,
+        isLoggedIn: true,
+        user: current.user || (session?.user ? { id: session.user.id, email: session.user.email || '' } : null),
+      });
+    }
   });
 });

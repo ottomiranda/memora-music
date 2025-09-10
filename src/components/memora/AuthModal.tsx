@@ -19,7 +19,7 @@ const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
   const [showPassword, setShowPassword] = useState(false);
   const [isLogin, setIsLogin] = useState(true);
   
-  const { login, signup, isLoading, error, clearError } = useAuthStore()
+  const { login, signup, isLoading, error, clearError, resetPassword } = useAuthStore()
   const { hideAuthPopup, executeAuthCallback } = useUiStore();
 
   // Configuração do react-hook-form com validação zod
@@ -81,6 +81,19 @@ const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
     } catch (error) {
       // O erro já foi tratado pelo authStore e está no estado 'error'
       // Não precisamos fazer nada aqui, pois o erro será exibido automaticamente
+    }
+  };
+
+  const handleForgotPassword = async () => {
+    const email = watch('email');
+    if (!email) {
+      // precise, mas não dependemos de toast aqui
+      alert('Informe seu e-mail para recuperar a senha.');
+      return;
+    }
+    const ok = await resetPassword(email);
+    if (ok) {
+      alert('Enviamos um e-mail com instruções para redefinir sua senha.');
     }
   };
 
@@ -273,6 +286,18 @@ const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
               {isLogin ? "Criar conta" : "Entrar"}
             </Button>
           </p>
+          {isLogin && (
+            <div className="mt-2">
+              <Button
+                type="button"
+                variant="link"
+                className="text-memora-primary hover:text-memora-primary/80 font-medium p-0 h-auto"
+                onClick={handleForgotPassword}
+              >
+                Esqueci minha senha
+              </Button>
+            </div>
+          )}
         </div>
       </div>
     </div>

@@ -65,11 +65,21 @@ export const songsApi = {
 // Funções de API para migração de dados
 export const migrationApi = {
   // Migrar dados do convidado para usuário autenticado
-  migrateGuestData: (guestId: string) => 
-    apiRequest(API_ENDPOINTS.MIGRATE_GUEST_DATA, {
+  migrateGuestData: async (guestId: string) => {
+    const { useAuthStore } = await import('../store/authStore');
+    const { user } = useAuthStore.getState();
+    const deviceId = localStorage.getItem('deviceId');
+    return apiRequest(API_ENDPOINTS.MIGRATE_GUEST_DATA, {
       method: 'POST',
-      body: { guestId }
-    }),
+      body: {
+        guestId,
+        userId: user?.id,
+        email: user?.email,
+        name: user?.name,
+        deviceId
+      }
+    });
+  },
 };
 
 // Funções de API para autenticação

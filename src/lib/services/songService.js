@@ -126,11 +126,10 @@ export class SongService {
         .eq('device_id', guestId)
         .order('created_at', { ascending: false })
         .limit(1)
-        .single();
+        .maybeSingle();
 
       if (guestError) {
-        console.error('Database error fetching guest user:', guestError);
-        throw new Error(`Failed to fetch guest user: ${guestError.message}`);
+        console.warn('Database warning fetching guest user (continuando com freesongsused=0):', guestError);
       }
 
       const guestFreesongsused = guestUser?.freesongsused || 0;

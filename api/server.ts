@@ -21,6 +21,7 @@ import migrateGuestDataRoute from './routes/migrate-guest-data.js';
 import paywallRoute from './routes/paywall.js';
 import downloadRoute from './routes/download.js';
 import stripeRoute from './routes/stripe.js';
+import supabasePublicRoute from './routes/supabase-public.js';
 
 // Criar rota de health check como Express Router
 import { Router } from 'express';
@@ -129,6 +130,7 @@ app.use('/api/migrate-guest-data', migrateGuestDataRoute);
 app.use('/api/user', paywallRoute);
 app.use('/api/download', downloadRoute);
 app.use('/api/stripe', stripeRoute);
+app.use('/api/supabase', supabasePublicRoute);
 
 console.log('📋 Rotas registradas:');
 console.log('  - /api/health');
@@ -141,6 +143,7 @@ console.log('  - /api/migrate-guest-data');
 console.log('  - /api/user (paywall)');
 console.log('  - /api/download');
 console.log('  - /api/stripe');
+console.log('  - /api/supabase');
 console.log('🔄 Sistema de salvamento automático ativo');
 
 // Rota de teste simples

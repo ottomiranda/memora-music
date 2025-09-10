@@ -1,6 +1,8 @@
 import { Router } from 'express';
 import { SongService } from '../../src/lib/services/songService.js';
 import { MigrateGuestDataSchema } from '../../src/lib/schemas/song.js';
+import { createClient } from '@supabase/supabase-js';
+import { optionalAuthMiddleware } from '../middleware/optionalAuth.js';
 
 const router = Router();
 
@@ -8,7 +10,7 @@ const router = Router();
  * POST /api/migrate-guest-data
  * Migra dados de músicas de convidado para usuário autenticado
  */
-router.post('/', async (req, res) => {
+router.post('/', optionalAuthMiddleware, async (req, res) => {
   try {
     console.log('🔄 Requisição de migração de dados:', req.body);
 
@@ -30,10 +32,25 @@ router.post('/', async (req, res) => {
     }
 
     const { guestId } = validation.data;
-    
-    // TODO: Em produção, o userId deveria vir da autenticação (JWT token)
-    // Por enquanto, vamos usar um userId de teste ou gerar um novo
-    const userId = req.body.userId || 'test-user-' + Date.now();
+    // Campos opcionais adicionais para migração robusta
+    const deviceId = req.body.deviceId;
+    // Preferir userId autenticado via Supabase Auth (JWT)
+    let userId = req.user?.id || null;
+    let email = req.user?.email || null;
+    let name = req.body.name || null;
+
+    // Fallback de desenvolvimento: aceitar userId do body SE for UUID válido
+    if (!userId && req.body.userId && typeof req.body.userId === 'string') {
+      const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+      if (uuidRegex.test(req.body.userId)) {
+        userId = req.body.userId;
+        email = req.body.email || null;
+      }
+    }
+
+    if (!userId) {
+      return res.status(401).json({ success: false, error: 'Não autenticado. Faça login para migrar suas músicas.' });
+    }
 
     console.log(`🔍 Verificando músicas para migração: ${guestId} → ${userId}`);
 
@@ -56,21 +73,32 @@ router.post('/', async (req, res) => {
 
     console.log(`📦 Encontradas ${guestSongs.length} músicas para migrar`);
 
-    // Executar migração
-    const migrationResult = await SongService.migrateGuestSongs(guestId, userId);
-    
-    if (!migrationResult.success) {
-      console.log('❌ Falha na migração:', migrationResult.error);
-      return res.status(500).json({
-        success: false,
-        error: 'Falha na migração',
-        details: migrationResult.error
-      });
+    // 1) Criar/atualizar perfil do usuário na tabela users
+    try {
+      const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
+      const upsertPayload = {
+        id: userId,
+        email: email || null,
+        name: name || null,
+        updated_at: new Date().toISOString(),
+      };
+      if (deviceId) upsertPayload.device_id = deviceId;
+
+      const { error: upsertErr } = await supabase
+        .from('users')
+        .upsert(upsertPayload, { onConflict: 'id' });
+      if (upsertErr) {
+        console.warn('⚠️ Falha ao criar/atualizar users:', upsertErr);
+      }
+    } catch (e) {
+      console.warn('⚠️ Erro ao inicializar Supabase para upsert de usuário:', e.message);
     }
 
-    console.log(`✅ Migração concluída: ${migrationResult.migratedCount} músicas`);
+    // 2) Executar migração de músicas (guest_id → user_id)
+    const migratedCount = await SongService.migrateGuestSongs(guestId, userId);
+    console.log(`✅ Migração concluída: ${migratedCount} músicas`);
 
-    // Limpar dados antigos de convidados (opcional)
+    // 3) Limpar dados antigos de convidados (opcional)
     try {
       await cleanupOldGuestData();
     } catch (cleanupError) {
@@ -80,9 +108,9 @@ router.post('/', async (req, res) => {
 
     return res.status(200).json({
       success: true,
-      message: `Migração concluída com sucesso! ${migrationResult.migratedCount} músicas migradas.`,
+      message: `Migração concluída com sucesso! ${migratedCount} músicas migradas.`,
       data: {
-        migratedCount: migrationResult.migratedCount,
+        migratedCount,
         guestId,
         userId,
         songs: guestSongs.map(song => ({
