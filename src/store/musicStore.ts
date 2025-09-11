@@ -593,6 +593,7 @@ export const useMusicStore = create<MusicStore>()(
       if (isFree === true) {
         // Se o usuário tem direito (novo convidado OU usuário logado com cota)
         console.log('[PAYWALL] Acesso permitido. Navegando para /criar.');
+        uiStore.unblockCreationFlow();
         navigate('/criar');
       } else {
         // Isso agora vai pegar os casos isFree === false, undefined, ou null
@@ -602,10 +603,14 @@ export const useMusicStore = create<MusicStore>()(
         // IMPORTANTE: Não navegamos para lugar nenhum. O usuário fica onde está.
       }
     } catch (error) {
-      // Fail-safe: Se a API falhar, bloqueamos por segurança.
-      console.error('[PAYWALL] Erro ao verificar status - mostrando paywall por segurança:', error);
-      uiStore.blockCreationFlow();
-      uiStore.showPaymentPopup();
+      // Fail-safe revisado: não bloquear por falha de rede.
+      console.warn('[PAYWALL] Falha ao verificar status. Permitindo acesso provisório ao fluxo.', error);
+      uiStore.unblockCreationFlow();
+      try {
+        // Informar o usuário sem travar o fluxo
+        toast.info('Não foi possível verificar seu status agora. Acessando o criador mesmo assim.');
+      } catch {}
+      navigate('/criar');
     }
   },
 

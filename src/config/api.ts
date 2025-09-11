@@ -11,18 +11,19 @@ const isDevelopment = () => {
 // Função para obter a configuração da API
 const getApiConfig = () => {
   const isDev = isDevelopment();
+  // Em desenvolvimento, apontar para backend local se não houver VITE_API_URL
+  // Em produção, NUNCA fazer fallback para localhost; usar a mesma origem (cadeia vazia)
   const apiBaseUrl = isDev
     ? (import.meta.env.VITE_API_URL || 'http://localhost:3003')
-    : import.meta.env.VITE_PROD_API_URL;
+    : (import.meta.env.VITE_PROD_API_URL || '');
 
   if (!apiBaseUrl && !isDev) {
-    console.error("ERRO: A URL da API não está definida nas variáveis de ambiente!");
-    console.error("Por favor, defina VITE_PROD_API_URL nas variáveis de ambiente.");
+    console.warn("[API] VITE_PROD_API_URL não definida. Usando mesma origem para /api/");
   }
 
   return {
     isDevelopment: isDev,
-    apiBaseUrl: apiBaseUrl || 'http://localhost:3003' // fallback para desenvolvimento
+    apiBaseUrl
   };
 };
 

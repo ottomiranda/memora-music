@@ -1,4 +1,5 @@
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
+import { API_BASE_URL } from '@/config/api';
 
 let clientPromise: Promise<SupabaseClient | null> | null = null;
 
@@ -16,7 +17,7 @@ export const getSupabaseBrowserClient = (): Promise<SupabaseClient | null> => {
 
       // Fallback: fetch from backend public config
       if (!url || !anonKey) {
-        const apiBase = (import.meta as any).env?.VITE_API_URL || 'http://localhost:3003';
+        const apiBase = API_BASE_URL || '';
         const resp = await fetch(`${apiBase}/api/supabase/public-config`);
         if (resp.ok) {
           const data = await resp.json();
@@ -51,4 +52,3 @@ export const getSupabaseBrowserClient = (): Promise<SupabaseClient | null> => {
 };
 
 export default getSupabaseBrowserClient;
-
