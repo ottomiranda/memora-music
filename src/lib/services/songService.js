@@ -180,38 +180,8 @@ export class SongService {
    */
   static async migrateGuestSongs(guestId, userId) {
     try {
-      // First, get guest user data to transfer freesongsused count
-      const { data: guestUser, error: guestError } = await getSupabaseClient()
-        .from('users')
-        .select('freesongsused')
-        .eq('device_id', guestId)
-        .order('created_at', { ascending: false })
-        .limit(1)
-        .maybeSingle();
-
-      if (guestError) {
-        console.warn('Database warning fetching guest user (continuando com freesongsused=0):', guestError);
-      }
-
-      const guestFreesongsused = guestUser?.freesongsused || 0;
-
-      // Create or update the registered user with the guest's freesongsused count
-      const { data: registeredUser, error: userError } = await getSupabaseClient()
-        .from('users')
-        .upsert({
-          id: userId,
-          freesongsused: guestFreesongsused,
-          updated_at: new Date().toISOString()
-        })
-        .select()
-        .single();
-
-      if (userError) {
-        console.error('Database error creating/updating registered user:', userError);
-        throw new Error(`Failed to create/update registered user: ${userError.message}`);
-      }
-
-      console.log(`✅ Created/updated registered user with freesongsused: ${guestFreesongsused}`);
+      // Importante: esta função deve apenas migrar músicas.
+      // A consolidação do contador e do device_id ocorre via RPC merge_guest_into_user.
 
       // Check how many songs exist for migration
       const { data: existingSongs, error: countError } = await getSupabaseClient()

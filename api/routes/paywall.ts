@@ -173,7 +173,7 @@ router.get('/creation-status', optionalAuthMiddleware, async (req: Request, res:
     
     // Se um usuário foi encontrado, verifique sua cota
     const freeSongsUsed = foundUser.freesongsused || 0;
-    const isFree = freeSongsUsed < 1;
+    const isFree = freeSongsUsed < 1; // Usuário é bloqueado quando freeSongsUsed >= 1
     
     console.log('[DEBUG] Status do usuário encontrado:', { freeSongsUsed, isFree, userType: userId ? 'authenticated' : (deviceId ? 'guest_device' : 'guest_ip') });
     

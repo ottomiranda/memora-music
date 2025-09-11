@@ -7,10 +7,19 @@ import { LoginResponse, SignupResponse, SignupData, MigrationResult } from '../t
 
 /**
  * Função para migrar dados do convidado para o usuário logado
+ * Agora inclui chamada automática da função merge_guest_into_user
  */
 const migrateGuestData = async (guestId: string): Promise<MigrationResult | null> => {
   try {
     console.log('[AuthStore] Iniciando migração de dados do convidado:', guestId);
+    
+    // Obter deviceId do localStorage
+    const deviceId = localStorage.getItem('deviceId');
+    console.log('[AuthStore] DeviceId encontrado:', deviceId);
+    
+    if (!deviceId) {
+      console.warn('[AuthStore] DeviceId não encontrado. Migração pode não funcionar corretamente.');
+    }
     
     const result = await migrationApi.migrateGuestData(guestId);
     
@@ -79,15 +88,18 @@ export const useAuthStore = create<AuthState>()(
           localStorage.setItem('authToken', accessToken);
           set({ user, token: accessToken, isLoggedIn: true, error: null });
           
-          // Migrar dados do convidado se existir guestId
-          if (guestId) {
+          // Migrar dados do convidado se existir guestId ou deviceId
+          const deviceId = localStorage.getItem('deviceId');
+          if (guestId || deviceId) {
             console.log('[AuthStore] Iniciando migração de dados do convidado');
             try {
-              const migrationResult = await migrateGuestData(guestId);
+              const migrationResult = await migrateGuestData(guestId || user.id);
               if (migrationResult && (migrationResult.success === true || migrationResult.data?.migratedCount >= 0)) {
                 console.log('[AuthStore] Migração concluída:', migrationResult);
-                clearGuestId();
-                console.log('[AuthStore] GuestId removido do localStorage');
+                if (guestId) {
+                  clearGuestId();
+                  console.log('[AuthStore] GuestId removido do localStorage');
+                }
               } else {
                 console.warn('[AuthStore] Migração não concluída. GuestId será mantido para nova tentativa.');
               }
@@ -147,15 +159,18 @@ export const useAuthStore = create<AuthState>()(
             set({ user, token: null, isLoggedIn: false, error: null });
           }
           
-          // Migrar dados do convidado se existir guestId
-          if (guestId) {
+          // Migrar dados do convidado se existir guestId ou deviceId
+          const deviceId = localStorage.getItem('deviceId');
+          if (guestId || deviceId) {
             console.log('[AuthStore] Iniciando migração de dados do convidado');
             try {
-              const migrationResult = await migrateGuestData(guestId);
+              const migrationResult = await migrateGuestData(guestId || user.id);
               if (migrationResult && (migrationResult.success === true || migrationResult.data?.migratedCount >= 0)) {
                 console.log('[AuthStore] Migração concluída:', migrationResult);
-                clearGuestId();
-                console.log('[AuthStore] GuestId removido do localStorage');
+                if (guestId) {
+                  clearGuestId();
+                  console.log('[AuthStore] GuestId removido do localStorage');
+                }
               } else {
                 console.warn('[AuthStore] Migração não concluída. GuestId será mantido para nova tentativa.');
               }

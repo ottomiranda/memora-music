@@ -33,7 +33,7 @@ router.post('/', optionalAuthMiddleware, async (req, res) => {
 
     const { guestId } = validation.data;
     // Campos opcionais adicionais para migração robusta
-    const deviceId = req.body.deviceId;
+    const deviceId = req.body.deviceId || req.headers['x-device-id'] || null;
     // Preferir userId autenticado via Supabase Auth (JWT)
     let userId = req.user?.id || null;
     let email = req.user?.email || null;
@@ -74,25 +74,68 @@ router.post('/', optionalAuthMiddleware, async (req, res) => {
 
     console.log(`📦 Encontradas ${guestSongs.length} músicas para migrar`);
 
-    // 1) Criar/atualizar perfil do usuário na tabela users
+    // 1) Verificar se já existe usuário com este deviceId e mesclar dados
     try {
       const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
+      const clientIp = (req.headers['x-forwarded-for']?.split(',')[0]?.trim()) || req.ip || null;
+      
+      // Primeiro, verificar se já existe um usuário convidado com este deviceId
+      if (deviceId) {
+        const { data: existingGuest, error: guestCheckError } = await supabase
+          .from('users')
+          .select('*')
+          .eq('device_id', deviceId)
+          .eq('status', 1) // status 1 = convidado
+          .single();
+          
+        if (guestCheckError && guestCheckError.code !== 'PGRST116') {
+          console.warn('⚠️ Erro ao verificar usuário convidado existente:', guestCheckError);
+        }
+        
+        if (existingGuest) {
+          console.log('🔍 Usuário convidado encontrado:', existingGuest.id, 'com', existingGuest.freesongsused, 'músicas usadas');
+        }
+      }
+      
+      // Criar/atualizar perfil do usuário autenticado (status = 0)
       const upsertPayload = {
         id: userId,
         email: email || null,
         name: name || null,
+        status: 0, // 0 = autenticado
         updated_at: new Date().toISOString(),
       };
-      if (deviceId) upsertPayload.device_id = deviceId;
-
+      
       const { error: upsertErr } = await supabase
         .from('users')
         .upsert(upsertPayload, { onConflict: 'id' });
       if (upsertErr) {
         console.warn('⚠️ Falha ao criar/atualizar users:', upsertErr);
+      } else {
+        console.log('✅ Usuário autenticado criado/atualizado com sucesso');
+      }
+
+      // Mesclar anônimo (por device_id) -> autenticado (por id) de forma atômica via RPC
+      if (deviceId) {
+        console.log('🔄 Iniciando mesclagem via RPC merge_guest_into_user');
+        const { data: mergeData, error: mergeError } = await supabase
+          .rpc('merge_guest_into_user', {
+            p_device_id: deviceId,
+            p_user_id: userId,
+            p_last_ip: clientIp
+          });
+        if (mergeError) {
+          console.error('❌ Erro ao mesclar guest->user via RPC:', mergeError);
+          // Não falhar a migração por causa do erro de mesclagem
+        } else {
+          console.log('✅ Mescla RPC concluída com sucesso:', mergeData);
+        }
+      } else {
+        console.warn('⚠️ DeviceId não fornecido. Mesclagem de usuários não será executada.');
       }
     } catch (e) {
-      console.warn('⚠️ Erro ao inicializar Supabase para upsert de usuário:', e.message);
+      console.error('❌ Erro ao processar migração de usuário:', e.message);
+      // Não falhar a migração por causa do erro de usuário
     }
 
     // 2) Executar migração de músicas (guest_id → user_id)
