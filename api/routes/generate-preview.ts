@@ -1012,50 +1012,11 @@ router.post('/', async (req: Request, res: Response) => {
       console.log('🎵 TaskId extraído:', taskId);
       
       // =================================================================
-      // INÍCIO DA LÓGICA CRÍTICA DE ATUALIZAÇÃO DO PAYWALL
+      // ATENÇÃO: Removido write adiantado no paywall para evitar duplicação
+      // Motivo: A escrita definitiva ocorre no Passo 4 (após sucesso da geração)
+      //         e agora existe índice único em users(device_id). Aqui mantemos no‑op.
       // =================================================================
-      console.log('[PAYWALL_UPDATE] Iniciando processo de atualização do banco de dados...');
-      
-      // Obter cliente Supabase para operações de banco de dados
-      const supabase = getSupabaseClient();
-      
-      // Usamos a variável 'existingUser' que foi recuperada no início da rota.
-      // E as variáveis 'deviceId' e 'clientIp' dos headers/request.
-      
-      if (existingUser) {
-        console.log(`[PAYWALL_UPDATE] Usuário existente encontrado (${existingUser.id}). Incrementando contador.`);
-        const { error: incrementError } = await supabase
-          .from('users')
-          .update({ freesongsused: existingUser.freesongsused + 1 })
-          .eq('id', existingUser.id);
-          
-        if (incrementError) {
-          console.error(`[PAYWALL_UPDATE_ERROR] Falha ao incrementar contador para usuário ${existingUser.id}:`, incrementError);
-        } else {
-          console.log(`[PAYWALL_UPDATE] Sucesso ao incrementar contador para usuário ${existingUser.id}.`);
-        }
-      } else {
-        console.log(`[PAYWALL_UPDATE] Nenhum usuário existente. Criando registro anônimo para deviceId: ${deviceId}`);
-        const { data: newUser, error: createError } = await supabase
-          .from('users')
-          .insert([{
-            device_id: deviceId,
-            last_used_ip: clientIp,
-            freesongsused: 1 // Começa em 1 pois a música acabou de ser usada
-          }])
-          .select()
-          .single();
-          
-        if (createError) {
-          console.error(`[PAYWALL_UPDATE_ERROR] Falha ao criar registro anônimo:`, createError);
-        } else {
-          console.log(`[PAYWALL_UPDATE] Sucesso ao criar registro anônimo. Novo ID: ${newUser?.id}`);
-        }
-      }
-      console.log('[PAYWALL_UPDATE] Processo de atualização do banco de dados finalizado.');
-      // =================================================================
-      // FIM DA LÓGICA CRÍTICA DE ATUALIZAÇÃO DO PAYWALL
-      // =================================================================
+      console.log('[PAYWALL_UPDATE] Etapa prévia: nenhuma escrita será feita (deferido ao Passo 4).');
       
       // Para o polling, usaremos o taskId
       const jobIds = [taskId];
