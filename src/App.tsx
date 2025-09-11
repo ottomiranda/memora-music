@@ -12,6 +12,7 @@ import PaymentModal from "./components/PaymentModal";
 import Index from "./pages/Index";
 import Criar from "./pages/Criar";
 import MinhasMusicas from "./pages/MinhasMusicas";
+import MusicaPublica from "./pages/MusicaPublica";
 import NotFound from "./pages/NotFound";
 import { useScrollToTop } from "./hooks/useScrollToTop";
 import { useUiStore } from "./store/uiStore";
@@ -40,6 +41,7 @@ const AppContent = () => {
         <Route path="/" element={<Index />} />
         <Route path="/criar" element={<Criar />} />
         <Route path="/minhas-musicas" element={<MinhasMusicas />} />
+        <Route path="/musica/:id" element={<MusicaPublica />} />
         {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
         <Route path="*" element={<NotFound />} />
       </Routes>

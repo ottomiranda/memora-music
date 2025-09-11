@@ -83,6 +83,7 @@ export const DatabaseSongSchema = z.object({
   prompt: z.string().nullable(),
   genre: z.string().nullable(),
   mood: z.string().nullable(),
+  image_url: z.string().nullable().optional(),
   audio_url_option1: z.string().nullable(),
   audio_url_option2: z.string().nullable(),
   task_id: z.string().nullable(),

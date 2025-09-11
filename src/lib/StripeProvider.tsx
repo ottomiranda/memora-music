@@ -55,6 +55,7 @@ export const StripeProvider: React.FC<StripeProviderProps> = ({ children }) => {
             borderRadius: '8px',
           },
         },
+        // Locale BR
         locale: 'pt-BR',
       }}
     >

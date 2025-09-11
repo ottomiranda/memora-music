@@ -198,6 +198,7 @@ async function autoSaveSongToDatabase(task: Record<string, unknown>, userId?: st
       mood: task.metadata?.mood || task.metadata?.emotionalTone || null,
       audioUrlOption1: task.audioClips[0]?.audio_url || null,
       audioUrlOption2: task.audioClips[1]?.audio_url || null,
+      imageUrl: task.audioClips[0]?.image_url || null,
       sunoTaskId: task.taskId
     };
     
@@ -287,6 +288,99 @@ async function fetchWithRetry(url: string, options: RequestInit, maxRetries: num
   // Se chegou aqui, todas as tentativas falharam
   console.log(`[FETCH RETRY] ❌ Todas as ${maxRetries} tentativas falharam`);
   throw lastError || new Error('Falha em todas as tentativas de fetch');
+}
+
+// Helper: compute public callback base URL for server
+function getCallbackBaseUrl(): string {
+  // Prefer explicit backend/public URL if set
+  const backend = process.env.BACKEND_URL || process.env.API_BASE_URL || process.env.RENDER_EXTERNAL_URL;
+  if (backend) return backend.replace(/\/$/, '');
+  const port = Number(process.env.PORT) || 3003;
+  return `http://localhost:${port}`;
+}
+
+// Global map para correlacionar tasks de cover -> música original
+declare global {
+  // eslint-disable-next-line no-var
+  var sunoCoverTasks: Map<string, { originalTaskId: string; songId?: string }>; // coverTaskId -> mapping
+}
+
+if (!global.sunoCoverTasks) {
+  global.sunoCoverTasks = new Map();
+}
+
+// Dispara geração de capa na Suno API
+async function triggerSunoCoverGeneration(originalTaskId: string, songId?: string) {
+  try {
+    if (!process.env.SUNO_API_KEY) {
+      console.log('[SUNO_COVER] SUNO_API_KEY ausente; ignorando geração de capa');
+      return;
+    }
+    const callbackUrl = `${getCallbackBaseUrl()}/api/suno-cover-callback`;
+    const resp = await fetchWithRetry(`${SUNO_API_BASE}/suno/cover/generate`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${process.env.SUNO_API_KEY}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ taskId: originalTaskId, callBackUrl: callbackUrl })
+    }, 3);
+    if (!resp.ok) {
+      const txt = await resp.text();
+      console.warn('[SUNO_COVER] Falha ao solicitar cover:', resp.status, txt);
+      return;
+    }
+    const data = await resp.json().catch(() => ({}));
+    const coverTaskId = data?.data?.taskId || data?.taskId;
+    if (coverTaskId) {
+      global.sunoCoverTasks.set(coverTaskId, { originalTaskId, songId });
+      console.log('[SUNO_COVER] Cover task criada:', coverTaskId, '-> original', originalTaskId, 'songId', songId);
+
+      // Fallback: iniciar polling do status do cover caso o callback não seja acessível publicamente
+      void pollCoverUntilReady(coverTaskId, originalTaskId);
+    } else {
+      console.log('[SUNO_COVER] Resposta sem taskId de cover:', data);
+    }
+  } catch (e) {
+    console.warn('[SUNO_COVER] Exceção ao disparar cover:', e);
+  }
+}
+
+// Polling do status do cover; atualiza o DB quando a imagem estiver pronta
+async function pollCoverUntilReady(coverTaskId: string, originalTaskId: string, timeoutMs = 2 * 60 * 1000, intervalMs = 5000) {
+  const start = Date.now();
+  while (Date.now() - start < timeoutMs) {
+    try {
+      const res = await fetchWithRetry(`${SUNO_API_BASE}/suno/cover/record-info?taskId=${encodeURIComponent(coverTaskId)}`, {
+        method: 'GET',
+        headers: { 'Authorization': `Bearer ${process.env.SUNO_API_KEY}` }
+      }, 2);
+      if (res.ok) {
+        const bodyText = await res.text();
+        let json: any = {};
+        try { json = JSON.parse(bodyText); } catch { json = {}; }
+        const status = json?.data?.status || json?.status;
+        const imageUrl = json?.data?.imageUrl || json?.data?.image_url || json?.imageUrl || json?.image_url;
+        console.log('[SUNO_COVER_POLL]', coverTaskId, 'status:', status, imageUrl ? 'img: yes' : 'img: no');
+        if ((status === 'SUCCESS' || status === 'COMPLETED') && imageUrl) {
+          const client = getSupabaseServiceClient();
+          const { error } = await client
+            .from('songs')
+            .update({ image_url: imageUrl, updated_at: new Date().toISOString() })
+            .eq('task_id', originalTaskId);
+          if (error) console.warn('[SUNO_COVER_POLL] Erro ao atualizar imagem no DB:', error);
+          else console.log('[SUNO_COVER_POLL] Imagem atualizada no DB para task_id', originalTaskId);
+          return;
+        }
+      } else {
+        console.warn('[SUNO_COVER_POLL] HTTP', res.status, 'coverTaskId', coverTaskId);
+      }
+    } catch (e) {
+      console.warn('[SUNO_COVER_POLL] Exceção no polling:', e);
+    }
+    await new Promise(r => setTimeout(r, intervalMs));
+  }
+  console.warn('[SUNO_COVER_POLL] Timeout aguardando capa para', coverTaskId);
 }
 
 // Função auxiliar para criar prompt da Etapa 1 (apenas letra e título)
@@ -1034,13 +1128,14 @@ router.post('/', async (req: Request, res: Response) => {
           };
           
           if (userId) {
-            insertData.user_id = userId;
+            // Em nossa tabela principal, o identificador do usuário autenticado é a coluna 'id'
+            insertData.id = userId;
           } else {
             insertData.device_id = deviceId;
           }
           
           const { error: insertError } = await supabaseClient
-            .from('anonymous_users')
+            .from('users')
             .insert([insertData]);
           
           if (insertError) {
@@ -1060,7 +1155,7 @@ router.post('/', async (req: Request, res: Response) => {
           };
           
           const { error: updateError } = await supabaseClient
-            .from('anonymous_users')
+            .from('users')
             .update(updateData)
             .eq('id', existingUser.id);
           
@@ -1310,6 +1405,14 @@ async function processTaskInBackground(taskId: string) {
             
             // Salvar automaticamente no banco de dados
             await autoSaveSongToDatabase(task, task.metadata.userId, task.metadata.guestId);
+
+            // Disparar geração de capa (cover) após salvar a música
+            try {
+              const savedSongId = (task.metadata as any)?.savedSongId as string | undefined;
+              await triggerSunoCoverGeneration(task.taskId, savedSongId);
+            } catch (e) {
+              console.warn('[SUNO_COVER] Falha ao disparar geração de capa:', e);
+            }
             
             break;
           }

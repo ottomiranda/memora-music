@@ -22,6 +22,7 @@ import paywallRoute from './routes/paywall.js';
 import downloadRoute from './routes/download.js';
 import stripeRoute from './routes/stripe.js';
 import supabasePublicRoute from './routes/supabase-public.js';
+import sunoCoverCallbackRoute from './routes/suno-cover-callback.js';
 
 // Criar rota de health check como Express Router
 import { Router } from 'express';
@@ -131,6 +132,7 @@ app.use('/api/user', paywallRoute);
 app.use('/api/download', downloadRoute);
 app.use('/api/stripe', stripeRoute);
 app.use('/api/supabase', supabasePublicRoute);
+app.use('/api/suno-cover-callback', sunoCoverCallbackRoute);
 
 console.log('📋 Rotas registradas:');
 console.log('  - /api/health');
@@ -144,6 +146,7 @@ console.log('  - /api/user (paywall)');
 console.log('  - /api/download');
 console.log('  - /api/stripe');
 console.log('  - /api/supabase');
+console.log('  - /api/suno-cover-callback');
 console.log('🔄 Sistema de salvamento automático ativo');
 
 // Rota de teste simples

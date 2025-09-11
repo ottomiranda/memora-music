@@ -42,6 +42,7 @@ export class SongService {
           prompt: songData.prompt || null,
           genre: songData.genre || null,
           mood: songData.mood || null,
+          image_url: songData.imageUrl || null,
           audio_url_option1: songData.audioUrlOption1 || null,
           audio_url_option2: songData.audioUrlOption2 || null,
           task_id: songData.taskId || null,
@@ -62,6 +63,66 @@ export class SongService {
       return this.mapDbToSong(data);
     } catch (error) {
       console.error('Error in createSong:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Update song fields (title/lyrics) owned by user or guest
+   */
+  static async updateSong(songId, fields, identity = { userId: null, guestId: null }) {
+    try {
+      const updates = {};
+      if (typeof fields?.title === 'string') updates['title'] = sanitizeSongTitle(fields.title);
+      if (typeof fields?.lyrics === 'string') updates['lyrics'] = fields.lyrics;
+      if (Object.keys(updates).length === 0) {
+        return null;
+      }
+
+      const client = getSupabaseClient();
+      let query = client.from('songs').update({
+        ...updates,
+        updated_at: new Date().toISOString(),
+      }).eq('id', songId);
+
+      if (identity?.userId) {
+        query = query.eq('user_id', identity.userId);
+      } else if (identity?.guestId) {
+        query = query.eq('guest_id', identity.guestId);
+      } else {
+        // No identity: refuse
+        throw new Error('Missing identity for update');
+      }
+
+      const { data, error } = await query.select('*').maybeSingle();
+      if (error) throw error;
+      if (!data) return null;
+      return this.mapDbToSong(data);
+    } catch (error) {
+      console.error('Error in updateSong:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Delete a song if owned by user or guest
+   */
+  static async deleteSong(songId, identity = { userId: null, guestId: null }) {
+    try {
+      const client = getSupabaseClient();
+      let query = client.from('songs').delete().eq('id', songId);
+      if (identity?.userId) {
+        query = query.eq('user_id', identity.userId);
+      } else if (identity?.guestId) {
+        query = query.eq('guest_id', identity.guestId);
+      } else {
+        throw new Error('Missing identity for delete');
+      }
+      const { data, error } = await query.select('id');
+      if (error) throw error;
+      return Array.isArray(data) && data.length > 0;
+    } catch (error) {
+      console.error('Error in deleteSong:', error);
       throw error;
     }
   }
@@ -216,6 +277,26 @@ export class SongService {
       return this.mapDbToSong(data);
     } catch (error) {
       console.error('Error in getSongByTaskId:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Get song by ID (server-side, service role)
+   */
+  static async getSongById(songId) {
+    try {
+      const { data, error } = await getSupabaseClient()
+        .from('songs')
+        .select('*')
+        .eq('id', songId)
+        .maybeSingle();
+
+      if (error) throw error;
+      if (!data) return null;
+      return this.mapDbToSong(data);
+    } catch (error) {
+      console.error('Error in getSongById:', error);
       throw error;
     }
   }
@@ -409,6 +490,7 @@ export class SongService {
         prompt: validatedRow.prompt,
         genre: validatedRow.genre,
         mood: validatedRow.mood,
+        imageUrl: validatedRow.image_url || null,
         audioUrlOption1: validatedRow.audio_url_option1,
         audioUrlOption2: validatedRow.audio_url_option2,
         sunoTaskId: validatedRow.task_id,

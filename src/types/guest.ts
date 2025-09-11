@@ -16,10 +16,15 @@ export interface Song {
   id: string;
   title: string;
   audioUrl: string;
+  audioUrlOption1?: string;
+  audioUrlOption2?: string;
   imageUrl?: string;
   lyrics?: string;
   genre?: string;
   mood?: string;
+  artist?: string;
+  duration?: number;
+  status?: 'pending' | 'processing' | 'completed' | 'failed' | string;
   userId?: string;
   guestId?: string;
   createdAt: string;

@@ -28,7 +28,9 @@
     "test": "vitest",
     "test:run": "vitest run",
     "test:ui": "vitest --ui",
-    "test:coverage": "vitest run --coverage"
+    "test:coverage": "vitest run --coverage",
+    "stripe:listen": "stripe listen --forward-to localhost:3003/api/stripe/webhook",
+    "simulate:boleto": "tsx scripts/simulate-boleto.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",
@@ -97,7 +99,8 @@
     "vaul": "^0.9.9",
     "vite-tsconfig-paths": "^5.1.4",
     "zod": "^3.25.76",
-    "zustand": "^5.0.8"
+    "zustand": "^5.0.8",
+    "lyrica": "^1.0.5"
   },
   "devDependencies": {
     "@eslint/js": "^9.32.0",

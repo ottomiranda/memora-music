@@ -37,7 +37,8 @@ router.post('/', optionalAuthMiddleware, async (req, res) => {
     // Preferir userId autenticado via Supabase Auth (JWT)
     let userId = req.user?.id || null;
     let email = req.user?.email || null;
-    let name = req.body.name || null;
+    // Preferir o nome vindo do usuário autenticado (metadata) e cair para body
+    let name = (req.user && req.user.name) || req.body.name || null;
 
     // Fallback de desenvolvimento: aceitar userId do body SE for UUID válido
     if (!userId && req.body.userId && typeof req.body.userId === 'string') {

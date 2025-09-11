@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Heart, Menu, X } from "lucide-react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Button } from "../ui/button";
 import { useAuthStore } from "../../store/authStore";
 import { useUiStore } from "../../store/uiStore";
@@ -9,11 +9,21 @@ const Navbar = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const location = useLocation();
+  const navigate = useNavigate();
   const isHomePage = location.pathname === '/';
   
   // Auth state
   const { isLoggedIn, user, logout } = useAuthStore();
   const { showAuthPopup } = useUiStore();
+
+  const goToDashboard = () => {
+    if (isLoggedIn) {
+      navigate('/minhas-musicas');
+    } else {
+      showAuthPopup(() => navigate('/minhas-musicas'));
+    }
+    setIsMobileMenuOpen(false);
+  };
 
   useEffect(() => {
     const handleScroll = () => {
@@ -59,6 +69,13 @@ const Navbar = () => {
             >
               Home
             </Link>
+            <Button
+              onClick={goToDashboard}
+              variant="ghost"
+              className={`${isHomePage && !isScrolled ? 'text-white hover:text-memora-gold' : 'text-memora-gray hover:text-memora-primary'} transition-colors duration-200 font-medium p-0 h-auto`}
+            >
+              Minhas Músicas
+            </Button>
             <Button
               onClick={() => scrollToSection("como-funciona")}
               variant="ghost"
@@ -146,6 +163,13 @@ const Navbar = () => {
               >
                 Home
               </Link>
+              <Button
+                onClick={goToDashboard}
+                variant="ghost"
+                className="block w-full text-left px-3 py-2 text-memora-gray hover:text-memora-primary transition-colors duration-200 font-medium h-auto justify-start"
+              >
+                Minhas Músicas
+              </Button>
               <Button
                 onClick={() => scrollToSection("como-funciona")}
                 variant="ghost"

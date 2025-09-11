@@ -1,9 +1,11 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { PaymentElement, useStripe, useElements } from '@stripe/react-stripe-js';
 import { AlertCircle, CheckCircle, CreditCard } from 'lucide-react';
+import { useAuthStore } from '@/store/authStore';
 
 interface StripePaymentFormProps {
   amount: number;
+  clientSecret?: string;
   onSuccess: (paymentIntentId: string) => void;
   onError: (error: string) => void;
   disabled?: boolean;
@@ -11,12 +13,14 @@ interface StripePaymentFormProps {
 
 const StripePaymentForm: React.FC<StripePaymentFormProps> = ({
   amount,
+  clientSecret,
   onSuccess,
   onError,
   disabled = false
 }) => {
   const stripe = useStripe();
   const elements = useElements();
+  const { user } = useAuthStore();
   const [isProcessing, setIsProcessing] = useState(false);
   const [paymentStatus, setPaymentStatus] = useState<'idle' | 'processing' | 'succeeded' | 'failed'>('idle');
   const [errorMessage, setErrorMessage] = useState<string>('');
@@ -47,12 +51,21 @@ const StripePaymentForm: React.FC<StripePaymentFormProps> = ({
       if (error) {
         console.error('❌ Erro no pagamento:', error);
         setPaymentStatus('failed');
-        setErrorMessage(error.message || 'Erro no pagamento');
+        // Mensagem mais amigável para CPF/CNPJ inválido no Boleto
+        if ((error as any)?.code === 'tax_id_invalid') {
+          setErrorMessage('CPF/CNPJ inválido. Confira o número informado. Para testes, utilize um CPF/CNPJ válido.');
+        } else {
+          setErrorMessage((error as any)?.message || 'Erro no pagamento');
+        }
         onError(error.message || 'Erro no pagamento');
       } else if (paymentIntent && paymentIntent.status === 'succeeded') {
         console.log('✅ Pagamento confirmado:', paymentIntent);
         setPaymentStatus('succeeded');
         onSuccess(paymentIntent.id);
+      } else if (paymentIntent && (paymentIntent.status === 'processing' || paymentIntent.status === 'requires_action')) {
+        console.log('⏳ Pagamento em processamento/ação requerida:', paymentIntent.status);
+        setPaymentStatus('processing');
+        setErrorMessage('Pagamento em processamento. Para Boleto/PIX, aguarde a confirmação. Você será liberado após a confirmação automática.');
       } else {
         console.log('⚠️ Status do pagamento:', paymentIntent?.status);
         setPaymentStatus('failed');
@@ -80,6 +93,28 @@ const StripePaymentForm: React.FC<StripePaymentFormProps> = ({
     }).format(cents / 100);
   };
 
+  const paymentElementOptions = useMemo(() => ({
+    // Reordena métodos no componente (Stripe ignora no Elements root)
+    paymentMethodOrder: ['pix', 'card', 'boleto'],
+    defaultValues: {
+      billingDetails: {
+        name: user?.name || undefined,
+        email: user?.email || undefined,
+        address: { country: 'BR' as const },
+      },
+    },
+    fields: {
+      billingDetails: {
+        name: 'auto' as const,
+        email: 'auto' as const,
+        address: {
+          // Permite que o Payment Element envie o país (usa defaultValues BR)
+          country: 'auto' as const,
+        },
+      },
+    },
+  }), [user?.name, user?.email]);
+
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       <div className="space-y-4">
@@ -95,7 +130,7 @@ const StripePaymentForm: React.FC<StripePaymentFormProps> = ({
             <CreditCard className="h-5 w-5 text-gray-500" />
             <span className="text-sm font-medium text-gray-700">Método de Pagamento</span>
           </div>
-          <PaymentElement />
+          <PaymentElement options={paymentElementOptions} />
         </div>
 
         {errorMessage && (

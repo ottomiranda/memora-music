@@ -5,6 +5,7 @@ import { toast } from 'sonner';
 import StepIndicator from "@/components/StepIndicator";
 import MusicPreview from "@/components/MusicPreview";
 import ValidationPopup from "@/components/ValidationPopup";
+import HighlightedTextarea from "@/components/HighlightedTextarea";
 import GenreSelector from "@/components/GenreSelector";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -13,7 +14,7 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Play, Download, RotateCcw, ArrowLeft, ArrowRight, Music, Sparkles, Edit, Volume2, Loader2, Wand2, RefreshCw, Pause } from "lucide-react";
+import { Play, Download, RotateCcw, ArrowLeft, ArrowRight, Music, Sparkles, Edit, Volume2, Loader2, Wand2, RefreshCw, Pause, Check, Search, X } from "lucide-react";
 import { useMusicStore } from '@/store/musicStore';
 import { useAuthStore } from '@/store/authStore';
 import { useUiStore } from '@/store/uiStore';
@@ -97,6 +98,7 @@ export default function Criar() {
     isValidationPopupVisible,
     // Nova função centralizada
     startNewCreationFlow,
+    generatedLyrics,
   } = musicStore;
 
   // Hook de navegação
@@ -107,6 +109,14 @@ export default function Criar() {
 
   // Estados locais apenas para UI
   const [validationErrors, setValidationErrors] = useState({});
+  // Edição de letras
+  const [isEditingLyrics, setIsEditingLyrics] = useState(false);
+  const [lyricsDraft, setLyricsDraft] = useState("");
+  const [saveHint, setSaveHint] = useState<"idle" | "saving" | "saved">("idle");
+  const [findText, setFindText] = useState("");
+  // Campo de busca para destaque
+  const [replaceText, setReplaceText] = useState(""); // deprecated (mantido para compat, não exibido)
+  const saveTimerRef = React.useRef<number | null>(null);
 
 
 
@@ -127,6 +137,43 @@ export default function Criar() {
   useEffect(() => {
     console.log(`[Criar.tsx] Componente re-renderizado. currentStep agora é: ${currentStep}`);
   }, [currentStep]);
+
+  // Sincronizar rascunho quando entramos na etapa de letra
+  useEffect(() => {
+    if (currentStep === 1 && formData.lyrics) {
+      setLyricsDraft(formData.lyrics);
+    }
+  }, [currentStep, formData.lyrics]);
+
+  // Auto‑save com debounce de 600ms
+  const scheduleAutoSave = (nextLyrics: string) => {
+    setSaveHint("saving");
+    if (saveTimerRef.current) window.clearTimeout(saveTimerRef.current);
+    saveTimerRef.current = window.setTimeout(() => {
+      updateFormData({ lyrics: nextLyrics });
+      setSaveHint("saved");
+      window.setTimeout(() => setSaveHint("idle"), 1500);
+    }, 600);
+  };
+
+  // Util: escapar HTML e realçar termos encontrados
+  const escapeHtml = (str: string) => str
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+
+  const getHighlightHtml = (text: string, query: string) => {
+    const safe = escapeHtml(text || "");
+    const q = (query || "").trim();
+    if (!q) return safe;
+    // Permitir múltiplas palavras separadas por espaço
+    const parts = q.split(/\s+/).filter(w => w.length > 0).map(w => w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
+    if (parts.length === 0) return safe;
+    const re = new RegExp(`(${parts.join('|')})`, 'gi');
+    return safe.replace(re, '<mark>$1</mark>');
+  };
 
 
 
@@ -404,14 +451,80 @@ export default function Criar() {
 
               {formData.lyrics && !isLoading && (
                 <div className="space-y-4">
-                  <div className="bg-muted p-6 rounded-lg">
-                    <h3 className="font-heading font-semibold mb-3 flex items-center gap-2">
-                      <Music className="w-5 h-5 text-primary" />
-                      Sua Letra Personalizada
-                    </h3>
-                    <pre className="whitespace-pre-wrap text-sm leading-relaxed font-medium">
-                      {formData.lyrics}
-                    </pre>
+                  <div className="bg-muted p-4 sm:p-6 rounded-lg">
+                    <div className="flex items-start justify-between mb-3">
+                      <h3 className="font-heading font-semibold flex items-center gap-2">
+                        <Music className="w-5 h-5 text-primary" />
+                        Sua Letra Personalizada
+                      </h3>
+                      <button
+                        type="button"
+                        onClick={() => setIsEditingLyrics((v) => !v)}
+                        className="inline-flex items-center gap-2 text-sm px-3 py-1.5 rounded-md bg-white/70 hover:bg-white shadow"
+                        aria-label={isEditingLyrics ? 'Fechar edição' : 'Editar letra'}
+                      >
+                        {isEditingLyrics ? <X className="w-4 h-4" /> : <Edit className="w-4 h-4" />}
+                        {isEditingLyrics ? 'Fechar' : 'Editar'}
+                      </button>
+                    </div>
+
+                    {!isEditingLyrics ? (
+                      <pre className="whitespace-pre-wrap text-sm leading-relaxed font-medium" dangerouslySetInnerHTML={{ __html: getHighlightHtml(formData.lyrics || '', findText) }} />
+                    ) : (
+                      <div className="space-y-3">
+                        {/* Toolbar básica */}
+                        <div className="flex flex-col sm:flex-row sm:items-end gap-3 bg-white/60 rounded-md p-3">
+                          <div className="flex-1 grid grid-cols-1 sm:grid-cols-3 gap-2">
+                            <div className="sm:col-span-3">
+                              <label className="text-xs font-medium text-muted-foreground flex items-center gap-1"><Search className="w-3 h-3" /> Localizar</label>
+                              <div className="relative">
+                                <input
+                                  value={findText}
+                                  onChange={(e) => setFindText(e.target.value)}
+                                  placeholder="Texto a localizar"
+                                  className="w-full pr-9 pl-3 py-2 rounded border"
+                                />
+                                {findText && (
+                                  <button
+                                    type="button"
+                                    aria-label="Limpar busca"
+                                    onClick={() => setFindText("")}
+                                    className="absolute right-2 top-1/2 -translate-y-1/2 p-1 rounded hover:bg-black/5"
+                                  >
+                                    <X className="w-3.5 h-3.5" />
+                                  </button>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                          <div className="text-xs text-muted-foreground flex items-center gap-3">
+                            <button
+                              type="button"
+                              className="px-2.5 py-1 rounded-md bg-white hover:bg-white/90 border text-xs font-medium"
+                              onClick={() => {
+                                const base = generatedLyrics || formData.lyrics || '';
+                                setLyricsDraft(base);
+                                scheduleAutoSave(base);
+                              }}
+                            >
+                              <RotateCcw className="w-3 h-3 inline mr-1" />
+                              Restaurar original
+                            </button>
+                            {saveHint === 'saving' && <Loader2 className="w-3 h-3 animate-spin" />}
+                            {saveHint === 'saved' && <Check className="w-3 h-3 text-green-600" />}
+                            {saveHint === 'saving' ? 'Salvando…' : saveHint === 'saved' ? 'Alterações salvas' : 'Auto‑salvamento ativado'}
+                          </div>
+                        </div>
+
+                        <HighlightedTextarea
+                          value={lyricsDraft}
+                          onChange={(val) => { setLyricsDraft(val); scheduleAutoSave(val); }}
+                          rows={14}
+                          highlightQuery={findText}
+                          className="w-full"
+                        />
+                      </div>
+                    )}
                   </div>
                   
                   <div className="flex flex-col sm:flex-row gap-3">
@@ -428,7 +541,18 @@ export default function Criar() {
                       )}
                       Gerar Nova Letra
                     </Button>
-                    <Button variant="default" onClick={nextStep} className="flex-1">
+                    <Button
+                      variant="default"
+                      onClick={() => {
+                        // Garante flush do rascunho antes de avançar
+                        if (lyricsDraft && lyricsDraft !== formData.lyrics) {
+                          updateFormData({ lyrics: lyricsDraft });
+                        }
+                        nextStep();
+                      }}
+                      className="flex-1"
+                      disabled={isEditingLyrics}
+                    >
                       <ArrowRight className="w-4 h-4" />
                       Aprovar e Continuar
                     </Button>

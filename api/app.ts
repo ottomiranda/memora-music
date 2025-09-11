@@ -14,6 +14,7 @@ import saveFeedbackRoutes from './routes/save-feedback.js';
 import paywallRoutes from './routes/paywall.js';
 import stripeRoutes from './routes/stripe.js';
 import supabasePublicRoutes from './routes/supabase-public.js';
+import sunoCoverCallbackRoute from './routes/suno-cover-callback.js';
 
 // for esm mode
 const __filename = fileURLToPath(import.meta.url);
@@ -85,6 +86,7 @@ app.use('/api/save-feedback', saveFeedbackRoutes);
 app.use('/api/user', paywallRoutes);
 app.use('/api/stripe', stripeRoutes);
 app.use('/api/supabase', supabasePublicRoutes);
+app.use('/api/suno-cover-callback', sunoCoverCallbackRoute);
 
 /**
  * health

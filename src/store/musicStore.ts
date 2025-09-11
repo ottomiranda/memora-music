@@ -579,15 +579,11 @@ export const useMusicStore = create<MusicStore>()(
     musicStore.reset();
     
     try {
-      // Passo 2: SEMPRE verifica o status no backend.
-      // A API já sabe lidar com token vs. deviceId/IP.
-      // LÓGICA TEMPORÁRIA PARA TESTE: Forçamos a chamada a agir como um "convidado"
-      // mesmo que o authStore pense que está logado. Isso nos permite testar o fluxo de deviceId/IP.
+      // Passo 2: Verifica o status no backend.
+      // A apiRequest já injeta automaticamente Authorization (se logado)
+      // e X-Device-ID (fingerprint), então não sobrescreveremos os headers.
       const response = await apiRequest('/api/user/creation-status', { 
-        method: 'GET',
-        headers: {
-          'Authorization': '' // Envia um header de autorização vazio
-        }
+        method: 'GET'
       });
 
       // NOVA LÓGICA (Robusta): Verifica se a propriedade 'isFree' existe diretamente no objeto de resposta

@@ -21,7 +21,8 @@ const MusicPreview: React.FC<MusicPreviewProps> = ({ clip, index }) => {
 
   const handleTimeUpdate = () => {
     const audio = audioRef.current;
-    if (!audio || isMvpFlowComplete) return;
+    // Usuários logados não sofrem gating de 45s
+    if (!audio || isMvpFlowComplete || isLoggedIn) return;
 
     const currentTime = audio.currentTime;
 
@@ -50,8 +51,10 @@ const MusicPreview: React.FC<MusicPreviewProps> = ({ clip, index }) => {
         fadeOutIntervalRef.current = null;
       }
       
-      // Exibe o popup de validação
-      setValidationPopupVisible(true);
+      // Exibe o popup de validação somente para convidados (não logados)
+      if (!isLoggedIn) {
+        setValidationPopupVisible(true);
+      }
     }
   };
 
@@ -136,8 +139,10 @@ const MusicPreview: React.FC<MusicPreviewProps> = ({ clip, index }) => {
             Seu navegador não suporta o elemento de áudio.
           </audio>
 
-          {/* Botão de download - só aparece se MVP flow estiver completo */}
-          {isMvpFlowComplete && (
+          {/* Botão de download
+              - Convidado: após completar MVP flow
+              - Logado: sempre visível */}
+          {(isMvpFlowComplete || isLoggedIn) && (
             <button
               onClick={handleDownloadClick}
               className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors duration-200 font-medium"
@@ -147,8 +152,8 @@ const MusicPreview: React.FC<MusicPreviewProps> = ({ clip, index }) => {
             </button>
           )}
 
-          {/* Mensagem quando MVP flow não está completo */}
-          {!isMvpFlowComplete && (
+          {/* Mensagem quando MVP flow não está completo (somente convidados) */}
+          {!isMvpFlowComplete && !isLoggedIn && (
             <div className="text-sm text-gray-500 italic">
               Ouça a prévia completa para desbloquear o download
             </div>

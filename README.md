@@ -198,6 +198,52 @@ npm run deploy:quick
 SUPABASE_ACCESS_TOKEN=seu_supabase_token
 ```
 
+## 💳 Stripe Webhook (BR — Boleto/PIX) — Checklist
+
+Para Boleto e PIX, confirme pagamentos via webhooks (recomendação Stripe):
+
+- Habilite métodos no Dashboard do Stripe:
+  - Payments → Payment methods → ative Boleto e, se desejar, PIX (modo Test).
+- Confirme variáveis no `.env`:
+  - `STRIPE_SECRET_KEY`, `STRIPE_PUBLISHABLE_KEY`
+  - `STRIPE_WEBHOOK_SECRET` (preencha após iniciar o Stripe CLI)
+- Suba o backend local (porta do `.env`, ex.: `3003`):
+  - `npm run server:dev`
+- Instale e faça login no Stripe CLI:
+  - macOS: `brew install stripe/stripe-cli/stripe`
+  - Login: `stripe login`
+- Ouça webhooks e copie o “Webhook signing secret” exibido (whsec_...):
+  - `npm run stripe:listen`
+  - Cole em `.env` como `STRIPE_WEBHOOK_SECRET` e reinicie o backend.
+- Dispare eventos de teste:
+  - `stripe trigger payment_intent.processing`
+  - `stripe trigger payment_intent.succeeded`
+
+Fluxo esperado:
+- Cartão: geralmente `succeeded` imediato, liberação no ato.
+- Boleto/PIX: primeiro `processing`; liberação acontece ao receber `payment_intent.succeeded` no webhook.
+
+Endpoints úteis:
+- Webhook: `POST /api/stripe/webhook`
+- Criar PaymentIntent: `POST /api/stripe/create-payment-intent`
+- Finalizar (apenas `succeeded`): `POST /api/stripe/finalize`
+- Status de criação: `GET /api/user/creation-status`
+
+### Simular pagamento de Boleto (modo super simples)
+
+Opção A — Voucher hospedado do Stripe:
+- Gere o PaymentIntent pelo app e escolha Boleto no Payment Element.
+- No voucher aberto pelo Stripe, clique em “Simular pagamento de teste”.
+- Com `npm run stripe:listen` ativo, o webhook `payment_intent.succeeded` vai liberar a cota.
+
+Opção B — Um comando com Stripe CLI (sem abrir voucher):
+- Em um terminal: `npm run stripe:listen`
+- Em outro terminal, rode um dos comandos abaixo (use seu `userId` autenticado OU o `deviceId`):
+  - `npm run simulate:boleto -- --user 65e94b59-59ed-4288-bc8b-331c1812fadc`
+  - `npm run simulate:boleto -- --device c1283ca7-2118-4fa5-8545-e936fe253922`
+
+Esse comando dispara `payment_intent.processing` e `payment_intent.succeeded` com metadados correspondentes; nosso webhook reseta a cota por `userId`/`deviceId`, liberando imediatamente o paywall em desenvolvimento.
+
 #### Produção (adicionar aos secrets acima)
 ```
 LASTFM_API_KEY=sua_lastfm_api_key

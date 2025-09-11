@@ -56,10 +56,39 @@ export const API_ENDPOINTS = {
 // Funções de API específicas para o sistema de músicas
 export const songsApi = {
   // Listar músicas (funciona com token ou guestId)
-  list: () => apiRequest(API_ENDPOINTS.SONGS),
+  list: async () => {
+    // Determinar o identificador a ser enviado na query, conforme exigido pelo backend
+    const { useAuthStore } = await import('../store/authStore');
+    const { isLoggedIn, user } = useAuthStore.getState();
+    let endpoint = API_ENDPOINTS.SONGS;
+    if (isLoggedIn && user?.id) {
+      endpoint += `?userId=${encodeURIComponent(user.id)}`;
+    } else {
+      const { getOrCreateGuestId } = await import('../utils/guest');
+      const guestId = getOrCreateGuestId();
+      endpoint += `?guestId=${encodeURIComponent(guestId)}`;
+    }
+    return apiRequest(endpoint);
+  },
   
   // Obter uma música específica
   get: (id: string) => apiRequest(`${API_ENDPOINTS.SONGS}/${id}`),
+
+  // Obter dados públicos de uma música (para compartilhamento)
+  getPublic: (id: string) => apiRequest(`${API_ENDPOINTS.SONGS}/${id}/public`),
+
+  // Atualizar uma música (ex.: título/lyrics)
+  update: (id: string, payload: { title?: string; lyrics?: string }) =>
+    apiRequest(`${API_ENDPOINTS.SONGS}/${id}`, {
+      method: 'PUT',
+      body: payload,
+    }),
+
+  // Excluir uma música
+  remove: (id: string) =>
+    apiRequest(`${API_ENDPOINTS.SONGS}/${id}`, {
+      method: 'DELETE',
+    }),
 };
 
 // Funções de API para migração de dados

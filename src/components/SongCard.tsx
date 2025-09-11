@@ -1,13 +1,16 @@
 import React from 'react';
-import { Play, Pause, Music, Clock, User } from 'lucide-react';
+import { Play, Pause, Music, Clock, User, Download } from 'lucide-react';
 import { Song } from '../types/guest';
+import { useAudioPlayerStore } from '@/store/audioPlayerStore';
 
 interface SongCardProps {
   song: Song;
   isPlaying?: boolean;
-  onPlay?: (song: Song) => void;
+  onPlay?: (song: Song, urlOverride?: string, versionLabel?: 'A' | 'B') => void;
   onPause?: () => void;
   className?: string;
+  onDownloadVersion?: (label: string, url: string) => void;
+  playingVersionLabel?: 'A' | 'B' | undefined;
 }
 
 export const SongCard: React.FC<SongCardProps> = ({
@@ -15,13 +18,17 @@ export const SongCard: React.FC<SongCardProps> = ({
   isPlaying = false,
   onPlay,
   onPause,
-  className = ''
+  className = '',
+  onDownloadVersion,
+  playingVersionLabel,
 }) => {
+  const { currentTime, duration } = useAudioPlayerStore();
+
   const handlePlayPause = () => {
     if (isPlaying) {
       onPause?.();
     } else {
-      onPlay?.(song);
+      onPlay?.(song, (song as any).audioUrlOption1 || song.audioUrl, 'A');
     }
   };
 
@@ -41,7 +48,15 @@ export const SongCard: React.FC<SongCardProps> = ({
   };
 
   return (
-    <div className={`bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow duration-200 p-4 ${className}`}>
+    <div className={`relative overflow-hidden rounded-lg shadow-md hover:shadow-lg transition-shadow duration-200 ${className}`}>
+      {song.imageUrl && (
+        <div
+          className="absolute inset-0 bg-cover bg-center opacity-20"
+          style={{ backgroundImage: `url(${song.imageUrl})` }}
+          aria-hidden="true"
+        />
+      )}
+      <div className="relative p-4 bg-white/90">
       {/* Header com título e botão de play */}
       <div className="flex items-start justify-between mb-3">
         <div className="flex-1 min-w-0">
@@ -84,6 +99,68 @@ export const SongCard: React.FC<SongCardProps> = ({
             <span>{formatDuration(song.duration)}</span>
           </div>
         )}
+
+        {/* Versões geradas (A/B) */}
+        {((song as any).audioUrlOption1 || (song as any).audioUrlOption2) && (
+          <div className="mt-2 space-y-2">
+            {(song as any).audioUrlOption1 && (
+              <div className="flex items-center justify-between">
+                <div className="text-sm text-gray-700 font-medium flex items-center gap-2">
+                  Versão A
+                  {isPlaying && playingVersionLabel === 'A' && (
+                    <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-blue-100 text-blue-700">Tocando</span>
+                  )}
+                </div>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => onPlay?.(song, (song as any).audioUrlOption1, 'A')}
+                    className={`px-2 py-1 text-xs rounded-md ${isPlaying && playingVersionLabel === 'A' ? 'bg-blue-700 text-white' : 'bg-blue-600 text-white hover:bg-blue-700'}`}
+                    aria-label="Reproduzir versão A"
+                  >
+                    <Play className="w-3 h-3 inline mr-1" /> Reproduzir
+                  </button>
+                  {onDownloadVersion && (
+                    <button
+                      onClick={() => onDownloadVersion('A', (song as any).audioUrlOption1)}
+                      className="px-2 py-1 text-xs rounded-md bg-gray-100 text-gray-800 hover:bg-gray-200"
+                      aria-label="Baixar versão A"
+                    >
+                      <Download className="w-3 h-3 inline mr-1" /> Baixar
+                    </button>
+                  )}
+                </div>
+              </div>
+            )}
+            {(song as any).audioUrlOption2 && (
+              <div className="flex items-center justify-between">
+                <div className="text-sm text-gray-700 font-medium flex items-center gap-2">
+                  Versão B
+                  {isPlaying && playingVersionLabel === 'B' && (
+                    <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-blue-100 text-blue-700">Tocando</span>
+                  )}
+                </div>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => onPlay?.(song, (song as any).audioUrlOption2, 'B')}
+                    className={`px-2 py-1 text-xs rounded-md ${isPlaying && playingVersionLabel === 'B' ? 'bg-blue-700 text-white' : 'bg-blue-600 text-white hover:bg-blue-700'}`}
+                    aria-label="Reproduzir versão B"
+                  >
+                    <Play className="w-3 h-3 inline mr-1" /> Reproduzir
+                  </button>
+                  {onDownloadVersion && (
+                    <button
+                      onClick={() => onDownloadVersion('B', (song as any).audioUrlOption2)}
+                      className="px-2 py-1 text-xs rounded-md bg-gray-100 text-gray-800 hover:bg-gray-200"
+                      aria-label="Baixar versão B"
+                    >
+                      <Download className="w-3 h-3 inline mr-1" /> Baixar
+                    </button>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Footer com data de criação */}
@@ -106,18 +183,24 @@ export const SongCard: React.FC<SongCardProps> = ({
         </div>
       </div>
 
-      {/* Indicador visual quando está tocando */}
+      {/* Indicador de progresso quando está tocando */}
       {isPlaying && (
         <div className="mt-3">
-          <div className="flex items-center space-x-1">
-            <div className="w-1 h-4 bg-blue-600 rounded-full animate-pulse"></div>
-            <div className="w-1 h-3 bg-blue-600 rounded-full animate-pulse" style={{ animationDelay: '0.1s' }}></div>
-            <div className="w-1 h-5 bg-blue-600 rounded-full animate-pulse" style={{ animationDelay: '0.2s' }}></div>
-            <div className="w-1 h-2 bg-blue-600 rounded-full animate-pulse" style={{ animationDelay: '0.3s' }}></div>
-            <span className="text-xs text-blue-600 font-medium ml-2">Reproduzindo...</span>
+          <div className="flex items-center justify-between text-xs text-blue-700 mb-1">
+            <span className="font-medium">Reproduzindo{playingVersionLabel ? ` · Versão ${playingVersionLabel}` : ''}</span>
+            <span>
+              {formatDuration(Math.floor(currentTime || 0))} / {formatDuration(Math.floor(duration || 0))}
+            </span>
+          </div>
+          <div className="w-full h-2 bg-blue-100 rounded-full overflow-hidden">
+            <div
+              className="h-full bg-blue-600 transition-[width] duration-200"
+              style={{ width: `${Math.min(100, Math.max(0, (currentTime && duration ? (currentTime / Math.max(1, duration)) * 100 : 0)))}%` }}
+            />
           </div>
         </div>
       )}
+      </div>
     </div>
   );
 };

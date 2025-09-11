@@ -1,6 +1,7 @@
 import { ReactNode } from "react";
 import { useUiStore } from "@/store/uiStore";
 import AuthModal from "./memora/AuthModal";
+import GlobalAudioPlayer from "./GlobalAudioPlayer";
 
 interface LayoutProps {
   children: ReactNode;
@@ -13,6 +14,9 @@ const Layout = ({ children }: LayoutProps) => {
     <>
       {/* O conteúdo da página atual será renderizado aqui */}
       {children}
+
+      {/* Player global persistente */}
+      <GlobalAudioPlayer />
 
       {/* O Modal agora vive aqui, disponível para todas as páginas */}
       <AuthModal 

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useUiStore } from '../store/uiStore';
 import { X, CreditCard, Star, Zap } from 'lucide-react';
 import { Elements } from '@stripe/react-stripe-js';
@@ -26,10 +26,13 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({ isOpen, onClose, onC
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [stripePromise, setStripePromise] = useState<Promise<Stripe | null> | null>(null);
   const [publishableKey, setPublishableKey] = useState<string | null>(null);
+  const openedRef = useRef<boolean>(false);
   
   // Estados para gerenciar o clientSecret
   const [clientSecret, setClientSecret] = useState<string | null>(null);
   const [isLoadingPayment, setIsLoadingPayment] = useState(false);
+  const [pending, setPending] = useState<Array<{ payment_intent_id: string; amount: number; currency: string; voucher_url?: string | null }>>([]);
+  const pollingRef = useRef<ReturnType<typeof setInterval> | null>(null);
   
   // Verificação robusta da configuração do Stripe
   const envPublishable = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY;
@@ -126,6 +129,64 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({ isOpen, onClose, onC
       console.debug('[PAYMENT_MODAL] Stripe configurado:', !!stripePromise);
     }
   }, [isOpen, envPublishable, publishableKey, stripePromise]);
+
+  // Resetar estado visual ao abrir o modal novamente (evita reabrir direto no formulário)
+  useEffect(() => {
+    if (isOpen && !openedRef.current) {
+      setShowPaymentForm(false);
+      setClientSecret(null);
+      setIsLoadingPayment(false);
+      setErrorMessage(null);
+    }
+    openedRef.current = isOpen;
+  }, [isOpen]);
+
+  // Buscar pagamentos pendentes ao abrir o modal
+  useEffect(() => {
+    const fetchPending = async () => {
+      try {
+        if (!isOpen) return;
+        const headers: Record<string, string> = { 'Content-Type': 'application/json', 'X-Device-ID': localStorage.getItem('deviceId') || '' };
+        if (token) headers['Authorization'] = `Bearer ${token}`;
+        const resp = await fetch(`${API_BASE_URL}/api/stripe/pending`, { headers });
+        if (!resp.ok) return;
+        const data = await resp.json();
+        setPending(Array.isArray(data?.items) ? data.items : []);
+      } catch {}
+    };
+    fetchPending();
+  }, [isOpen, token]);
+
+  // Polling automático: enquanto há pendência, verifica liberação a cada 3s
+  useEffect(() => {
+    if (!isOpen) return;
+    if (pending.length === 0 && !showPaymentForm) return;
+
+    if (!pollingRef.current) {
+      pollingRef.current = setInterval(async () => {
+        try {
+          const headers: Record<string, string> = { 'X-Device-ID': localStorage.getItem('deviceId') || '' };
+          if (token) headers['Authorization'] = `Bearer ${token}`;
+          const check = await fetch(`${API_BASE_URL}/api/user/creation-status`, { headers });
+          const res = await check.json().catch(() => ({}));
+          const isFree = res?.isFree ?? res?.data?.isFree;
+          if (isFree === true) {
+            unblockCreationFlow();
+            hidePaymentPopup();
+            onConfirm();
+            navigate('/criar');
+          }
+        } catch {}
+      }, 3000);
+    }
+
+    return () => {
+      if (pollingRef.current) {
+        clearInterval(pollingRef.current);
+        pollingRef.current = null;
+      }
+    };
+  }, [isOpen, pending.length, showPaymentForm, token, unblockCreationFlow, hidePaymentPopup, navigate, onConfirm]);
   
   const handleUpgradeClick = async () => {
     if (isStripeConfigured && stripePromise) {
@@ -294,6 +355,48 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({ isOpen, onClose, onC
             </div>
           </div>
 
+          {/* Pagamentos pendentes (exibe antes do formulário) */}
+          {isOpen && pending && pending.length > 0 && (
+            <div className="mb-6 border border-yellow-300 bg-yellow-50 rounded-lg p-4">
+              <p className="font-medium text-yellow-900">Pagamento pendente encontrado</p>
+              <p className="text-sm text-yellow-800 mt-1">Finalize o boleto antes de continuar. Você pode abrir o boleto abaixo e, após simular o pagamento de teste no Stripe CLI, clicar em verificar.</p>
+              {pending.map((p) => (
+                <div key={p.payment_intent_id} className="mt-3 flex items-center justify-between text-sm">
+                  <div>
+                    <div className="text-gray-800">Intent: {p.payment_intent_id}</div>
+                    {p.voucher_url && (
+                      <a href={p.voucher_url} target="_blank" rel="noopener noreferrer" className="text-indigo-600 hover:underline">Abrir boleto</a>
+                    )}
+                  </div>
+                </div>
+              ))}
+              <div className="mt-3 flex gap-2">
+                <button
+                  onClick={async () => {
+                    try {
+                      const headers: Record<string, string> = { 'X-Device-ID': localStorage.getItem('deviceId') || '' };
+                      if (token) headers['Authorization'] = `Bearer ${token}`;
+                      const check = await fetch(`${API_BASE_URL}/api/user/creation-status`, { headers });
+                      const res = await check.json().catch(() => ({}));
+                      const isFree = res?.isFree ?? res?.data?.isFree;
+                      if (isFree === true) {
+                        unblockCreationFlow();
+                        hidePaymentPopup();
+                        onConfirm();
+                        navigate('/criar');
+                      } else {
+                        toast.info('Ainda aguardando confirmação. Tente novamente em alguns segundos.');
+                      }
+                    } catch {}
+                  }}
+                  className="bg-indigo-600 text-white px-3 py-2 rounded-md hover:bg-indigo-700"
+                >
+                  Já paguei, verificar agora
+                </button>
+              </div>
+            </div>
+          )}
+
           {/* Payment Form or Actions */}
           {showPaymentForm && isStripeConfigured && stripePromise ? (
             <div className="space-y-4">
@@ -328,6 +431,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({ isOpen, onClose, onC
                   stripe={stripePromise}
                   options={{
                     clientSecret,
+                    paymentMethodOrder: ['pix', 'card', 'boleto'],
                     appearance: {
                       theme: 'stripe' as const,
                       variables: {

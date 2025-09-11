@@ -1,6 +1,11 @@
 # API de Pagamentos Stripe
 
-Esta documentação descreve os endpoints da API de pagamentos integrados com o Stripe.
+Integração com Stripe usando Payment Element localizada para Brasil (pt-BR) e com suporte aos métodos: PIX, Cartão e Boleto. Os PaymentIntents são criados em BRL e restritos a estes três meios.
+
+Pré‑requisitos no Dashboard do Stripe:
+- Habilitar capacidades de pagamentos para Brasil, incluindo PIX e Boleto.
+- Verificar a conta e aceitar os termos de Boleto e PIX.
+- Garantir que a moeda BRL está habilitada.
 
 ## Configuração
 
@@ -33,14 +38,17 @@ Cria um novo Payment Intent no Stripe para processar um pagamento.
 #### Parâmetros
 
 - `amount` (number, obrigatório): Valor em centavos (ex: 2000 = R$ 20,00)
-- `currency` (string, obrigatório): Código da moeda ("brl", "usd", etc.)
-- `userId` (string, obrigatório): ID do usuário que está fazendo o pagamento
+- `currency` (string, ignorado — forçamos `brl` no backend)
+- `metadata.userId` (string, opcional)
+- `metadata.deviceId` (string, opcional)
 
 #### Validações
 
 - Valor mínimo: R$ 1,00 (100 centavos)
 - Valor máximo: R$ 10.000,00 (1.000.000 centavos)
-- Moedas suportadas: BRL, USD, EUR
+- Moeda efetiva: BRL (forçada no backend)
+
+Observação: o PaymentIntent é criado com `payment_method_types: ['card','boleto','pix']` e opções padrão (`boleto.expires_after_days=5`, `pix.expires_after_seconds=3600`).
 
 #### Response (200 OK)
 
@@ -108,7 +116,8 @@ Endpoint para receber eventos do Stripe via webhook.
 
 #### Eventos Suportados
 
-- `payment_intent.succeeded`: Pagamento confirmado com sucesso
+- `payment_intent.succeeded`: Pagamento confirmado com sucesso (fulfill/liberar acesso aqui; recomendado para Boleto/PIX)
+- `payment_intent.processing`: Pagamento em processamento (marque a transação como "processing")
 - `payment_intent.payment_failed`: Falha no pagamento
 
 #### Response (200 OK)
@@ -184,17 +193,23 @@ curl -X POST http://localhost:3000/api/stripe/create-payment-intent \
   }'
 ```
 
-2. **Confirmar Pagamento** (no frontend com Stripe Elements):
+2. **Confirmar Pagamento** (no frontend com Stripe Payment Element):
 ```javascript
 const {error} = await stripe.confirmPayment({
   elements,
   confirmParams: {
     return_url: 'https://your-website.com/return'
   }
-});
+ });
 ```
 
 3. **Webhook será chamado automaticamente** quando o pagamento for processado.
+   - Para Cartão: normalmente quase imediato (succeeded).
+   - Para Boleto/PIX: use os webhooks para transicionar de `processing` para `succeeded` e só então liberar acesso.
+
+4. **Liberação no servidor**:
+   - A rota `/api/stripe/finalize` agora só libera quando o PaymentIntent está `succeeded`.
+   - Para Boleto/PIX, a liberação acontece via webhook `payment_intent.succeeded`.
 
 ## Tratamento de Erros
 

@@ -7,6 +7,7 @@ import { Router, type Request, type Response } from 'express';
 import { z } from 'zod';
 import Stripe from 'stripe';
 import { executeSupabaseQuery, getSupabaseServiceClient } from '../../src/lib/supabase-client.js';
+import { sendEmail } from '../lib/mailer.js';
 import { optionalAuthMiddleware } from '../middleware/optionalAuth.js';
 import rateLimit from 'express-rate-limit';
 
@@ -57,8 +58,9 @@ router.post('/finalize', paymentRateLimit, optionalAuthMiddleware, async (req: R
 
     // Retrieve intent from Stripe to verify success
     const pi = await stripe.paymentIntents.retrieve(paymentIntentId);
-    if (!(pi.status === 'succeeded' || pi.status === 'processing' || pi.status === 'requires_capture')) {
-      res.status(400).json({ success: false, message: `Pagamento ainda não concluído (status: ${pi.status})` });
+    // Para métodos assíncronos (ex: boleto, pix), libere somente no webhook quando status=succeeded
+    if (pi.status !== 'succeeded') {
+      res.status(202).json({ success: false, message: `Pagamento em processamento (status: ${pi.status}). A liberação ocorrerá após confirmação via webhook.` });
       return;
     }
 
@@ -146,6 +148,7 @@ const createPaymentIntentSchema = z.object({
   currency: z.string().default('brl'),
   metadata: z.object({
     userId: z.string().optional(),
+    deviceId: z.string().optional(),
     productType: z.string().default('music_generation'),
     description: z.string().optional()
   }).optional()
@@ -215,23 +218,41 @@ router.post('/create-payment-intent', paymentRateLimit, optionalAuthMiddleware, 
     }
     
     // Criar Payment Intent no Stripe
-    console.log("=============================================");
-    console.log("[DEBUG] Chave Secreta usada pelo Backend:", process.env.STRIPE_SECRET_KEY);
-    console.log("=============================================");
-    
-    const paymentIntent = await stripe.paymentIntents.create({
-      amount: Math.round(amount), // Stripe espera valor em centavos
-      currency,
-      automatic_payment_methods: {
-        enabled: true,
-      },
-      metadata: {
-        userId: userId || 'guest',
-        productType: metadata?.productType || 'music_generation',
-        description: metadata?.description || 'Geração de música premium',
-        timestamp: new Date().toISOString()
-      }
-    });
+    let paymentIntent: Stripe.PaymentIntent;
+    try {
+      // Tenta forçar BR métodos (cartão, boleto e pix)
+      paymentIntent = await stripe.paymentIntents.create({
+        amount: Math.round(amount),
+        currency: 'brl',
+        payment_method_types: ['card', 'boleto', 'pix'],
+        payment_method_options: {
+          boleto: { expires_after_days: 5 },
+          pix: { expires_after_seconds: 60 * 60 },
+        },
+        metadata: {
+          userId: userId || 'guest',
+          deviceId: metadata?.deviceId || '',
+          productType: metadata?.productType || 'music_generation',
+          description: metadata?.description || 'Geração de música premium',
+          timestamp: new Date().toISOString(),
+        },
+      });
+    } catch (e: any) {
+      // Fallback: conta pode não ter PIX/BOLETO ativados — usar APM automáticos
+      console.warn('[STRIPE] Falha ao usar payment_method_types específicos, aplicando fallback automático');
+      paymentIntent = await stripe.paymentIntents.create({
+        amount: Math.round(amount),
+        currency: 'brl',
+        automatic_payment_methods: { enabled: true },
+        metadata: {
+          userId: userId || 'guest',
+          deviceId: metadata?.deviceId || '',
+          productType: metadata?.productType || 'music_generation',
+          description: metadata?.description || 'Geração de música premium',
+          timestamp: new Date().toISOString(),
+        },
+      });
+    }
     
     // Salvar transação no banco
     const supabase = getSupabaseClient();
@@ -373,6 +394,11 @@ router.post('/webhook', webhookRateLimit, async (req: Request, res: Response): P
         await handlePaymentSuccess(paymentIntent);
         break;
         
+      case 'payment_intent.processing':
+        const processingPayment = event.data.object as Stripe.PaymentIntent;
+        await handlePaymentProcessing(processingPayment);
+        break;
+
       case 'payment_intent.payment_failed':
         const failedPayment = event.data.object as Stripe.PaymentIntent;
         await handlePaymentFailure(failedPayment);
@@ -481,5 +507,114 @@ async function handlePaymentFailure(paymentIntent: Stripe.PaymentIntent): Promis
     console.error('[STRIPE_WEBHOOK] Erro ao processar pagamento falhado:', error);
   }
 }
+
+// Função para tratar pagamento em processamento (ex: boleto/pix)
+async function handlePaymentProcessing(paymentIntent: Stripe.PaymentIntent): Promise<void> {
+  try {
+    console.log('[STRIPE_WEBHOOK] Processando pagamento em processamento:', paymentIntent.id, 'status:', paymentIntent.status);
+
+    const supabase = getSupabaseClient();
+
+    // Extrair possíveis dados do boleto
+    const nextAction: any = (paymentIntent as any).next_action || {};
+    const boletoDetails = nextAction?.boleto_display_details || {};
+    const hostedVoucherUrl = boletoDetails?.hosted_voucher_url
+      || (paymentIntent as any)?.charges?.data?.[0]?.payment_method_details?.boleto?.hosted_voucher_url
+      || null;
+    const boletoNumber = boletoDetails?.number || null;
+    const expiresAt = boletoDetails?.expires_at || null; // epoch seconds
+
+    // Atualizar status da transação para 'processing' + metadados úteis
+    const { error: updateError } = await supabase
+      .from('stripe_transactions')
+      .update({
+        status: 'processing',
+        stripe_payment_intent_data: paymentIntent,
+        metadata: {
+          ...(paymentIntent.metadata || {}),
+          voucher_url: hostedVoucherUrl,
+          boleto_number: boletoNumber,
+          expires_at: expiresAt,
+        },
+        updated_at: new Date().toISOString()
+      })
+      .eq('payment_intent_id', paymentIntent.id);
+
+    if (updateError) {
+      console.error('[STRIPE_WEBHOOK] Erro ao marcar transação como processing:', updateError);
+    }
+
+    // Enviar e-mail com boleto quando possível
+    try {
+      const userId = paymentIntent.metadata?.userId as string | undefined;
+      if (userId && hostedVoucherUrl) {
+        const { data: userRow } = await supabase
+          .from('users')
+          .select('email, name')
+          .eq('id', userId)
+          .maybeSingle();
+        const email = userRow?.email;
+        if (email) {
+          const html = `
+            <p>Olá${userRow?.name ? `, ${userRow.name}` : ''}!</p>
+            <p>Seu boleto está pronto para pagamento. Acesse pelo link abaixo:</p>
+            <p><a href="${hostedVoucherUrl}">Abrir boleto</a></p>
+            ${expiresAt ? `<p>Vencimento: ${new Date((Number(expiresAt) || 0) * 1000).toLocaleString()}</p>` : ''}
+            <p>Após a compensação, seu acesso será liberado automaticamente.</p>
+          `;
+          const sent = await sendEmail({ to: email, subject: 'Seu boleto - Memora Music', html });
+          console.log('[STRIPE_WEBHOOK] Email com boleto', sent ? 'enviado' : 'não enviado');
+        }
+      }
+    } catch (e) {
+      console.warn('[STRIPE_WEBHOOK] Falha ao enviar email do boleto:', e);
+    }
+  } catch (error) {
+    console.error('[STRIPE_WEBHOOK] Erro ao processar estado processing:', error);
+  }
+}
+
+// Lista pagamentos pendentes do usuário (status processing)
+router.get('/pending', optionalAuthMiddleware, async (req: Request, res: Response): Promise<void> => {
+  try {
+    const supabase = getSupabaseServiceClient();
+    const userId: string | undefined = (req as any).user?.id;
+    const deviceId = (req.headers['x-device-id'] as string | undefined) || undefined;
+
+    if (!userId && !deviceId) {
+      res.status(400).json({ success: false, message: 'Identificação ausente (userId ou X-Device-ID)' });
+      return;
+    }
+
+    let query = supabase.from('stripe_transactions').select('*').eq('status', 'processing');
+    if (userId) {
+      query = query.eq('user_id', userId);
+    } else if (deviceId) {
+      // Como guardamos deviceId em metadata, filtrar por JSON
+      query = query.contains('metadata', { deviceId });
+    }
+
+    const { data, error } = await query.order('created_at', { ascending: false });
+    if (error) {
+      res.status(500).json({ success: false, message: 'Erro ao consultar pagamentos pendentes' });
+      return;
+    }
+
+    const items = (data || []).map((row: any) => ({
+      payment_intent_id: row.payment_intent_id,
+      amount: row.amount,
+      currency: row.currency,
+      status: row.status,
+      voucher_url: row?.metadata?.voucher_url || row?.stripe_payment_intent_data?.next_action?.boleto_display_details?.hosted_voucher_url || null,
+      expires_at: row?.metadata?.expires_at || row?.stripe_payment_intent_data?.next_action?.boleto_display_details?.expires_at || null,
+      created_at: row.created_at,
+    }));
+
+    res.status(200).json({ success: true, items });
+  } catch (e) {
+    console.error('[STRIPE_PENDING] Erro:', e);
+    res.status(500).json({ success: false, message: 'Erro interno ao listar pendências' });
+  }
+});
 
 export default router;

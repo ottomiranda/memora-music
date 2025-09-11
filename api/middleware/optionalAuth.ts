@@ -18,7 +18,7 @@ declare global {
 }
 
 // Função auxiliar para extrair userId do token usando Supabase Auth
-const extractUserIdFromToken = async (jwt: string): Promise<{ id: string; email?: string } | null> => {
+const extractUserIdFromToken = async (jwt: string): Promise<{ id: string; email?: string; name?: string } | null> => {
   try {
     const supabase = getSupabaseServiceClient();
     const { data: { user }, error: userError } = await supabase.auth.getUser(jwt);
@@ -32,7 +32,8 @@ const extractUserIdFromToken = async (jwt: string): Promise<{ id: string; email?
       console.log('[OPTIONAL_AUTH] Usuário autenticado com UUID:', user.id);
       return {
         id: user.id,
-        email: user.email
+        email: user.email,
+        name: (user.user_metadata as any)?.name
       };
     }
     

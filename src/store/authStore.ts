@@ -69,7 +69,11 @@ export const useAuthStore = create<AuthState>()(
           if (error) throw error;
 
           const accessToken = data.session?.access_token;
-          const user = data.user ? { id: data.user.id, email: data.user.email || credentials.email } : null;
+          const user = data.user ? {
+            id: data.user.id,
+            email: data.user.email || credentials.email,
+            name: (data.user.user_metadata && (data.user.user_metadata as any).name) || undefined
+          } : null;
           if (!accessToken || !user) throw new Error('Sessão inválida');
 
           localStorage.setItem('authToken', accessToken);
