@@ -293,10 +293,11 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({ isOpen, onClose, onC
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full mx-4 overflow-hidden">
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-3 sm:p-4">
+      {/* Modal container with constrained height and internal scroll */}
+      <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full mx-4 flex flex-col max-h-[90vh]">
         {/* Header */}
-        <div className="bg-gradient-to-r from-purple-600 to-pink-600 p-6 text-white relative">
+        <div className="bg-gradient-to-r from-purple-600 to-pink-600 p-5 sm:p-6 text-white relative shrink-0">
           <button
             onClick={onClose}
             className="absolute top-4 right-4 text-white hover:text-gray-200 transition-colors"
@@ -315,7 +316,8 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({ isOpen, onClose, onC
         </div>
 
         {/* Content */}
-        <div className="p-6">
+        {/* Scrollable content area */}
+        <div className="px-4 py-5 sm:p-6 overflow-y-auto flex-1">
           {/* Aviso e benefícios só aparecem quando NÃO está no formulário de pagamento */}
           {!showPaymentForm && (
             <>

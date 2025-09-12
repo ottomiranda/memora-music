@@ -154,32 +154,35 @@ const StripePaymentForm: React.FC<StripePaymentFormProps> = ({
         )}
       </div>
 
-      <button
-        type="submit"
-        disabled={!stripe || isProcessing || disabled || paymentStatus === 'succeeded'}
-        className="bg-purple-600 hover:bg-purple-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white font-medium py-2 px-6 rounded-lg transition-colors duration-200 flex items-center space-x-2 w-full h-12 text-base font-semibold justify-center"
-      >
-        {isProcessing ? (
-          <>
-            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-            <span>Processando...</span>
-          </>
-        ) : paymentStatus === 'succeeded' ? (
-          <>
-            <CheckCircle className="mr-2 h-5 w-5" />
-            Pagamento Concluído
-          </>
-        ) : (
-          <>
-            <CreditCard className="mr-2 h-5 w-5" />
-            Pagar {formatCurrency(amount)}
-          </>
-        )}
-      </button>
+      {/* Sticky footer with CTA to keep visible on small screens */}
+      <div className="sticky bottom-0 left-0 right-0 bg-white pt-3 pb-3 sm:pb-4 border-t border-gray-200 [--s:env(safe-area-inset-bottom)] pb-[max(0px,var(--s))]">
+        <button
+          type="submit"
+          disabled={!stripe || isProcessing || disabled || paymentStatus === 'succeeded'}
+          className="bg-purple-600 hover:bg-purple-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white font-medium py-2 px-6 rounded-lg transition-colors duration-200 flex items-center space-x-2 w-full h-12 text-base font-semibold justify-center shadow-lg"
+        >
+          {isProcessing ? (
+            <>
+              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+              <span>Processando...</span>
+            </>
+          ) : paymentStatus === 'succeeded' ? (
+            <>
+              <CheckCircle className="mr-2 h-5 w-5" />
+              Pagamento Concluído
+            </>
+          ) : (
+            <>
+              <CreditCard className="mr-2 h-5 w-5" />
+              Pagar {formatCurrency(amount)}
+            </>
+          )}
+        </button>
 
-      <div className="text-xs text-gray-500 text-center space-y-1">
-        <p>🔒 Pagamento seguro processado pelo Stripe</p>
-        <p>Seus dados de cartão são criptografados e não são armazenados em nossos servidores</p>
+        <div className="mt-2 text-[11px] leading-4 text-gray-500 text-center space-y-1">
+          <p>🔒 Pagamento seguro processado pelo Stripe</p>
+          <p>Seus dados de cartão são criptografados e não são armazenados em nossos servidores</p>
+        </div>
       </div>
     </form>
   );
