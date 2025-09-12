@@ -179,9 +179,8 @@ const StripePaymentForm: React.FC<StripePaymentFormProps> = ({
           )}
         </button>
 
-        <div className="mt-2 text-[11px] leading-4 text-gray-500 text-center space-y-1">
+        <div className="mt-2 text-[11px] leading-4 text-gray-500 text-center">
           <p>🔒 Pagamento seguro processado pelo Stripe</p>
-          <p>Seus dados de cartão são criptografados e não são armazenados em nossos servidores</p>
         </div>
       </div>
     </form>
