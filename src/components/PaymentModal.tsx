@@ -316,47 +316,52 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({ isOpen, onClose, onC
 
         {/* Content */}
         <div className="p-6">
-          <div className="text-center mb-6">
-            <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-4">
-              <p className="text-red-800 font-medium">🔒 Limite de músicas gratuitas atingido</p>
-              <p className="text-red-600 text-sm mt-1">
-                Você já criou sua música gratuita. Faça upgrade para continuar!
-              </p>
-            </div>
-          </div>
+          {/* Aviso e benefícios só aparecem quando NÃO está no formulário de pagamento */}
+          {!showPaymentForm && (
+            <>
+              <div className="text-center mb-6">
+                <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-4">
+                  <p className="text-red-800 font-medium">🔒 Limite de músicas gratuitas atingido</p>
+                  <p className="text-red-600 text-sm mt-1">
+                    Você já criou sua música gratuita. Faça upgrade para continuar!
+                  </p>
+                </div>
+              </div>
 
-          {/* Features */}
-          <div className="space-y-3 mb-6">
-            <div className="flex items-center gap-3">
-              <div className="bg-green-100 p-1 rounded-full">
-                <Zap className="text-green-600" size={16} />
+              {/* Features */}
+              <div className="space-y-3 mb-6">
+                <div className="flex items-center gap-3">
+                  <div className="bg-green-100 p-1 rounded-full">
+                    <Zap className="text-green-600" size={16} />
+                  </div>
+                  <span className="text-gray-700">Músicas ilimitadas</span>
+                </div>
+                <div className="flex items-center gap-3">
+                  <div className="bg-blue-100 p-1 rounded-full">
+                    <Star className="text-blue-600" size={16} />
+                  </div>
+                  <span className="text-gray-700">Qualidade premium</span>
+                </div>
+                <div className="flex items-center gap-3">
+                  <div className="bg-purple-100 p-1 rounded-full">
+                    <CreditCard className="text-purple-600" size={16} />
+                  </div>
+                  <span className="text-gray-700">Sem anúncios</span>
+                </div>
               </div>
-              <span className="text-gray-700">Músicas ilimitadas</span>
-            </div>
-            <div className="flex items-center gap-3">
-              <div className="bg-blue-100 p-1 rounded-full">
-                <Star className="text-blue-600" size={16} />
-              </div>
-              <span className="text-gray-700">Qualidade premium</span>
-            </div>
-            <div className="flex items-center gap-3">
-              <div className="bg-purple-100 p-1 rounded-full">
-                <CreditCard className="text-purple-600" size={16} />
-              </div>
-              <span className="text-gray-700">Sem anúncios</span>
-            </div>
-          </div>
 
-          {/* Pricing */}
-          <div className="bg-gradient-to-r from-purple-50 to-pink-50 rounded-lg p-4 mb-6">
-            <div className="text-center">
-              <div className="text-2xl font-bold text-gray-800">R$ 14,90</div>
-              <div className="text-sm text-gray-600">pagamento único</div>
-            </div>
-          </div>
+              {/* Pricing */}
+              <div className="bg-gradient-to-r from-purple-50 to-pink-50 rounded-lg p-4 mb-6">
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-gray-800">R$ 14,90</div>
+                  <div className="text-sm text-gray-600">pagamento único</div>
+                </div>
+              </div>
+            </>
+          )}
 
           {/* Pagamentos pendentes (exibe antes do formulário) */}
-          {isOpen && pending && pending.length > 0 && (
+          {!showPaymentForm && isOpen && pending && pending.length > 0 && (
             <div className="mb-6 border border-yellow-300 bg-yellow-50 rounded-lg p-4">
               <p className="font-medium text-yellow-900">Pagamento pendente encontrado</p>
               <p className="text-sm text-yellow-800 mt-1">Finalize o boleto antes de continuar. Você pode abrir o boleto abaixo e, após simular o pagamento de teste no Stripe CLI, clicar em verificar.</p>
