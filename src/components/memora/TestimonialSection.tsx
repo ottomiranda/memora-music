@@ -1,6 +1,7 @@
 import { Star, Quote, ChevronLeft, ChevronRight } from "lucide-react";
 import { useState } from "react";
 import { Button } from '@/components/ui/button';
+import UserSlider from './UserSlider';
 
 const TestimonialSection = () => {
   const [currentTestimonial, setCurrentTestimonial] = useState(0);
@@ -46,7 +47,7 @@ const TestimonialSection = () => {
   const currentTest = testimonials[currentTestimonial];
 
   return (
-    <section className="py-20 bg-memora-primary relative overflow-hidden">
+    <section className="py-20 bg-background dark:bg-neutral-dark relative overflow-hidden">
       {/* Background Pattern */}
       <div className="absolute inset-0 opacity-10">
         <div className="absolute top-10 left-10 w-32 h-32 border border-white/20 rounded-full" />
@@ -57,40 +58,43 @@ const TestimonialSection = () => {
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 relative">
         {/* Section Header */}
         <div className="text-center mb-16">
-          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-heading font-bold text-white mb-4">
+          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-heading font-bold text-foreground dark:text-white mb-4">
             O que nossos usuários dizem
           </h2>
-          <p className="text-xl text-white/80 max-w-3xl mx-auto">
+          <p className="text-xl text-muted-foreground dark:text-white/80 max-w-3xl mx-auto">
             Histórias reais de pessoas que transformaram suas memórias em música
           </p>
         </div>
 
+        {/* User Slider */}
+        <UserSlider />
+
         {/* Main Testimonial */}
         <div className="relative">
-          <div className="bg-white/10 backdrop-blur-sm rounded-3xl p-8 lg:p-12 border border-white/20">
+          <div className="surface-2 rounded-3xl p-8 lg:p-12">
             {/* Quote Icon */}
             <div className="flex justify-center mb-8">
-              <div className="w-16 h-16 bg-memora-secondary rounded-full flex items-center justify-center">
-                <Quote className="w-8 h-8 text-memora-primary" />
+              <div className="w-16 h-16 bg-secondary rounded-full flex items-center justify-center">
+                <Quote className="w-8 h-8 text-neutral-dark" />
               </div>
             </div>
 
             {/* Testimonial Content */}
             <div className="text-center mb-8">
-              <blockquote className="text-2xl lg:text-3xl font-heading text-white leading-relaxed mb-8">
+              <blockquote className="text-2xl lg:text-3xl font-heading text-foreground dark:text-white leading-relaxed mb-8">
                 "{currentTest.text}"
               </blockquote>
 
               {/* Rating */}
               <div className="flex justify-center mb-6">
                 {[...Array(currentTest.rating)].map((_, i) => (
-                  <Star key={i} className="w-6 h-6 text-memora-secondary fill-current" />
+                  <Star key={i} className="w-6 h-6 text-secondary fill-current" />
                 ))}
               </div>
 
               {/* Author Info */}
               <div className="flex items-center justify-center space-x-4">
-                <div className="w-16 h-16 rounded-full overflow-hidden ring-4 ring-white/20">
+                <div className="w-16 h-16 rounded-full overflow-hidden ring-4 ring-black/10 dark:ring-white/20">
                   <img
                     src={currentTest.avatar}
                     alt={`Foto de ${currentTest.author}`}
@@ -98,10 +102,10 @@ const TestimonialSection = () => {
                   />
                 </div>
                 <div className="text-left">
-                  <div className="text-white font-heading font-bold text-lg">
+                  <div className="text-foreground dark:text-white font-heading font-bold text-lg">
                     {currentTest.author}, {currentTest.age} anos
                   </div>
-                  <div className="text-white/70">
+                  <div className="text-muted-foreground dark:text-white/70">
                     {currentTest.location}
                   </div>
                 </div>
@@ -116,20 +120,20 @@ const TestimonialSection = () => {
                 onClick={prevTestimonial}
                 variant="ghost"
                 size="sm"
-                className="absolute left-4 top-1/2 -translate-y-1/2 w-12 h-12 bg-white/20 hover:bg-white/30 backdrop-blur-sm rounded-full flex items-center justify-center transition-all duration-300 group p-0"
+                className="absolute left-4 top-1/2 -translate-y-1/2 w-12 h-12 bg-black/10 hover:bg-black/20 dark:bg-white/20 dark:hover:bg-white/30 backdrop-blur-sm rounded-full flex items-center justify-center transition-all duration-300 group p-0"
                 aria-label="Depoimento anterior"
               >
-                <ChevronLeft className="w-6 h-6 text-white group-hover:scale-110 transition-transform" />
+                <ChevronLeft className="w-6 h-6 text-neutral-dark dark:text-white group-hover:scale-110 transition-transform" />
               </Button>
               
               <Button
                 onClick={nextTestimonial}
                 variant="ghost"
                 size="sm"
-                className="absolute right-4 top-1/2 -translate-y-1/2 w-12 h-12 bg-white/20 hover:bg-white/30 backdrop-blur-sm rounded-full flex items-center justify-center transition-all duration-300 group p-0"
+                className="absolute right-4 top-1/2 -translate-y-1/2 w-12 h-12 bg-black/10 hover:bg-black/20 dark:bg-white/20 dark:hover:bg-white/30 backdrop-blur-sm rounded-full flex items-center justify-center transition-all duration-300 group p-0"
                 aria-label="Próximo depoimento"
               >
-                <ChevronRight className="w-6 h-6 text-white group-hover:scale-110 transition-transform" />
+                <ChevronRight className="w-6 h-6 text-neutral-dark dark:text-white group-hover:scale-110 transition-transform" />
               </Button>
             </>
           )}
@@ -147,7 +151,7 @@ const TestimonialSection = () => {
                 className={`w-3 h-3 rounded-full transition-all duration-300 p-0 h-3 min-w-0 ${
                   index === currentTestimonial
                     ? 'bg-memora-secondary scale-125'
-                    : 'bg-white/30 hover:bg-white/50'
+                    : 'bg-black/20 hover:bg-black/30 dark:bg-white/30 dark:hover:bg-white/50'
                 }`}
                 aria-label={`Ir para depoimento ${index + 1}`}
               />
@@ -158,28 +162,28 @@ const TestimonialSection = () => {
         {/* Stats */}
         <div className="mt-16 grid sm:grid-cols-3 gap-8 text-center">
           <div>
-            <div className="text-4xl lg:text-5xl font-heading font-bold text-memora-secondary mb-2">
+            <div className="text-4xl lg:text-5xl font-heading font-bold text-secondary mb-2">
               500+
             </div>
-            <div className="text-white/80">
+            <div className="text-muted-foreground dark:text-white/80">
               Músicas criadas
             </div>
           </div>
           
           <div>
-            <div className="text-4xl lg:text-5xl font-heading font-bold text-memora-secondary mb-2">
+            <div className="text-4xl lg:text-5xl font-heading font-bold text-secondary mb-2">
               4.9★
             </div>
-            <div className="text-white/80">
+            <div className="text-muted-foreground dark:text-white/80">
               Avaliação média
             </div>
           </div>
           
           <div>
-            <div className="text-4xl lg:text-5xl font-heading font-bold text-memora-secondary mb-2">
+            <div className="text-4xl lg:text-5xl font-heading font-bold text-secondary mb-2">
               98%
             </div>
-            <div className="text-white/80">
+            <div className="text-muted-foreground dark:text-white/80">
               Satisfação dos usuários
             </div>
           </div>
@@ -188,7 +192,7 @@ const TestimonialSection = () => {
         {/* CTA */}
         <div className="text-center mt-12">
           <Button
-            className="bg-memora-secondary hover:bg-memora-secondary/90 text-memora-primary font-heading font-bold py-4 px-8 rounded-2xl transition-all duration-300 hover:scale-105 hover:shadow-2xl"
+            className="bg-secondary hover:bg-secondary/90 text-neutral-dark font-heading font-bold py-4 px-8 rounded-2xl transition-all duration-300 hover:scale-105 hover:shadow-2xl"
             data-attr="testimonial-cta-create-music"
             size="lg"
           >

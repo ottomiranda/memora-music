@@ -68,6 +68,45 @@ export class SongService {
   }
 
   /**
+   * Get a random selection of public songs (with cover and audio)
+   * Intended for discovery sections on the homepage.
+   */
+  static async getRandomPublicSongs(limit = 24) {
+    try {
+      // Fetch latest pool and randomize in memory for portability
+      const { data, error } = await getSupabaseClient()
+        .from('songs')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(Math.max(limit * 8, 200));
+
+      if (error) {
+        console.error('Database error fetching discovery songs:', error);
+        throw new Error(`Failed to fetch discovery songs: ${error.message}`);
+      }
+
+      const pool = (data || []).filter((row) => {
+        const hasCover = !!row.image_url;
+        const hasAudio = !!row.audio_url_option1 || !!row.audio_url_option2;
+        const isComplete = (row.generation_status || row.status) === 'completed' || row.generation_status == null;
+        return hasCover && hasAudio && isComplete;
+      });
+
+      // Shuffle (Fisher–Yates)
+      for (let i = pool.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [pool[i], pool[j]] = [pool[j], pool[i]];
+      }
+
+      const selected = pool.slice(0, limit).map(this.mapDbToSong.bind(this));
+      return selected;
+    } catch (error) {
+      console.error('Error in getRandomPublicSongs:', error);
+      throw error;
+    }
+  }
+
+  /**
    * Update song fields (title/lyrics) owned by user or guest
    */
   static async updateSong(songId, fields, identity = { userId: null, guestId: null }) {

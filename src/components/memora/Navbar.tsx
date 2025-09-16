@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Heart, Menu, X } from "lucide-react";
+import { Heart, Menu, X, Moon, Sun } from "lucide-react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Button } from "../ui/button";
 import { useAuthStore } from "../../store/authStore";
@@ -14,7 +14,7 @@ const Navbar = () => {
   
   // Auth state
   const { isLoggedIn, user, logout } = useAuthStore();
-  const { showAuthPopup } = useUiStore();
+  const { showAuthPopup, theme, setTheme } = useUiStore();
 
   const goToDashboard = () => {
     if (isLoggedIn) {
@@ -46,11 +46,11 @@ const Navbar = () => {
     <nav
       className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
         isScrolled
-          ? "bg-white/95 backdrop-blur-md shadow-lg"
+          ? "bg-white/95 dark:bg-black/50 backdrop-blur-md border-b border-black/5 dark:border-white/10 shadow-lg"
           : "bg-transparent"
       }`}
     >
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
           <div className="flex items-center">
@@ -97,6 +97,16 @@ const Navbar = () => {
             >
               Artistas
             </Button>
+            {/* Theme Toggle */}
+            <button
+              onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+              className={`${isHomePage && !isScrolled ? 'text-white hover:text-memora-gold' : 'text-memora-gray hover:text-memora-primary'} transition-colors duration-200`}
+              aria-label="Alternar tema"
+              title={theme === 'dark' ? 'Mudar para claro' : 'Mudar para escuro'}
+            >
+              {theme === 'dark' ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
+            </button>
+
             {/* Auth Section */}
             <div className="flex items-center gap-4">
               {isLoggedIn ? (
@@ -135,7 +145,14 @@ const Navbar = () => {
           </div>
 
           {/* Mobile Menu Button */}
-          <div className="md:hidden">
+          <div className="md:hidden flex items-center gap-2">
+            <button
+              onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+              className={`${isHomePage && !isScrolled ? 'text-white hover:text-memora-gold' : 'text-memora-gray hover:text-memora-primary'} transition-colors duration-200`}
+              aria-label="Alternar tema"
+            >
+              {theme === 'dark' ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
+            </button>
             <Button
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
               variant="ghost"

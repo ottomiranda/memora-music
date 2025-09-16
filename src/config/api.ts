@@ -46,6 +46,7 @@ export const API_ENDPOINTS = {
   
   // Endpoints do sistema de identidade de convidado
   SONGS: '/api/songs',
+  SONGS_DISCOVER: '/api/songs/discover',
   MIGRATE_GUEST_DATA: '/api/migrate-guest-data',
   
   // Endpoints de autenticação
@@ -71,6 +72,9 @@ export const songsApi = {
     }
     return apiRequest(endpoint);
   },
+  
+  // Descobrir músicas públicas aleatórias (para homepage)
+  discover: (limit: number = 24) => apiRequest(`${API_ENDPOINTS.SONGS_DISCOVER}?limit=${limit}`),
   
   // Obter uma música específica
   get: (id: string) => apiRequest(`${API_ENDPOINTS.SONGS}/${id}`),

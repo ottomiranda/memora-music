@@ -5,6 +5,8 @@ interface UiState {
   authCallback: (() => void) | null;
   isPaymentPopupVisible: boolean;
   isCreationFlowBlocked: boolean;
+  theme: 'light' | 'dark' | 'system';
+  setTheme: (t: UiState['theme']) => void;
   showAuthPopup: (callback?: () => void) => void;
   hideAuthPopup: () => void;
   executeAuthCallback: () => void;
@@ -20,6 +22,17 @@ export const useUiStore = create<UiState>((set, get) => ({
   authCallback: null,
   isPaymentPopupVisible: false,
   isCreationFlowBlocked: false,
+  theme: (() => {
+    try { return (localStorage.getItem('theme') as UiState['theme']) || 'system'; } catch { return 'system'; }
+  })(),
+  setTheme: (t) => {
+    try { localStorage.setItem('theme', t); } catch {}
+    const root = document.documentElement;
+    const preferDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+    const isDark = t === 'dark' || (t === 'system' && preferDark);
+    root.classList.toggle('dark', isDark);
+    set({ theme: t });
+  },
    
   showAuthPopup: (callback?: () => void) => {
     set({ 

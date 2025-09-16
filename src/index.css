@@ -127,6 +127,35 @@ All colors MUST be HSL.
 }
 
 @layer components {
+  /* Swiper pagination styling to match the mock */
+  .swiper-pagination-bullet {
+    background: rgba(255, 255, 255, 0.4);
+    opacity: 1;
+  }
+  .swiper-pagination-bullet-active {
+    background: rgba(255, 255, 255, 0.9);
+    width: 24px;
+    border-radius: 9999px;
+  }
+
+  /* Surface utilities for dark glass UI */
+  .surface-1 { @apply bg-white/80 border border-black/5 backdrop-blur-md; }
+  .dark .surface-1 { @apply bg-white/5 border-white/10; }
+
+  .surface-2 { @apply bg-white/60 border border-black/5 backdrop-blur-lg; }
+  .dark .surface-2 { @apply bg-white/10 border-white/10; }
+
+  /* Spotlight hover (lightweight, static center) */
+  .spotlight {
+    background-image: radial-gradient(600px 300px at 80% 90%, rgba(255,255,255,.15), transparent 60%);
+  }
+  .dark .spotlight {
+    background-image: radial-gradient(600px 300px at 80% 90%, rgba(255,255,255,.08), transparent 60%);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .transition-smooth, .transition-bounce { transition: none; }
+  }
   /* Gradient backgrounds */
   .bg-gradient-primary {
     background: var(--gradient-primary);

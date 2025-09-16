@@ -20,13 +20,13 @@ const GlobalAudioPlayer: React.FC = () => {
 
   return (
     <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-40 max-w-3xl w-[92%] sm:w-[640px]">
-      <div className="bg-white shadow-xl rounded-xl border border-gray-200 p-3">
+      <div className="rounded-xl border p-3 backdrop-blur-md bg-white/90 dark:bg-white/10 border-gray-200 dark:border-white/10 shadow-[0_10px_30px_rgba(0,0,0,0.3)]">
         <div className="flex items-center gap-3">
           {/* Play/Pause */}
           {isPlaying ? (
             <button
               onClick={pause}
-              className="w-10 h-10 rounded-full bg-blue-600 hover:bg-blue-700 text-white flex items-center justify-center"
+              className="w-10 h-10 rounded-full bg-blue-600 hover:bg-blue-700 text-white flex items-center justify-center active:scale-95 transition"
               aria-label="Pausar"
             >
               <Pause className="w-5 h-5" />
@@ -34,7 +34,7 @@ const GlobalAudioPlayer: React.FC = () => {
           ) : (
             <button
               onClick={() => currentId && currentUrl && play(currentId, currentUrl, { title: currentTitle || undefined, versionLabel: currentVersionLabel || undefined })}
-              className="w-10 h-10 rounded-full bg-blue-600 hover:bg-blue-700 text-white flex items-center justify-center"
+              className="w-10 h-10 rounded-full bg-blue-600 hover:bg-blue-700 text-white flex items-center justify-center active:scale-95 transition"
               aria-label="Reproduzir"
             >
               <Play className="w-5 h-5" />
@@ -77,8 +77,8 @@ const GlobalAudioPlayer: React.FC = () => {
           </div>
 
           {/* Close */}
-          <button onClick={stop} className="p-2 rounded-md hover:bg-gray-100" aria-label="Fechar player">
-            <X className="w-4 h-4 text-gray-600" />
+          <button onClick={stop} className="p-2 rounded-md hover:bg-gray-100 dark:hover:bg-white/10" aria-label="Fechar player">
+            <X className="w-4 h-4 text-gray-600 dark:text-gray-300" />
           </button>
         </div>
       </div>
@@ -87,4 +87,3 @@ const GlobalAudioPlayer: React.FC = () => {
 };
 
 export default GlobalAudioPlayer;
-

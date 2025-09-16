@@ -1,179 +1,142 @@
-import { Play, Lock } from "lucide-react";
+import React, { useEffect, useMemo, useState } from "react";
+import { Play, Pause } from "lucide-react";
+import { songsApi } from "@/config/api";
+import type { Song } from "@/types/guest";
+import { useAudioPlayerStore } from "@/store/audioPlayerStore";
+import { useMusicStore } from "@/store/musicStore";
+import { useAuthStore } from "@/store/authStore";
+import { useNavigate } from "react-router-dom";
 
-const ArtistsSection = () => {
-  const artists = [
-    {
-      id: "ana-silva",
-      name: "Ana Silva",
-      avatar: "https://trae-api-us.mchost.guru/api/ide/v1/text_to_image?prompt=professional%20female%20singer%20portrait%20warm%20smile%20studio%20lighting%20musical%20artist&image_size=square",
-      styles: ["Pop", "Romântico"],
-      description: "Voz suave e envolvente"
-    },
-    {
-      id: "carlos-mendes",
-      name: "Carlos Mendes",
-      avatar: "https://trae-api-us.mchost.guru/api/ide/v1/text_to_image?prompt=professional%20male%20singer%20portrait%20confident%20expression%20studio%20lighting%20musical%20artist&image_size=square",
-      styles: ["Sertanejo", "Country"],
-      description: "Timbre marcante e emotivo"
-    },
-    {
-      id: "lucia-santos",
-      name: "Lúcia Santos",
-      avatar: "https://trae-api-us.mchost.guru/api/ide/v1/text_to_image?prompt=professional%20female%20vocalist%20elegant%20portrait%20warm%20lighting%20musical%20performer&image_size=square",
-      styles: ["MPB", "Bossa Nova"],
-      description: "Interpretação sofisticada"
-    },
-    {
-      id: "pedro-costa",
-      name: "Pedro Costa",
-      avatar: "https://trae-api-us.mchost.guru/api/ide/v1/text_to_image?prompt=professional%20male%20vocalist%20friendly%20smile%20studio%20portrait%20musical%20artist&image_size=square",
-      styles: ["Rock", "Pop Rock"],
-      description: "Energia e versatilidade"
-    },
-    {
-      id: "maria-oliveira",
-      name: "Maria Oliveira",
-      avatar: "https://trae-api-us.mchost.guru/api/ide/v1/text_to_image?prompt=professional%20female%20singer%20gentle%20expression%20warm%20studio%20lighting%20musical%20talent&image_size=square",
-      styles: ["Infantil", "Família"],
-      description: "Doçura e carinho na voz"
-    },
-    {
-      id: "rafael-lima",
-      name: "Rafael Lima",
-      avatar: "https://trae-api-us.mchost.guru/api/ide/v1/text_to_image?prompt=professional%20male%20singer%20charismatic%20portrait%20studio%20lighting%20musical%20performer&image_size=square",
-      styles: ["Funk", "R&B"],
-      description: "Groove e personalidade"
+const fallbackGenres = [
+  "Pop", "R&B", "Soul", "Hip hop", "Latin Pop", "Ballad",
+  "Cinematic", "Opera", "Soul/Funk", "Pop/EDM",
+];
+
+const pickAudioUrl = (song: Song): string | null => {
+  return (song as any).audioUrlOption1 || (song as any).audioUrlOption2 || song.audioUrl || null;
+};
+
+// Extrai apenas o subestilo escolhido (ex.: "Sertanejo - Sertanejo Universitário" -> "Sertanejo Universitário")
+const extractChosenStyle = (value?: string): string => {
+  if (!value) return "";
+  const separators = [" - ", " — ", " – ", ": ", "/"];
+  let out = value;
+  for (const sep of separators) {
+    if (out.includes(sep)) out = out.split(sep).pop()!.trim();
+  }
+  return out;
+};
+
+// Helpers para checar mídia
+const hasAudio = (s: Song) => Boolean((s as any).audioUrlOption1 || (s as any).audioUrlOption2 || s.audioUrl);
+const hasCover = (s: Song) => Boolean(s.imageUrl);
+
+const ArtistsSection: React.FC = () => {
+  const [items, setItems] = useState<Song[]>([]);
+  const [bgUrl, setBgUrl] = useState<string | null>(null);
+  const { currentId, isPlaying, play, pause } = useAudioPlayerStore();
+
+  useEffect(() => {
+    let mounted = true;
+    songsApi
+      .discover(24)
+      .then((resp: any) => {
+        const listRaw: Song[] = (resp?.data?.songs || resp?.songs || []) as Song[];
+        const list = listRaw.filter((s) => hasCover(s) && hasAudio(s)).slice(0, 12);
+        if (!mounted) return;
+        setItems(list);
+      })
+      .catch((e) => {
+        console.error('[ArtistsSection] erro ao buscar músicas públicas:', e);
+        if (mounted) setItems([]);
+      });
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  const handlePlay = (song: Song) => {
+    const url = pickAudioUrl(song);
+    if (!url) return;
+    if (currentId === song.id && isPlaying) {
+      pause();
+      return;
     }
-  ];
+    setBgUrl(song.imageUrl || null);
+    play(song.id, url, { title: song.title, versionLabel: (song as any).audioUrlOption2 && !(song as any).audioUrlOption1 ? 'B' : 'A' });
+  };
+
+  const sectionBgStyle = useMemo(() => (
+    bgUrl
+      ? { backgroundImage: `url(${bgUrl})` }
+      : undefined
+  ), [bgUrl]);
 
   return (
-    <section id="artistas" className="py-20 bg-memora-gray-light/30">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <section id="artistas" className="relative py-20">
+      {/* Background gradient */}
+      <div className="absolute inset-0 bg-gradient-to-b from-[#052a66] via-[#073777] to-[#082a55]" aria-hidden="true" />
+      {/* Dynamic cover background */}
+      <div
+        className="absolute inset-0 bg-cover bg-center opacity-20 blur-lg transition-[background-image] duration-500"
+        style={sectionBgStyle}
+        aria-hidden="true"
+      />
+
+      <div className="relative container mx-auto px-4">
         {/* Header */}
-        <div className="text-center mb-16">
-          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-heading font-bold text-memora-black mb-4">
+        <div className="text-center mb-6">
+          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-heading font-bold text-white drop-shadow">
             Artistas que dão voz às suas memórias
           </h2>
-          <p className="text-xl text-memora-gray max-w-4xl mx-auto">
-            A IA cria a base e você poderá escolher versões cantadas por artistas reais nas próximas etapas.
+          <p className="mt-3 text-white/90 max-w-3xl mx-auto text-sm sm:text-base">
+            Descubra vozes únicas e estilos variados para dar vida às suas memórias. Clique para ouvir e deixe a capa do álbum iluminar o momento.
           </p>
         </div>
 
-        {/* Artists Grid */}
-        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
-          {artists.map((artist) => (
-            <div
-              key={artist.id}
-              className="group relative bg-white rounded-2xl p-6 shadow-lg hover:shadow-2xl transition-all duration-300 hover:-translate-y-2"
-            >
-              {/* Coming Soon Badge */}
-              <div className="absolute top-4 right-4 bg-memora-secondary/10 text-memora-secondary px-3 py-1 rounded-full text-xs font-bold">
-                Em breve
-              </div>
-
-              {/* Avatar */}
-              <div className="relative mb-4">
-                <div className="w-20 h-20 mx-auto rounded-full overflow-hidden ring-4 ring-transparent group-hover:ring-memora-turquoise/30 transition-all duration-300">
-                  <img
-                    src={artist.avatar}
-                    alt={`Foto do artista ${artist.name}`}
-                    className="w-full h-full object-cover"
-                  />
+        {/* Grid 2 linhas x 6 colunas (12 itens) */}
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4 sm:gap-5 lg:gap-6">
+          {items.slice(0, 12).map((song, idx) => {
+            const cover = song.imageUrl || '';
+            const genre = extractChosenStyle(song.genre) || fallbackGenres[idx % fallbackGenres.length];
+            const active = currentId === song.id && isPlaying;
+            return (
+              <button
+                key={song.id}
+                onClick={() => handlePlay(song)}
+                className="group relative aspect-square rounded-2xl overflow-hidden shadow-[0_10px_20px_rgba(0,0,0,0.25)] bg-black/30 ring-1 ring-white/10 hover:ring-white/30 transition spotlight"
+                aria-label={`Reproduzir ${song.title}`}
+              >
+                {/* Cover */}
+                <img src={cover} alt={song.title} className="absolute inset-0 w-full h-full object-cover" />
+                {/* Gradient overlay */}
+                <div className="absolute inset-0 bg-gradient-to-tr from-black/40 via-black/10 to-transparent" />
+                {/* Genre pill */}
+                <div className="absolute top-2 left-2 px-2.5 py-1 rounded-md text-[11px] font-semibold text-white bg-black/60 backdrop-blur text-left">
+                  {genre}
                 </div>
-              </div>
-
-              {/* Artist Info */}
-              <div className="text-center mb-4">
-                <h3 className="text-xl font-heading font-bold text-memora-black mb-2">
-                  {artist.name}
-                </h3>
-                <p className="text-memora-gray text-sm mb-3">
-                  {artist.description}
-                </p>
-                
-                {/* Styles */}
-                <div className="flex flex-wrap justify-center gap-2 mb-4">
-                  {artist.styles.map((style, index) => (
-                    <span
-                      key={index}
-                      className="bg-memora-primary/10 text-memora-primary px-3 py-1 rounded-full text-xs font-medium"
-                    >
-                      {style}
-                    </span>
-                  ))}
+                {/* Play button */}
+                <div className="absolute bottom-2 right-2">
+                  <div className="w-11 h-11 rounded-full bg-white/70 group-hover:bg-white/90 flex items-center justify-center shadow-md">
+                    {active ? (
+                      <Pause className="w-5 h-5 text-black" />
+                    ) : (
+                      <Play className="w-5 h-5 text-black ml-0.5" />
+                    )}
+                  </div>
                 </div>
-              </div>
-
-              {/* Sample Button (Disabled) */}
-              <div className="text-center">
-                <button
-                  disabled
-                  className="w-full bg-memora-gray/20 text-memora-gray cursor-not-allowed font-heading font-bold py-3 px-4 rounded-2xl transition-all duration-300 flex items-center justify-center space-x-2"
-                  aria-label={`Ouvir amostra de ${artist.name} - Em breve`}
-                >
-                  <Lock className="w-4 h-4" />
-                  <span>Ouvir amostra</span>
-                </button>
-              </div>
-
-              {/* Hover Effect Overlay */}
-              <div className="absolute inset-0 bg-gradient-to-t from-memora-turquoise/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-2xl pointer-events-none" />
-            </div>
-          ))}
+              </button>
+            );
+          })}
         </div>
 
-        {/* Bottom Info */}
-        <div className="mt-16 text-center">
-          <div className="inline-flex items-center space-x-4 bg-white px-8 py-4 rounded-2xl shadow-lg">
-            <div className="flex items-center space-x-2">
-              <div className="w-3 h-3 bg-memora-secondary rounded-full animate-pulse" />
-              <span className="text-memora-black font-medium">
-                Funcionalidade em desenvolvimento
-              </span>
-            </div>
-            <div className="w-px h-6 bg-memora-gray/30" />
-            <span className="text-memora-gray text-sm">
-              Versões com artistas reais estarão disponíveis em breve
+        {/* CTA */}
+        <div className="relative mt-10 text-center">
+          <div className="inline-flex flex-col items-center gap-3 bg-black/20 backdrop-blur-sm border border-white/10 rounded-2xl px-6 py-5">
+            <span className="text-white/90 text-sm sm:text-base">
+              Gostou do que ouviu? Crie sua própria música personalizada agora mesmo.
             </span>
-          </div>
-        </div>
-
-        {/* Features Preview */}
-        <div className="mt-12 grid sm:grid-cols-3 gap-6 max-w-4xl mx-auto">
-          <div className="text-center">
-            <div className="w-12 h-12 bg-memora-primary/10 rounded-full flex items-center justify-center mx-auto mb-3">
-              <Play className="w-6 h-6 text-memora-primary" />
-            </div>
-            <h4 className="font-heading font-bold text-memora-black mb-1">
-              Múltiplas Versões
-            </h4>
-            <p className="text-sm text-memora-gray">
-              Escolha entre diferentes interpretações da sua música
-            </p>
-          </div>
-          
-          <div className="text-center">
-            <div className="w-12 h-12 bg-memora-secondary/10 rounded-full flex items-center justify-center mx-auto mb-3">
-              <Lock className="w-6 h-6 text-memora-secondary" />
-            </div>
-            <h4 className="font-heading font-bold text-memora-black mb-1">
-              Qualidade Profissional
-            </h4>
-            <p className="text-sm text-memora-gray">
-              Gravações em estúdio com artistas experientes
-            </p>
-          </div>
-          
-          <div className="text-center">
-            <div className="w-12 h-12 bg-memora-turquoise/10 rounded-full flex items-center justify-center mx-auto mb-3">
-              <Play className="w-6 h-6 text-memora-turquoise" />
-            </div>
-            <h4 className="font-heading font-bold text-memora-black mb-1">
-              Estilos Variados
-            </h4>
-            <p className="text-sm text-memora-gray">
-              Do sertanejo ao pop, encontre o estilo perfeito
-            </p>
+            <ArtistsCTAButton />
           </div>
         </div>
       </div>
@@ -182,3 +145,28 @@ const ArtistsSection = () => {
 };
 
 export default ArtistsSection;
+
+// CTA button component co-located for clarity
+const ArtistsCTAButton: React.FC = () => {
+  const navigate = useNavigate();
+  const { token } = useAuthStore();
+  const { startNewCreationFlow } = useMusicStore();
+
+  const onClick = async () => {
+    try {
+      await startNewCreationFlow(navigate, token || null);
+    } catch (e) {
+      console.error('[ArtistsCTAButton] erro ao iniciar fluxo de criação', e);
+      navigate('/criar');
+    }
+  };
+
+  return (
+    <button
+      onClick={onClick}
+      className="inline-flex items-center justify-center px-5 py-3 rounded-full bg-white text-black font-semibold shadow hover:shadow-md transition"
+    >
+      Crie sua música grátis
+    </button>
+  );
+};

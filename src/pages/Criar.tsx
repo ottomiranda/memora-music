@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import { toast } from 'sonner';
 
 import StepIndicator from "@/components/StepIndicator";
-import MusicPreview from "@/components/MusicPreview";
+import NewMusicPlayer from "@/components/NewMusicPlayer";
 import ValidationPopup from "@/components/ValidationPopup";
 import HighlightedTextarea from "@/components/HighlightedTextarea";
 import GenreSelector from "@/components/GenreSelector";
@@ -18,35 +18,85 @@ import { Play, Download, RotateCcw, ArrowLeft, ArrowRight, Music, Sparkles, Edit
 import { useMusicStore } from '@/store/musicStore';
 import { useAuthStore } from '@/store/authStore';
 import { useUiStore } from '@/store/uiStore';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { musicGenres } from '@/data/musicGenres';
 import { validateStep, getValidationErrors } from '@/lib/validations';
 import { z } from 'zod';
 
 const steps = ["Briefing", "Letra", "Estilo", "Prévia"];
 
-const occasions = [
-  "Aniversário",
-  "Aniversário de Namoro/Casamento",
-  "Casamento",
-  "Pedido de Casamento",
-  "Agradecimento",
-  "Formatura",
-  "Desculpa",
-  "Feriado",
-  "Melhoras",
-  "Outro"
+// Ocasiões organizadas por categorias para uma seleção mais intuitiva
+const occasionCategories: { category: string; items: string[] }[] = [
+  {
+    category: 'Amor',
+    items: [
+      'Canção de amor',
+      'Aniversário de namoro',
+      'Aniversário de casamento',
+      'Proposta',
+      'Noivado',
+      'Casamento',
+      'Desculpa',
+      'Só porque…',
+    ],
+  },
+  {
+    category: 'Família',
+    items: [
+      'Aniversário',
+      'Dia dos Pais',
+      'Dia das Mães',
+      'Nascimento de criança',
+      'Chá de bebê',
+      'Batizado',
+      'Natal',
+    ],
+  },
+  {
+    category: 'Amizade',
+    items: ['Melhores amigos', 'Agradecimento', 'Despedida', 'Saudade'],
+  },
+  {
+    category: 'Conquistas',
+    items: ['Graduação', 'Formatura', 'Reconhecimento'],
+  },
+  {
+    category: 'Memória',
+    items: ['Memorial', 'Homenagem a quem partiu'],
+  },
 ];
 
-const relationships = [
-  "Parceiro(a)/Cônjuge",
-  "Filho(a)",
-  "Pai/Mãe",
-  "Irmão/Irmã",
-  "Avô/Avó",
-  "Neto(a)",
-  "Amigo(a)",
-  "Colega"
+// Relações organizadas por categorias
+const relationshipCategories: { category: string; items: string[] }[] = [
+  {
+    category: 'Família',
+    items: [
+      'Pai ou Mãe',
+      'Filho(a)',
+      'Irmão ou Irmã',
+      'Avô ou Avó',
+      'Neto(a)',
+      'Tio ou Tia',
+      'Sobrinho(a)',
+      'Padrasto ou Madrasta',
+      'Enteado(a)',
+    ],
+  },
+  {
+    category: 'Amor',
+    items: ['Namorado(a)', 'Esposo(a) / Esposa', 'Noivo(a)', 'Companheiro(a)'],
+  },
+  {
+    category: 'Amigos & Outros',
+    items: [
+      'Amigo(a)',
+      'Melhores amigos',
+      'Colega de trabalho',
+      'Professor(a) / Mentor(a)',
+      'Chefe / Equipe',
+      'Cliente especial',
+    ],
+  },
 ];
 
 
@@ -103,6 +153,7 @@ export default function Criar() {
 
   // Hook de navegação
   const navigate = useNavigate();
+  const location = useLocation();
 
   // Estado de bloqueio centralizado
   const { isCreationFlowBlocked } = useUiStore();
@@ -117,10 +168,31 @@ export default function Criar() {
   // Campo de busca para destaque
   const [replaceText, setReplaceText] = useState(""); // deprecated (mantido para compat, não exibido)
   const saveTimerRef = React.useRef<number | null>(null);
+  // Categoria selecionada no briefing
+  const [selectedOccasionCategory, setSelectedOccasionCategory] = useState<string>(() => {
+    // Tenta inferir a categoria a partir da ocasião já selecionada
+    const found = occasionCategories.find((c) => c.items.includes(musicStore.formData.occasion || ''));
+    return found ? found.category : occasionCategories[0].category;
+  });
+  const [selectedRelationshipCategory, setSelectedRelationshipCategory] = useState<string>(() => {
+    const rel = musicStore.formData.relationship || '';
+    const found = relationshipCategories.find((c) => c.items.includes(rel));
+    return found ? found.category : relationshipCategories[0].category;
+  });
 
 
 
 
+
+  // useEffect para processar parâmetros da URL
+  useEffect(() => {
+    const searchParams = new URLSearchParams(location.search);
+    const paraParam = searchParams.get('para');
+    
+    if (paraParam && paraParam.trim() && !formData.recipientName) {
+      updateFormData({ recipientName: paraParam.trim() });
+    }
+  }, [location.search, formData.recipientName, updateFormData]);
 
   // useEffect para exibir toasts com mensagens de erro da API
   useEffect(() => {
@@ -269,23 +341,56 @@ export default function Criar() {
                 </div>
               )}
               
-              {/* A Ocasião */}
+              {/* A Ocasião (por categorias) */}
               <div className="space-y-4">
                 <h3 className="text-lg font-semibold font-heading">A Ocasião</h3>
-                <div className="space-y-2">
-                  <Label htmlFor="occasion">Qual a ocasião especial? *</Label>
-                  <Select value={formData.occasion} onValueChange={(value) => handleFieldUpdate('occasion', value)}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecione a ocasião" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {occasions.map((occasion) => (
-                        <SelectItem key={occasion} value={occasion}>
-                          {occasion}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                <div className="space-y-3">
+                  <Label>Qual a ocasião especial? *</Label>
+                  {/* Categorias */}
+                  <div className="flex flex-wrap gap-2">
+                    {occasionCategories.map(({ category }) => {
+                      const active = selectedOccasionCategory === category;
+                      return (
+                        <button
+                          type="button"
+                          key={category}
+                          onClick={() => setSelectedOccasionCategory(category)}
+                          className={`px-3 py-1.5 rounded-full text-sm border transition-colors ${
+                            active
+                              ? 'bg-memora-primary text-white border-memora-primary'
+                              : 'bg-white/50 border-black/10 hover:border-memora-primary/40 text-neutral-gray'
+                          }`}
+                          aria-pressed={active}
+                        >
+                          {category}
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  {/* Opções da categoria selecionada */}
+                  <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2 mt-2">
+                    {occasionCategories
+                      .find((c) => c.category === selectedOccasionCategory)!
+                      .items.map((item) => {
+                        const active = formData.occasion === item;
+                        return (
+                          <button
+                            type="button"
+                            key={item}
+                            onClick={() => handleFieldUpdate('occasion', item)}
+                            className={`text-sm px-3 py-2 rounded-xl border transition-colors text-left ${
+                              active
+                                ? 'bg-memora-primary text-white border-memora-primary'
+                                : 'bg-white/60 border-black/10 hover:border-memora-primary/40 text-neutral-gray'
+                            }`}
+                          >
+                            {item}
+                          </button>
+                        );
+                      })}
+                  </div>
+
                   {validationErrors.occasion && (
                     <p className="text-sm text-accent-coral mt-1">{validationErrors.occasion}</p>
                   )}
@@ -311,19 +416,52 @@ export default function Criar() {
                   </div>
                   
                   <div className="space-y-2">
-                    <Label htmlFor="relationship">Qual a vossa relação? *</Label>
-                    <Select value={formData.relationship} onValueChange={(value) => handleFieldUpdate('relationship', value)}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Selecione a relação" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {relationships.map((relationship) => (
-                          <SelectItem key={relationship} value={relationship}>
-                            {relationship}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    <Label>Qual a vossa relação? *</Label>
+                    {/* Categorias de relação */}
+                    <div className="flex flex-wrap gap-2">
+                      {relationshipCategories.map(({ category }) => {
+                        const active = selectedRelationshipCategory === category;
+                        return (
+                          <button
+                            type="button"
+                            key={category}
+                            onClick={() => setSelectedRelationshipCategory(category)}
+                            className={`px-3 py-1.5 rounded-full text-sm border transition-colors ${
+                              active
+                                ? 'bg-memora-primary text-white border-memora-primary'
+                                : 'bg-white/50 border-black/10 hover:border-memora-primary/40 text-neutral-gray'
+                            }`}
+                            aria-pressed={active}
+                          >
+                            {category}
+                          </button>
+                        );
+                      })}
+                    </div>
+
+                    {/* Opções da categoria selecionada */}
+                    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2 mt-2">
+                      {relationshipCategories
+                        .find((c) => c.category === selectedRelationshipCategory)!
+                        .items.map((item) => {
+                          const active = formData.relationship === item;
+                          return (
+                            <button
+                              type="button"
+                              key={item}
+                              onClick={() => handleFieldUpdate('relationship', item)}
+                              className={`text-sm px-3 py-2 rounded-xl border transition-colors text-left ${
+                                active
+                                  ? 'bg-memora-primary text-white border-memora-primary'
+                                  : 'bg-white/60 border-black/10 hover:border-memora-primary/40 text-neutral-gray'
+                              }`}
+                            >
+                              {item}
+                            </button>
+                          );
+                        })}
+                    </div>
+
                     {validationErrors.relationship && (
                       <p className="text-sm text-accent-coral mt-1">{validationErrors.relationship}</p>
                     )}
@@ -740,29 +878,23 @@ export default function Criar() {
                 <CardContent className="space-y-6">
                   {/* Sistema Progressivo - Mostra músicas prontas + placeholders para as que estão sendo geradas */}
                   <div className="space-y-4">
-                    {/* Renderizar músicas prontas */}
-                    {audioClips && audioClips.length > 0 && audioClips.map((clip, index) => (
-                      <div key={clip.id || index} className="bg-gradient-to-r from-primary/10 to-secondary/10 p-6 rounded-lg border">
-                        <div className="flex items-center justify-between mb-4">
-                          <div>
-                            <h3 className="font-semibold font-heading text-lg flex items-center gap-2">
-                              Opção {index + 1}
-                              <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                                ✓ Pronta
-                              </span>
-                            </h3>
-                            <p className="text-sm text-muted-foreground">{clip.title || `Prévia ${index + 1}`}</p>
-                          </div>
-                          <div className="text-right">
-                            <p className="text-sm text-muted-foreground">Duração</p>
-                            <p className="font-mono text-lg">{clip.duration || '3:24'}</p>
-                          </div>
+                    {/* Renderizar o novo player unificado quando há músicas prontas */}
+                    {audioClips && audioClips.length > 0 && (
+                      <div className="bg-gradient-to-r from-primary/10 to-secondary/10 p-6 rounded-lg border">
+                        <div className="mb-4">
+                          <h3 className="font-semibold font-heading text-lg flex items-center gap-2 mb-2">
+                            Suas Músicas Personalizadas
+                            <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                              ✓ {audioClips.filter(clip => clip.audio_url).length} Pronta{audioClips.filter(clip => clip.audio_url).length !== 1 ? 's' : ''}
+                            </span>
+                          </h3>
+                          <p className="text-sm text-muted-foreground">Use os controles abaixo para ouvir e baixar suas opções</p>
                         </div>
                         
-                        {/* Usar o componente MusicPreview que inclui a lógica de fade-out e controle de download */}
-                        <MusicPreview clip={clip} index={index} />
+                        {/* Usar o novo componente NewMusicPlayer que unifica todos os players */}
+                        <NewMusicPlayer clips={audioClips} />
                       </div>
-                    ))}
+                    )}
                     
                     {/* Renderizar placeholders para músicas ainda sendo geradas */}
                     {isPolling && totalExpected > 0 && Array.from({ length: Math.max(0, totalExpected - (audioClips?.length || 0)) }).map((_, index) => {

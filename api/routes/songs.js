@@ -86,6 +86,21 @@ router.get('/', async (req, res) => {
 });
 
 /**
+ * GET /api/songs/discover
+ * Lista músicas públicas para descoberta (aleatórias, com capa e áudio)
+ */
+router.get('/discover', async (req, res) => {
+  try {
+    const limit = Math.max(1, Math.min(72, parseInt(String(req.query.limit || '24'), 10) || 24));
+    const songs = await SongService.getRandomPublicSongs(limit);
+    return res.status(200).json({ success: true, data: { songs } });
+  } catch (error) {
+    console.error('[SONGS] GET /discover erro:', error);
+    return res.status(500).json({ success: false, message: 'Erro ao buscar músicas públicas' });
+  }
+});
+
+/**
  * Função auxiliar para obter estatísticas das músicas
  */
 async function getSongStats(userId, guestId) {

@@ -90,8 +90,8 @@ const CookieBanner = () => {
   return (
     <>
       {/* Cookie Banner */}
-      <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-memora-gray/20 shadow-2xl z-50 transform transition-transform duration-500">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+      <div className="fixed bottom-0 left-0 right-0 surface-1 shadow-2xl z-50 transform transition-transform duration-500">
+        <div className="container mx-auto px-4 py-4">
           <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
             <div className="flex-1">
               <div className="flex items-start space-x-3">
@@ -99,10 +99,10 @@ const CookieBanner = () => {
                   <Shield className="w-5 h-5 text-memora-primary" />
                 </div>
                 <div>
-                  <h3 className="font-heading font-bold text-memora-black text-sm mb-1">
+                  <h3 className="font-heading font-bold text-foreground text-sm mb-1">
                     Cookies e Privacidade
                   </h3>
-                  <p className="text-memora-gray text-sm leading-relaxed">
+                  <p className="text-muted-foreground text-sm leading-relaxed">
                     Usamos cookies para melhorar sua experiência, analisar o tráfego e personalizar conteúdo. 
                     Você pode escolher quais cookies aceitar.
                   </p>
@@ -120,7 +120,7 @@ const CookieBanner = () => {
               </button>
               <button
                 onClick={rejectAll}
-                className="border border-memora-gray/30 hover:border-memora-primary text-memora-gray hover:text-memora-primary font-heading font-bold py-2 px-4 rounded-xl transition-colors duration-200 text-sm"
+                className="border border-white/20 hover:border-memora-primary text-muted-foreground hover:text-memora-primary font-heading font-bold py-2 px-4 rounded-xl transition-colors duration-200 text-sm"
                 data-attr="cookie-reject-all"
               >
                 Rejeitar todos
@@ -141,35 +141,35 @@ const CookieBanner = () => {
       {/* Customization Modal */}
       {showModal && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[60] flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+          <div className="surface-2 rounded-3xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
             {/* Modal Header */}
-            <div className="flex items-center justify-between p-6 border-b border-memora-gray/20">
-              <h2 className="text-2xl font-heading font-bold text-memora-black">
+            <div className="flex items-center justify-between p-6 border-b border-white/10">
+              <h2 className="text-2xl font-heading font-bold text-foreground">
                 Preferências de Cookies
               </h2>
               <button
                 onClick={() => setShowModal(false)}
-                className="p-2 hover:bg-memora-gray/10 rounded-xl transition-colors duration-200"
+                className="p-2 hover:bg-white/10 rounded-xl transition-colors duration-200"
                 aria-label="Fechar modal"
               >
-                <X className="w-6 h-6 text-memora-gray" />
+                <X className="w-6 h-6 text-muted-foreground" />
               </button>
             </div>
 
             {/* Modal Content */}
             <div className="p-6 space-y-6">
-              <p className="text-memora-gray leading-relaxed">
+              <p className="text-muted-foreground leading-relaxed">
                 Personalize suas preferências de cookies. Você pode alterar essas configurações a qualquer momento.
               </p>
 
               {/* Cookie Categories */}
               <div className="space-y-4">
                 {/* Necessary Cookies */}
-                <div className="bg-memora-gray-light/30 rounded-2xl p-4">
+                <div className="bg-white/5 rounded-2xl p-4">
                   <div className="flex items-center justify-between mb-3">
                     <div className="flex items-center space-x-3">
                       <Shield className="w-5 h-5 text-memora-primary" />
-                      <h3 className="font-heading font-bold text-memora-black">
+                      <h3 className="font-heading font-bold text-foreground">
                         Cookies Necessários
                       </h3>
                     </div>
@@ -177,18 +177,18 @@ const CookieBanner = () => {
                       SEMPRE ATIVO
                     </div>
                   </div>
-                  <p className="text-memora-gray text-sm leading-relaxed">
+                  <p className="text-muted-foreground text-sm leading-relaxed">
                     Estes cookies são essenciais para o funcionamento do site e não podem ser desativados. 
                     Eles são geralmente definidos em resposta a ações suas, como fazer login ou preencher formulários.
                   </p>
                 </div>
 
                 {/* Analytics Cookies */}
-                <div className="bg-memora-gray-light/30 rounded-2xl p-4">
+                <div className="bg-white/5 rounded-2xl p-4">
                   <div className="flex items-center justify-between mb-3">
                     <div className="flex items-center space-x-3">
                       <BarChart3 className="w-5 h-5 text-memora-turquoise" />
-                      <h3 className="font-heading font-bold text-memora-black">
+                      <h3 className="font-heading font-bold text-foreground">
                         Cookies de Analytics
                       </h3>
                     </div>
@@ -208,18 +208,18 @@ const CookieBanner = () => {
                       </div>
                     </label>
                   </div>
-                  <p className="text-memora-gray text-sm leading-relaxed">
+                  <p className="text-muted-foreground text-sm leading-relaxed">
                     Estes cookies nos ajudam a entender como os visitantes interagem com o site, 
                     coletando informações de forma anônima para melhorar a experiência do usuário.
                   </p>
                 </div>
 
                 {/* Marketing Cookies */}
-                <div className="bg-memora-gray-light/30 rounded-2xl p-4">
+                <div className="bg-white/5 rounded-2xl p-4">
                   <div className="flex items-center justify-between mb-3">
                     <div className="flex items-center space-x-3">
                       <Target className="w-5 h-5 text-memora-coral" />
-                      <h3 className="font-heading font-bold text-memora-black">
+                      <h3 className="font-heading font-bold text-foreground">
                         Cookies de Marketing
                       </h3>
                     </div>
@@ -239,7 +239,7 @@ const CookieBanner = () => {
                       </div>
                     </label>
                   </div>
-                  <p className="text-memora-gray text-sm leading-relaxed">
+                  <p className="text-muted-foreground text-sm leading-relaxed">
                     Estes cookies são usados para exibir anúncios relevantes e medir a eficácia 
                     de nossas campanhas publicitárias em diferentes plataformas.
                   </p>
@@ -248,10 +248,10 @@ const CookieBanner = () => {
             </div>
 
             {/* Modal Footer */}
-            <div className="flex flex-col sm:flex-row gap-3 p-6 border-t border-memora-gray/20">
+            <div className="flex flex-col sm:flex-row gap-3 p-6 border-t border-white/10">
               <button
                 onClick={() => setShowModal(false)}
-                className="flex-1 border border-memora-gray/30 hover:border-memora-primary text-memora-gray hover:text-memora-primary font-heading font-bold py-3 px-6 rounded-2xl transition-colors duration-200"
+                className="flex-1 border border-white/20 hover:border-memora-primary text-muted-foreground hover:text-memora-primary font-heading font-bold py-3 px-6 rounded-2xl transition-colors duration-200"
               >
                 Cancelar
               </button>
