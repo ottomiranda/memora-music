@@ -11,6 +11,7 @@ import Index from "./pages/Index";
 import Criar from "./pages/Criar";
 import MinhasMusicas from "./pages/MinhasMusicas";
 import MusicaPublica from "./pages/MusicaPublica";
+import AuthCallback from "./pages/AuthCallback";
 import NotFound from "./pages/NotFound";
 import { useScrollToTop } from "./hooks/useScrollToTop";
 import { useUiStore } from "./store/uiStore";
@@ -40,6 +41,7 @@ const AppContent = () => {
         <Route path="/criar" element={<Criar />} />
         <Route path="/minhas-musicas" element={<MinhasMusicas />} />
         <Route path="/musica/:id" element={<MusicaPublica />} />
+        <Route path="/auth/callback" element={<AuthCallback />} />
         {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
         <Route path="*" element={<NotFound />} />
       </Routes>

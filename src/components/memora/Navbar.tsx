@@ -42,6 +42,11 @@ const Navbar = () => {
     setIsMobileMenuOpen(false);
   };
 
+  const getFirstName = (fullName?: string) => {
+    if (!fullName) return '';
+    return fullName.split(' ')[0];
+  };
+
   return (
     <nav
       className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
@@ -54,28 +59,17 @@ const Navbar = () => {
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
           <div className="flex items-center">
-            <img 
-              src={isHomePage && !isScrolled ? "/memora_logo_white.svg" : "/memora_logo.svg"} 
-              alt="Memora Music" 
-              className="h-9 w-auto"
-            />
+            <Link to="/">
+              <img 
+                src={isHomePage && !isScrolled ? "/memora_logo_white.svg" : "/memora_logo.svg"} 
+                alt="Memora Music" 
+                className="h-9 w-auto cursor-pointer"
+              />
+            </Link>
           </div>
 
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center space-x-8">
-            <Link
-              to="/"
-              className={`${isHomePage && !isScrolled ? 'text-white hover:text-memora-gold' : 'text-memora-gray hover:text-memora-primary'} transition-colors duration-200 font-medium`}
-            >
-              Home
-            </Link>
-            <Button
-              onClick={goToDashboard}
-              variant="ghost"
-              className={`${isHomePage && !isScrolled ? 'text-white hover:text-memora-gold' : 'text-memora-gray hover:text-memora-primary'} transition-colors duration-200 font-medium p-0 h-auto`}
-            >
-              Minhas Músicas
-            </Button>
             <Button
               onClick={() => scrollToSection("como-funciona")}
               variant="ghost"
@@ -113,11 +107,11 @@ const Navbar = () => {
                 // --- Estado Logado ---
                 <div className="flex items-center gap-4">
                   <span className={`${isHomePage && !isScrolled ? 'text-white' : 'text-memora-gray'} font-medium`}>
-                    Olá, {user?.name || 'usuário'}!
+                    Olá, {getFirstName(user?.name) || 'usuário'}!
                   </span>
                   <Button 
                     variant="outline" 
-                    onClick={logout}
+                    onClick={() => logout().catch(console.error)}
                     className={`${isHomePage && !isScrolled ? 'border-white text-white hover:bg-white hover:text-memora-primary' : 'border-memora-primary text-memora-primary hover:bg-memora-primary hover:text-white'} transition-all duration-200`}
                   >
                     Sair
@@ -126,18 +120,12 @@ const Navbar = () => {
               ) : (
                 // --- Estado Deslogado ---
                 <>
+
                   <Button 
-                    variant="ghost" 
-                    onClick={() => showAuthPopup()}
-                    className={`${isHomePage && !isScrolled ? 'text-white hover:text-memora-gold' : 'text-memora-gray hover:text-memora-primary'} transition-colors duration-200 font-medium`}
-                  >
-                    Entrar
-                  </Button>
-                  <Button 
-                    onClick={() => showAuthPopup()}
+                    onClick={() => goToDashboard()}
                     className="bg-memora-primary text-white px-6 py-2 rounded-2xl hover:bg-memora-primary/90 transition-all duration-200 font-medium shadow-lg hover:shadow-xl hover:-translate-y-0.5"
                   >
-                    Criar Conta
+                    Minhas Músicas
                   </Button>
                 </>
               )}
@@ -173,20 +161,6 @@ const Navbar = () => {
         {isMobileMenuOpen && (
           <div className="md:hidden bg-white/95 backdrop-blur-md border-t border-memora-gray-light">
             <div className="px-2 pt-2 pb-3 space-y-1">
-              <Link
-                to="/"
-                onClick={() => setIsMobileMenuOpen(false)}
-                className="block w-full text-left px-3 py-2 text-memora-gray hover:text-memora-primary transition-colors duration-200 font-medium"
-              >
-                Home
-              </Link>
-              <Button
-                onClick={goToDashboard}
-                variant="ghost"
-                className="block w-full text-left px-3 py-2 text-memora-gray hover:text-memora-primary transition-colors duration-200 font-medium h-auto justify-start"
-              >
-                Minhas Músicas
-              </Button>
               <Button
                 onClick={() => scrollToSection("como-funciona")}
                 variant="ghost"
@@ -213,11 +187,11 @@ const Navbar = () => {
                 // --- Estado Logado Mobile ---
                 <div className="mt-2 space-y-2">
                   <div className="px-3 py-2 text-memora-gray font-medium">
-                    Olá, {user?.name || 'usuário'}!
+                    Olá, {getFirstName(user?.name) || 'usuário'}!
                   </div>
                   <Button
                     onClick={() => {
-                      logout();
+                      logout().catch(console.error);
                       setIsMobileMenuOpen(false);
                     }}
                     variant="outline"
@@ -229,24 +203,15 @@ const Navbar = () => {
               ) : (
                 // --- Estado Deslogado Mobile ---
                 <div className="mt-2 space-y-2">
+
                   <Button
                     onClick={() => {
-                      showAuthPopup();
-                      setIsMobileMenuOpen(false);
-                    }}
-                    variant="ghost"
-                    className="block w-full text-left px-3 py-2 text-memora-gray hover:text-memora-primary transition-colors duration-200 font-medium h-auto justify-start"
-                  >
-                    Entrar
-                  </Button>
-                  <Button
-                    onClick={() => {
-                      showAuthPopup();
+                      goToDashboard();
                       setIsMobileMenuOpen(false);
                     }}
                     className="block w-full text-left px-3 py-2 bg-memora-primary text-white rounded-2xl hover:bg-memora-primary/90 transition-all duration-200 font-medium"
                   >
-                    Criar Conta
+                    Minhas Músicas
                   </Button>
                 </div>
               )}

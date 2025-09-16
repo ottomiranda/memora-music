@@ -1,7 +1,7 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { X, Mail, Eye, EyeOff } from "lucide-react";
+import { Eye, EyeOff, X, Mail, CheckCircle } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -18,9 +18,43 @@ const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
   // Estados locais
   const [showPassword, setShowPassword] = useState(false);
   const [isLogin, setIsLogin] = useState(true);
+  const [showEmailConfirmation, setShowEmailConfirmation] = useState(false);
+  const [userEmail, setUserEmail] = useState('');
   
-  const { login, signup, isLoading, error, clearError, resetPassword } = useAuthStore()
+  const { login, signup, isLoading, error, clearError, resetPassword, isLoggedIn, resendConfirmationEmail } = useAuthStore()
   const { hideAuthPopup, executeAuthCallback } = useUiStore();
+
+  // Monitorar mudanças na autenticação para fechar o modal automaticamente
+  useEffect(() => {
+    if (isLoggedIn && showEmailConfirmation) {
+      hideAuthPopup();
+      executeAuthCallback();
+      onClose();
+      // Redirecionar para o dashboard após verificação bem-sucedida
+      window.location.href = '/minhas-musicas';
+    }
+  }, [isLoggedIn, showEmailConfirmation, hideAuthPopup, executeAuthCallback, onClose]);
+
+  useEffect(() => {
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        onClose();
+      }
+    };
+
+    document.addEventListener('keydown', handleEscape);
+    return () => document.removeEventListener('keydown', handleEscape);
+  }, [onClose]);
+
+  // Monitorar confirmação de email e redirecionar automaticamente
+  useEffect(() => {
+    if (showEmailConfirmation && isLoggedIn) {
+      // Se o usuário está logado, significa que o email foi confirmado
+      setTimeout(() => {
+        handleCloseModal();
+      }, 2000); // Aguarda 2 segundos para mostrar feedback antes de redirecionar
+    }
+  }, [showEmailConfirmation, isLoggedIn]);
 
   // Configuração do react-hook-form com validação zod
   const {
@@ -63,6 +97,11 @@ const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
           email: data.email, 
           password: data.password 
         });
+        executeAuthCallback();
+        hideAuthPopup();
+        onClose();
+        // Limpar formulário
+        reset();
       } else {
         const signupData = data as { name: string; email: string; password: string };
         await signup({ 
@@ -70,14 +109,10 @@ const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
           password: signupData.password, 
           name: signupData.name 
         });
+        // Após signup, mostrar tela de confirmação de email
+        setUserEmail(data.email);
+        setShowEmailConfirmation(true);
       }
-      
-      // Se chegou até aqui, a autenticação foi bem-sucedida
-      executeAuthCallback();
-      hideAuthPopup();
-      onClose();
-      // Limpar formulário
-      reset();
     } catch (error) {
       // O erro já foi tratado pelo authStore e está no estado 'error'
       // Não precisamos fazer nada aqui, pois o erro será exibido automaticamente
@@ -94,6 +129,48 @@ const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
     const ok = await resetPassword(email);
     if (ok) {
       alert('Enviamos um e-mail com instruções para redefinir sua senha.');
+    }
+  };
+
+  const handleResendEmail = async () => {
+    if (!userEmail) return;
+    
+    try {
+      const success = await resendConfirmationEmail(userEmail);
+      if (success) {
+        // Mostrar feedback de sucesso temporário
+        const button = document.querySelector('[data-resend-button]') as HTMLButtonElement;
+        if (button) {
+          const originalText = button.textContent;
+          button.textContent = 'E-mail enviado!';
+          button.disabled = true;
+          setTimeout(() => {
+            button.textContent = originalText;
+            button.disabled = false;
+          }, 3000);
+        }
+      }
+    } catch (error) {
+      console.error('Erro ao reenviar email:', error);
+      // Mostrar feedback de erro temporário
+      const button = document.querySelector('[data-resend-button]') as HTMLButtonElement;
+      if (button) {
+        const originalText = button.textContent;
+        button.textContent = 'Erro ao enviar';
+        setTimeout(() => {
+          button.textContent = originalText;
+        }, 3000);
+      }
+    }
+  };
+
+  const handleCloseModal = () => {
+    setShowEmailConfirmation(false);
+    hideAuthPopup();
+    onClose();
+    // Redirecionar para /minhas-musicas se o usuário estiver logado
+    if (isLoggedIn) {
+      window.location.href = '/minhas-musicas';
     }
   };
 
@@ -299,6 +376,54 @@ const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
             </div>
           )}
         </div>
+
+        {/* Tela de confirmação de email */}
+        {showEmailConfirmation && (
+          <div className="absolute inset-0 bg-white rounded-2xl flex flex-col items-center justify-center p-8 text-center">
+            <div className="mb-6">
+              <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Mail className="w-8 h-8 text-blue-600" />
+              </div>
+              <h3 className="text-xl font-semibold text-gray-900 mb-2">
+                Confirme seu e-mail
+              </h3>
+              <p className="text-gray-600 mb-4">
+                Enviamos um link de confirmação para:
+              </p>
+              <p className="font-medium text-gray-900 mb-6">
+                {userEmail}
+              </p>
+              <p className="text-sm text-gray-500 mb-6">
+                Clique no link do e-mail para ativar sua conta. Após a confirmação, você será redirecionado automaticamente.
+              </p>
+            </div>
+            
+            <div className="space-y-3 w-full max-w-sm">
+              <Button
+                onClick={handleResendEmail}
+                variant="outline"
+                className="w-full"
+                disabled={isLoading}
+                data-resend-button
+              >
+                {isLoading ? 'Reenviando...' : 'Reenviar e-mail'}
+              </Button>
+              
+              <Button
+                onClick={handleCloseModal}
+                variant="ghost"
+                className="w-full text-gray-500"
+              >
+                Fechar
+              </Button>
+            </div>
+            
+            <div className="mt-6 flex items-center text-sm text-gray-500">
+              <CheckCircle className="w-4 h-4 mr-2 text-green-500" />
+              Monitorando confirmação automaticamente...
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

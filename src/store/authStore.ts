@@ -49,6 +49,8 @@ interface AuthState {
   logout: () => void;
   clearError: () => void;
   resetPassword: (email: string) => Promise<boolean>;
+  resendConfirmationEmail: (email: string) => Promise<boolean>;
+  syncSession: () => Promise<boolean>;
 }
 
 export const useAuthStore = create<AuthState>()(
@@ -194,13 +196,36 @@ export const useAuthStore = create<AuthState>()(
         }
       },
 
-      logout: () => {
-        localStorage.removeItem('authToken');
-        // Sair no Supabase também
-        getSupabaseBrowserClient().then((supabase) => {
-          supabase?.auth.signOut();
-        });
-        set({ user: null, token: null, isLoggedIn: false, error: null });
+      logout: async () => {
+        try {
+          // Limpar completamente o localStorage
+          localStorage.removeItem('authToken');
+          localStorage.removeItem('deviceId');
+          localStorage.removeItem('guestId');
+          
+          // Fazer signOut no Supabase de forma síncrona
+          const supabase = await getSupabaseBrowserClient();
+          if (supabase) {
+            await supabase.auth.signOut();
+          }
+          
+          // Limpar o estado do Zustand
+          set({ user: null, token: null, isLoggedIn: false, error: null });
+          
+          // Limpar o storage persistido do Zustand
+          useAuthStore.persist.clearStorage();
+          
+          console.log('[AuthStore] Logout completo realizado');
+          
+          // Redirecionar para a página inicial após logout
+          window.location.href = '/';
+        } catch (error) {
+          console.error('[AuthStore] Erro durante logout:', error);
+          // Mesmo com erro, limpar dados locais e redirecionar
+          localStorage.clear();
+          set({ user: null, token: null, isLoggedIn: false, error: null });
+          window.location.href = '/';
+        }
       },
 
       clearError: () => {
@@ -219,6 +244,73 @@ export const useAuthStore = create<AuthState>()(
         } catch (e) {
           const msg = e instanceof Error ? e.message : 'Erro ao solicitar recuperação de senha';
           set({ error: msg });
+          return false;
+        }
+      },
+
+      resendConfirmationEmail: async (email: string) => {
+        set({ isLoading: true, error: null });
+        try {
+          const supabase = await getSupabaseBrowserClient();
+          if (!supabase) throw new Error('Falha ao inicializar Supabase');
+          
+          const { error } = await supabase.auth.resend({
+            type: 'signup',
+            email: email,
+            options: {
+              emailRedirectTo: `${window.location.origin}/auth/callback`,
+            }
+          });
+          
+          if (error) throw error;
+          return true;
+        } catch (e) {
+          const msg = e instanceof Error ? e.message : 'Erro ao reenviar email de confirmação';
+          set({ error: msg });
+          return false;
+        } finally {
+          set({ isLoading: false });
+        }
+      },
+
+      // Função para sincronizar sessão do Supabase com o authStore
+      syncSession: async () => {
+        try {
+          const supabase = await getSupabaseBrowserClient();
+          if (!supabase) throw new Error('Falha ao inicializar Supabase');
+
+          const { data: sessionData, error } = await supabase.auth.getSession();
+          if (error) throw error;
+
+          if (sessionData.session) {
+            const { access_token, user } = sessionData.session;
+            const userData = {
+              id: user.id,
+              email: user.email || '',
+              name: user.user_metadata?.name || user.email || ''
+            };
+
+            // Atualizar localStorage e estado
+            localStorage.setItem('authToken', access_token);
+            set({ 
+              user: userData, 
+              token: access_token, 
+              isLoggedIn: true, 
+              error: null 
+            });
+
+            console.log('[AuthStore] Sessão sincronizada:', userData);
+            return true;
+          } else {
+            // Limpar dados se não há sessão
+            localStorage.removeItem('authToken');
+            set({ user: null, token: null, isLoggedIn: false });
+            return false;
+          }
+        } catch (error) {
+          console.error('[AuthStore] Erro ao sincronizar sessão:', error);
+          const errorMessage = error instanceof Error ? error.message : 'Erro ao sincronizar sessão';
+          set({ error: errorMessage });
           return false;
         }
       },
