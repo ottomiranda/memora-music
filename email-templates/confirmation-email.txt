@@ -1,0 +1,23 @@
+Confirme seu email - {{.SiteName}}
+
+===========================================
+MEMORA MUSIC
+===========================================
+
+Confirme seu email
+
+Olá!
+
+Obrigado por se cadastrar no {{.SiteName}}. Para completar seu cadastro e começar a usar nossa plataforma, acesse o link abaixo para confirmar seu endereço de email:
+
+{{.ConfirmationURL}}
+
+Se você não conseguir clicar no link, copie e cole o endereço completo no seu navegador.
+
+-------------------------------------------
+
+Este email foi enviado pelo {{.SiteName}}. Se você não se cadastrou em nossa plataforma, pode ignorar este email.
+
+© 2024 Memora Music. Todos os direitos reservados.
+
+===========================================
