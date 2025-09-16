@@ -1,8 +1,8 @@
 import { Check, Clock, Music, Mic, Download, Sparkles } from "lucide-react";
-import { useState } from "react";
+import { useCreationStatus } from "../../hooks/useCreationStatus";
 
 const PlanSection = () => {
-  const [isFirstSong, setIsFirstSong] = useState(true);
+  const { isFree: isFirstSong, isLoading, error } = useCreationStatus();
   const benefits = [
     {
       icon: Music,
@@ -54,11 +54,17 @@ const PlanSection = () => {
                   AI Premium
                 </h3>
                 <div className="flex items-center justify-center space-x-2">
-                  <span className="text-4xl sm:text-5xl font-heading font-bold text-primary">
-                    {isFirstSong ? "R$ 0" : "R$ 149"}
-                  </span>
+                  {isLoading ? (
+                    <div className="text-4xl sm:text-5xl font-heading font-bold text-muted-foreground animate-pulse">
+                      R$ --
+                    </div>
+                  ) : (
+                    <span className="text-4xl sm:text-5xl font-heading font-bold text-primary">
+                      {isFirstSong ? "R$ 0" : "R$ 149"}
+                    </span>
+                  )}
                   <div className="text-left">
-                    {isFirstSong && (
+                    {!isLoading && isFirstSong && (
                       <div className="text-muted-foreground line-through text-lg">
                         R$ 149
                       </div>
@@ -68,6 +74,11 @@ const PlanSection = () => {
                     </div>
                   </div>
                 </div>
+                {error && (
+                  <div className="text-xs text-orange-600 mt-2">
+                    Erro ao carregar preço. Usando valor padrão.
+                  </div>
+                )}
               </div>
 
               {/* Benefits */}

@@ -20,7 +20,6 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-white font-body">
-
       <main>
         <Hero />
         <HowItWorks />

@@ -53,6 +53,9 @@ export const API_ENDPOINTS = {
   LOGIN: '/api/auth/login',
   SIGNUP: '/api/auth/signup',
   LOGOUT: '/api/auth/logout',
+  
+  // Endpoint do paywall
+  PAYWALL: `${API_BASE_URL}/api/user`,
 } as const;
 
 // Funções de API específicas para o sistema de músicas
