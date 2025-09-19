@@ -131,17 +131,56 @@ router.get('/creation-status', optionalAuthMiddleware, async (req: Request, res:
       } else {
         foundUser = null;
       }
-      // DEBUG: Log detalhado para diagnóstico em produção
-      console.log('[PAYWALL_DEBUG] Supabase config check:', {
-        hasUrl: !!process.env.SUPABASE_URL,
-        hasKey: !!process.env.SUPABASE_SERVICE_ROLE_KEY,
-        urlLength: process.env.SUPABASE_URL?.length || 0,
-        keyLength: process.env.SUPABASE_SERVICE_ROLE_KEY?.length || 0
+      // Verificação robusta de configuração do Supabase
+      const supabaseUrl = process.env.SUPABASE_URL;
+      const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+      console.log('[SUPABASE_CONFIG] Verificando configuração:', {
+        hasUrl: !!supabaseUrl,
+        hasServiceKey: !!supabaseServiceKey,
+        urlLength: supabaseUrl?.length || 0,
+        keyLength: supabaseServiceKey?.length || 0,
+        nodeEnv: process.env.NODE_ENV,
+        timestamp: new Date().toISOString()
       });
+
+      if (!supabaseUrl || !supabaseServiceKey) {
+        console.error('[SUPABASE_CONFIG_ERROR] Variáveis de ambiente não configuradas:', {
+          SUPABASE_URL: supabaseUrl ? 'definida' : 'UNDEFINED',
+          SUPABASE_SERVICE_ROLE_KEY: supabaseServiceKey ? 'definida' : 'UNDEFINED',
+          allEnvKeys: Object.keys(process.env).filter(key => key.includes('SUPABASE')),
+          nodeEnv: process.env.NODE_ENV
+        });
+        return res.status(500).json({
+          success: false,
+          error: 'Configuração do servidor incompleta',
+          message: 'Serviço temporariamente indisponível',
+          debug: process.env.NODE_ENV === 'development' ? {
+            missingVars: {
+              SUPABASE_URL: !supabaseUrl,
+              SUPABASE_SERVICE_ROLE_KEY: !supabaseServiceKey
+            }
+          } : undefined
+        });
+      }
 
       // Só considerar erro se não for "nenhum resultado encontrado"
       if (error && error.code !== 'PGRST116') {
-        console.error('[PAYWALL_ERROR] Erro ao buscar usuário por deviceId:', JSON.stringify(error, null, 2));
+        console.error('[PAYWALL_ERROR] Erro ao buscar usuário por deviceId:', {
+          deviceId,
+          error: {
+            code: error.code,
+            message: error.message,
+            details: error.details,
+            hint: error.hint
+          },
+          supabaseConfig: {
+            url: process.env.SUPABASE_URL?.substring(0, 30) + '...',
+            hasServiceKey: !!process.env.SUPABASE_SERVICE_ROLE_KEY,
+            keyPrefix: process.env.SUPABASE_SERVICE_ROLE_KEY?.substring(0, 10) + '...'
+          },
+          timestamp: new Date().toISOString()
+        });
         findError = error;
       }
     }
