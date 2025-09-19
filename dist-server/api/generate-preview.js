@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import OpenAI from 'openai';
+// Force deploy trigger - campos hobbies e qualities são opcionais
 // Usar fetch nativo do Node.js 18+ em vez de node-fetch
 const fetchWithTimeout = async (url, options = {}) => {
     const { timeout = 30000, ...fetchOptions } = options;
