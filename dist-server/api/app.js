@@ -12,45 +12,51 @@ import checkMusicStatusRoutes from './routes/check-music-status.js';
 import saveFeedbackRoutes from './routes/save-feedback.js';
 import paywallRoutes from './routes/paywall.js';
 import stripeRoutes from './routes/stripe.js';
+import supabasePublicRoutes from './routes/supabase-public.js';
+import sunoCoverCallbackRoute from './routes/suno-cover-callback.js';
+import sunoMusicRoute from './routes/suno-music.js';
 // for esm mode
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 // load env
 dotenv.config({ path: path.join(__dirname, '../.env') });
 const app = express();
-// ==================== SEÇÃO CORS ROBUSTA COM DEPURAÇÃO ====================
-// 1. Crie uma lista base com a sua URL de desenvolvimento local.
+// ==================== TESTE NUCLEAR (TEMPORÁRIO) ====================
+// Comentando toda a lógica de corsOptions para diagnóstico
+/*
 const allowedOrigins = [
-    'http://localhost:5173' // Corrigido para a porta 5173
+  'http://localhost:5173' // Corrigido para a porta 5173
 ];
-// 2. Em produção, a Render define a variável FRONTEND_URL.
+
 if (process.env.FRONTEND_URL) {
-    console.log(`Variável FRONTEND_URL encontrada: ${process.env.FRONTEND_URL}`);
-    allowedOrigins.push(process.env.FRONTEND_URL);
+  console.log(`Variável FRONTEND_URL encontrada: ${process.env.FRONTEND_URL}`);
+  allowedOrigins.push(process.env.FRONTEND_URL);
+} else {
+  console.warn('AVISO: Variável de ambiente FRONTEND_URL não foi encontrada.');
 }
-else {
-    console.warn('AVISO: Variável de ambiente FRONTEND_URL não foi encontrada.');
-}
-// 3. Adiciona a URL de "Deploy Previews" da Render, se existir.
+
 if (process.env.RENDER_EXTERNAL_URL) {
-    allowedOrigins.push(process.env.RENDER_EXTERNAL_URL);
+  allowedOrigins.push(process.env.RENDER_EXTERNAL_URL);
 }
-// 4. A linha de log mais importante para depuração:
+
 console.log('✅ Origens CORS permitidas para este ambiente:', allowedOrigins);
-const corsOptions = {
-    origin: (origin, callback) => {
-        if (!origin || allowedOrigins.indexOf(origin) !== -1) {
-            callback(null, true);
-        }
-        else {
-            console.error(`❌ CORS: Bloqueando origin não autorizado: ${origin}`);
-            callback(new Error('Not allowed by CORS'));
-        }
-    },
-    credentials: true,
+
+const corsOptions: cors.CorsOptions = {
+  origin: (origin, callback) => {
+    if (!origin || allowedOrigins.indexOf(origin) !== -1) {
+      callback(null, true);
+    } else {
+      console.error(`❌ CORS: Bloqueando origin não autorizado: ${origin}`);
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  credentials: true,
 };
-app.use(cors(corsOptions));
-// ==================== FIM DA SEÇÃO CORS ====================
+*/
+// TESTE NUCLEAR: CORS totalmente aberto para diagnóstico
+console.log('🚨 TESTE NUCLEAR: CORS totalmente aberto ativado!');
+app.use(cors());
+// =================================================================
 // Raw body parsing for Stripe webhook, JSON for everything else
 app.use('/api/stripe/webhook', express.raw({ type: 'application/json' }));
 app.use(express.json({ limit: '10mb' }));
@@ -69,6 +75,9 @@ app.use('/api/check-music-status', checkMusicStatusRoutes);
 app.use('/api/save-feedback', saveFeedbackRoutes);
 app.use('/api/user', paywallRoutes);
 app.use('/api/stripe', stripeRoutes);
+app.use('/api/supabase', supabasePublicRoutes);
+app.use('/api/suno-cover-callback', sunoCoverCallbackRoute);
+app.use('/api/suno', sunoMusicRoute);
 /**
  * health
  */

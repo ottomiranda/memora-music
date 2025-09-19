@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teste de Proteção de Rotas</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .test-section {
+            background: white;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .status {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+        }
+        .success { background-color: #d4edda; color: #155724; }
+        .error { background-color: #f8d7da; color: #721c24; }
+        .warning { background-color: #fff3cd; color: #856404; }
+        .info { background-color: #d1ecf1; color: #0c5460; }
+        button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        #results {
+            white-space: pre-wrap;
+            font-family: monospace;
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-radius: 4px;
+            border: 1px solid #dee2e6;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔒 Teste de Proteção de Rotas - Memora Music</h1>
+    
+    <div class="test-section">
+        <h2>1. Teste de Acesso Direto</h2>
+        <p>Clique nos links abaixo para testar o acesso direto às rotas protegidas:</p>
+        <button onclick="testRoute('/minhas-musicas')">Testar /minhas-musicas</button>
+        <button onclick="testRoute('/criar-musica')">Testar /criar-musica</button>
+        <button onclick="testRoute('/')">Testar / (home)</button>
+    </div>
+    
+    <div class="test-section">
+        <h2>2. Teste de APIs</h2>
+        <p>Teste o acesso às APIs sem autenticação:</p>
+        <button onclick="testAPI('/api/songs')">Testar GET /api/songs</button>
+        <button onclick="testAPI('/api/songs/stats')">Testar GET /api/songs/stats</button>
+        <button onclick="testAPI('/api/user/profile')">Testar GET /api/user/profile</button>
+    </div>
+    
+    <div class="test-section">
+        <h2>3. Verificação de Estado</h2>
+        <button onclick="checkAuthState()">Verificar Estado de Autenticação</button>
+        <button onclick="checkLocalStorage()">Verificar LocalStorage</button>
+        <button onclick="simulateLogin()">Simular Login</button>
+        <button onclick="simulateLogout()">Simular Logout</button>
+    </div>
+    
+    <div class="test-section">
+        <h2>📋 Resultados dos Testes</h2>
+        <div id="results">Clique nos botões acima para executar os testes...</div>
+    </div>
+
+    <script>
+        let results = [];
+        
+        function log(message, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString();
+            results.push(`[${timestamp}] ${type.toUpperCase()}: ${message}`);
+            updateResults();
+        }
+        
+        function updateResults() {
+            document.getElementById('results').textContent = results.join('\n');
+        }
+        
+        function testRoute(path) {
+            log(`Testando acesso à rota: ${path}`);
+            
+            // Abrir em nova aba para observar comportamento
+            const newWindow = window.open(window.location.origin + path, '_blank');
+            
+            // Verificar se a janela foi bloqueada
+            if (!newWindow) {
+                log('❌ Popup bloqueado pelo navegador', 'error');
+                return;
+            }
+            
+            log(`✅ Rota ${path} aberta em nova aba - verifique manualmente o comportamento`, 'success');
+            
+            // Tentar detectar redirecionamento (limitado por CORS)
+            setTimeout(() => {
+                try {
+                    const currentUrl = newWindow.location.href;
+                    log(`📍 URL atual da aba: ${currentUrl}`);
+                    
+                    if (currentUrl.includes('/login') || currentUrl.includes('/auth')) {
+                        log('✅ Redirecionamento para login detectado - proteção funcionando', 'success');
+                    } else if (currentUrl === window.location.origin + path) {
+                        log('⚠️ Usuário permaneceu na rota protegida - verificar se modal de login apareceu', 'warning');
+                    }
+                } catch (e) {
+                    log('ℹ️ Não foi possível verificar URL devido a restrições de CORS', 'info');
+                }
+            }, 2000);
+        }
+        
+        async function testAPI(endpoint) {
+            log(`Testando API: ${endpoint}`);
+            
+            try {
+                const response = await fetch(endpoint, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                log(`📡 ${endpoint}: ${response.status} ${response.statusText}`);
+                
+                if (response.status === 401) {
+                    log('✅ API protegida corretamente (401 Unauthorized)', 'success');
+                } else if (response.status === 403) {
+                    log('✅ API protegida corretamente (403 Forbidden)', 'success');
+                } else if (response.status === 200) {
+                    log('⚠️ API acessível - pode indicar problema na proteção', 'warning');
+                } else if (response.status >= 500) {
+                    log('❌ Erro interno do servidor - verificar logs', 'error');
+                } else {
+                    log(`❓ Status inesperado: ${response.status}`, 'warning');
+                }
+                
+                // Tentar ler resposta
+                try {
+                    const data = await response.text();
+                    if (data && data.length < 200) {
+                        log(`📄 Resposta: ${data}`);
+                    }
+                } catch (e) {
+                    log('ℹ️ Não foi possível ler o corpo da resposta');
+                }
+                
+            } catch (error) {
+                log(`❌ Erro ao acessar ${endpoint}: ${error.message}`, 'error');
+            }
+        }
+        
+        function checkAuthState() {
+            log('Verificando estado de autenticação...');
+            
+            // Verificar se existe algum token no localStorage
+            const keys = Object.keys(localStorage);
+            const authKeys = keys.filter(key => key.includes('auth') || key.includes('supabase'));
+            
+            if (authKeys.length === 0) {
+                log('✅ Nenhum token de autenticação encontrado no localStorage', 'success');
+            } else {
+                log(`⚠️ Tokens encontrados: ${authKeys.join(', ')}`, 'warning');
+                authKeys.forEach(key => {
+                    const value = localStorage.getItem(key);
+                    log(`  ${key}: ${value ? 'presente' : 'ausente'}`);
+                });
+            }
+            
+            // Verificar cookies
+            const cookies = document.cookie;
+            if (cookies) {
+                log(`🍪 Cookies: ${cookies}`);
+            } else {
+                log('✅ Nenhum cookie encontrado', 'success');
+            }
+        }
+        
+        function checkLocalStorage() {
+            log('Verificando LocalStorage...');
+            
+            const storage = {};
+            for (let i = 0; i < localStorage.length; i++) {
+                const key = localStorage.key(i);
+                const value = localStorage.getItem(key);
+                storage[key] = value;
+            }
+            
+            if (Object.keys(storage).length === 0) {
+                log('✅ LocalStorage vazio', 'success');
+            } else {
+                log('📦 Conteúdo do LocalStorage:');
+                Object.entries(storage).forEach(([key, value]) => {
+                    log(`  ${key}: ${value.substring(0, 100)}${value.length > 100 ? '...' : ''}`);
+                });
+            }
+        }
+        
+        function simulateLogin() {
+            log('Simulando login...');
+            
+            // Simular token no localStorage
+            const mockToken = {
+                access_token: 'mock_access_token_' + Date.now(),
+                refresh_token: 'mock_refresh_token_' + Date.now(),
+                expires_at: Math.floor(Date.now() / 1000) + 3600,
+                user: {
+                    id: 'mock_user_id',
+                    email: 'test@example.com'
+                }
+            };
+            
+            localStorage.setItem('sb-mock-auth-token', JSON.stringify(mockToken));
+            log('✅ Token mock adicionado ao localStorage', 'success');
+            log('ℹ️ Agora teste novamente as rotas protegidas', 'info');
+        }
+        
+        function simulateLogout() {
+            log('Simulando logout...');
+            
+            // Limpar todos os tokens relacionados à autenticação
+            const keys = Object.keys(localStorage);
+            const authKeys = keys.filter(key => key.includes('auth') || key.includes('supabase') || key.includes('sb-'));
+            
+            authKeys.forEach(key => {
+                localStorage.removeItem(key);
+                log(`🗑️ Removido: ${key}`);
+            });
+            
+            log('✅ Logout simulado - tokens removidos', 'success');
+        }
+        
+        // Executar verificação inicial
+        window.onload = function() {
+            log('🚀 Teste de proteção de rotas iniciado');
+            log('ℹ️ Este teste verifica se as rotas protegidas estão funcionando corretamente');
+            checkAuthState();
+        };
+    </script>
+</body>
+</html>

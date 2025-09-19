@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { API_BASE_URL, songsApi } from '../config/api';
 import { SongCard } from '../components/SongCard';
@@ -11,6 +11,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { triggerDownload } from '@/utils/download';
 import { useAudioPlayerStore } from '@/store/audioPlayerStore';
 import { toast } from 'sonner';
+import { getSunoAudioLinks } from '@/lib/sunoAudio';
 
 interface Song {
   id: string;
@@ -25,6 +26,8 @@ interface Song {
   createdAt: string;
   userId?: string;
   guestId?: string;
+  status?: string;
+  sunoTaskId?: string | null;
 }
 
 const MinhasMusicas: React.FC = () => {
@@ -33,7 +36,9 @@ const MinhasMusicas: React.FC = () => {
   const [songs, setSongs] = useState<Song[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [loadingSongId, setLoadingSongId] = useState<string | null>(null);
   const { currentId, isPlaying, play: playGlobal, pause: pauseGlobal, currentVersionLabel } = useAudioPlayerStore();
+  const audioCache = useRef(new Map<string, { playbackUrl: string; downloadUrl?: string | null }>());
   const [query, setQuery] = useState('');
   const [sortBy, setSortBy] = useState<'recent' | 'oldest' | 'title'>('recent');
   const [statusFilter, setStatusFilter] = useState<'all' | 'completed' | 'processing' | 'failed'>('all');
@@ -73,6 +78,7 @@ const MinhasMusicas: React.FC = () => {
             // backend uses generation_status; keep a simple string for filtering
             // fallback to 'completed' to keep existing visuals pleasant
             status: s.status || s.generationStatus || s.generation_status || 'completed',
+            sunoTaskId: s.sunoTaskId || s.suno_task_id || s.taskId || s.task_id || null,
           };
         });
         // Ordenar por mais recentes
@@ -89,12 +95,62 @@ const MinhasMusicas: React.FC = () => {
     loadSongs();
   }, []);
 
-  const getAudioUrl = (song: Song) => song.audioUrl || song.audioUrlOption1 || song.audioUrlOption2;
+  const resolveAudioForSong = async (song: Song) => {
+    const cached = audioCache.current.get(song.id);
+    if (cached) {
+      return cached;
+    }
 
-  const handlePlay = (song: Song, urlOverride?: string, versionLabel?: 'A' | 'B') => {
-    const url = urlOverride || getAudioUrl(song);
-    if (!url) return;
-    playGlobal(song.id, url, { title: song.title, versionLabel });
+    const localA = song.audioUrlOption1 || song.audioUrl || null;
+    const localB = song.audioUrlOption2 || null;
+    const taskId = song.sunoTaskId || (typeof song.id === 'string' && song.id.startsWith('suno_') ? song.id.replace('suno_', '') : null);
+
+    if (taskId) {
+      const links = await getSunoAudioLinks(taskId);
+      if (links?.streamUrl) {
+        const entry = {
+          playbackUrl: links.streamUrl,
+          downloadUrl: links.audioUrl || localA || localB || null,
+        };
+        audioCache.current.set(song.id, entry);
+        return entry;
+      }
+    }
+
+    if (localA || localB) {
+      const fallbackEntry = {
+        playbackUrl: (localA || localB) as string,
+        downloadUrl: localA || localB || null,
+      };
+      audioCache.current.set(song.id, fallbackEntry);
+      return fallbackEntry;
+    }
+
+    return null;
+  };
+
+  const handlePlay = async (song: Song, urlOverride?: string, versionLabel?: 'A' | 'B') => {
+    try {
+      setLoadingSongId(song.id);
+
+      let playbackUrl = urlOverride || null;
+      if (!playbackUrl) {
+        const resolved = await resolveAudioForSong(song);
+        playbackUrl = resolved?.playbackUrl || null;
+      }
+
+      if (!playbackUrl) {
+        toast.error('Não foi possível carregar o áudio desta música.');
+        return;
+      }
+
+      playGlobal(song.id, playbackUrl, { title: song.title, versionLabel });
+    } catch (error) {
+      console.error('Erro ao reproduzir música:', error);
+      toast.error('Falha ao iniciar a reprodução. Tente novamente.');
+    } finally {
+      setLoadingSongId((current) => (current === song.id ? null : current));
+    }
   };
 
   const handlePause = () => {
@@ -151,15 +207,24 @@ const MinhasMusicas: React.FC = () => {
   };
 
   const handleDownload = async (song: Song, urlOverride?: string, filenameSuffix?: string) => {
-    const url = urlOverride || getAudioUrl(song);
-    if (!url) return;
+    let downloadUrl = urlOverride || null;
+    if (!downloadUrl) {
+      const resolved = await resolveAudioForSong(song);
+      downloadUrl = resolved?.downloadUrl || resolved?.playbackUrl || null;
+    }
+
+    if (!downloadUrl) {
+      toast.error('Não foi possível localizar o arquivo para download.');
+      return;
+    }
+
     const friendly = `${song.title || 'minha-musica'}${filenameSuffix ? `_${filenameSuffix}` : ''}.mp3`;
     try {
-      const proxyUrl = `${API_BASE_URL}/api/download?url=${encodeURIComponent(url)}&filename=${encodeURIComponent(friendly)}`;
+      const proxyUrl = `${API_BASE_URL}/api/download?url=${encodeURIComponent(downloadUrl)}&filename=${encodeURIComponent(friendly)}`;
       await triggerDownload(proxyUrl, friendly);
     } catch (e) {
       console.error('Erro no download via proxy, tentando direto:', e);
-      await triggerDownload(url, friendly);
+      await triggerDownload(downloadUrl, friendly);
     }
   };
 
@@ -296,9 +361,11 @@ const MinhasMusicas: React.FC = () => {
                     audioUrlOption1: song.audioUrlOption1,
                     audioUrlOption2: song.audioUrlOption2,
                     status: song.status,
+                    sunoTaskId: song.sunoTaskId,
                   }} 
                   isPlaying={currentId === song.id && isPlaying}
-                  onPlay={(s, url) => handlePlay(song, url)}
+                  isLoading={loadingSongId === song.id}
+                  onPlay={(s, url, version) => handlePlay(song, url, version)}
                   onPause={handlePause}
                   onDownloadVersion={(label, url) => handleDownload(song, url, label)}
                   playingVersionLabel={currentId === song.id ? (currentVersionLabel as 'A' | 'B' | undefined) : undefined}

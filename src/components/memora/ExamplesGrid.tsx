@@ -8,6 +8,10 @@ import "swiper/css/effect-coverflow";
 import { songsApi } from "@/config/api";
 import type { Song } from "@/types/guest";
 import { useAudioPlayerStore } from "@/store/audioPlayerStore";
+import SectionTitle from '../ui/SectionTitle';
+import { SectionSubtitle } from '@/components/ui/SectionSubtitle';
+import { toast } from 'sonner';
+import { getSunoAudioLinks } from '@/lib/sunoAudio';
 
 
 const ExamplesGrid = () => {
@@ -212,16 +216,14 @@ const ExamplesGrid = () => {
   };
 
   return (
-    <section id="exemplos" className="py-20 bg-background">
+    <section id="exemplos" className="py-20">
       <div className="container mx-auto px-4">
         {/* Header */}
         <div className="text-center mb-16">
-          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-heading font-bold text-foreground mb-4">
+          <SectionTitle>
             Momentos que viram canção
-          </h2>
-          <p className="text-xl text-muted-foreground max-w-4xl mx-auto">
-            Há algo especial no poder das músicas de unir as pessoas e tornar momentos ainda mais significativos.
-          </p>
+          </SectionTitle>
+          <SectionSubtitle>Há algo especial no poder das músicas de unir as pessoas e tornar momentos ainda mais significativos.</SectionSubtitle>
         </div>
 
         {/* Examples Slider (Swiper Coverflow) */}
@@ -275,6 +277,69 @@ function ExamplesSwiper({
   linked: Record<string, Song | null>;
 }) {
   const { play, pause, currentId, isPlaying } = useAudioPlayerStore();
+  const [loadingSongId, setLoadingSongId] = useState<string | null>(null);
+  const audioCache = useRef(new Map<string, { playbackUrl: string; downloadUrl?: string | null }>());
+
+  const resolveAudioForSong = async (song: Song) => {
+    const cached = audioCache.current.get(song.id);
+    if (cached) return cached;
+
+    const localUrl = chooseAudioUrl(song);
+    const taskId = song.sunoTaskId || (typeof song.id === 'string' && song.id.startsWith('suno_') ? song.id.replace('suno_', '') : null);
+
+    if (taskId) {
+      const links = await getSunoAudioLinks(taskId);
+      if (links?.streamUrl) {
+        const entry = {
+          playbackUrl: links.streamUrl,
+          downloadUrl: links.audioUrl || localUrl || null,
+        };
+        audioCache.current.set(song.id, entry);
+        return entry;
+      }
+    }
+
+    if (localUrl) {
+      const entry = { playbackUrl: localUrl, downloadUrl: localUrl };
+      audioCache.current.set(song.id, entry);
+      return entry;
+    }
+
+    return null;
+  };
+
+  const handleCardPlay = async (exampleId: string, song: Song | null) => {
+    if (!song) {
+      onTogglePlay(exampleId);
+      return;
+    }
+
+    const assocId = song.id;
+
+    if (currentId === assocId && isPlaying) {
+      pause();
+      return;
+    }
+
+    try {
+      setLoadingSongId(assocId);
+      const resolved = await resolveAudioForSong(song);
+
+      if (!resolved?.playbackUrl) {
+        toast.error('Não foi possível carregar a prévia desta música.');
+        onTogglePlay(exampleId);
+        return;
+      }
+
+      play(assocId, resolved.playbackUrl, { title: song.title });
+    } catch (error) {
+      console.error('[ExamplesSwiper] Erro ao tocar música:', error);
+      toast.error('Falha ao reproduzir esta prévia.');
+      onTogglePlay(exampleId);
+    } finally {
+      setLoadingSongId((current) => (current === assocId ? null : current));
+    }
+  };
 
   return (
     <div className="relative">
@@ -300,6 +365,7 @@ function ExamplesSwiper({
           const song = linked[example.id] || null;
           const assocId = song?.id || null;
           const isCardPlaying = assocId && currentId === assocId && isPlaying;
+          const isLoading = assocId ? loadingSongId === assocId : false;
 
           return (
             <SwiperSlide key={example.id} className="!w-[92%] sm:!w-[78%] md:!w-[66%] lg:!w-[58%] xl:!w-[52%]">
@@ -319,38 +385,31 @@ function ExamplesSwiper({
                     <h3 className="font-heading text-white font-semibold drop-shadow-sm text-xl sm:text-2xl md:text-3xl lg:text-4xl max-w-[75%]">
                       {example.title}
                     </h3>
-                    <div className="mt-4">
-                      <button
-                        onClick={() => {
-                          if (song && assocId) {
-                            const url = (song as any).audioUrlOption1 || (song as any).audioUrlOption2 || (song as any).audioUrl;
-                            if (url) {
-                              if (currentId === assocId && isPlaying) {
-                                pause();
-                              } else {
-                                play(assocId, url, { title: song.title });
-                              }
-                              return;
-                            }
-                          }
-                          // Fallback: simulação antiga por 15s
-                          onTogglePlay(example.id);
-                        }}
-                        className={`inline-flex items-center gap-2 rounded-2xl px-5 py-2.5 text-sm sm:text-base font-semibold transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-white/60 shadow-[inset_0_1px_0_rgba(255,255,255,0.3)] ${
-                          isCardPlaying || simulatedPlaying
-                            ? "bg-white text-neutral-900"
-                            : "bg-white/20 hover:bg-white/30 text-white border border-white/40 backdrop-blur"
-                        }`}
-                        aria-label={`${(isCardPlaying || simulatedPlaying) ? "Pausar" : "Reproduzir"} exemplo de ${example.title}`}
-                      >
-                        <span className="tracking-wide">Ouça agora</span>
-                        <span className={`ml-1 inline-flex h-5 w-5 items-center justify-center rounded-full ${
-                          (isCardPlaying || simulatedPlaying) ? "bg-neutral-900 text-white" : "bg-white/80 text-neutral-900"
-                        }`}>
+                  <div className="mt-4">
+                    <button
+                      onClick={() => {
+                        void handleCardPlay(example.id, song);
+                      }}
+                      disabled={isLoading}
+                      className={`inline-flex items-center gap-2 rounded-2xl px-5 py-2.5 text-sm sm:text-base font-semibold transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-white/60 shadow-[inset_0_1px_0_rgba(255,255,255,0.3)] ${
+                        isCardPlaying || simulatedPlaying
+                          ? "bg-white text-neutral-900"
+                          : "bg-white/20 hover:bg-white/30 text-white border border-white/40 backdrop-blur"
+                      } ${isLoading ? 'opacity-70 cursor-wait' : ''}`}
+                      aria-label={`${isLoading ? 'Carregando' : (isCardPlaying || simulatedPlaying) ? 'Pausar' : 'Reproduzir'} exemplo de ${example.title}`}
+                    >
+                      <span className="tracking-wide">{isLoading ? 'Carregando...' : 'Ouça agora'}</span>
+                      <span className={`ml-1 inline-flex h-5 w-5 items-center justify-center rounded-full ${
+                        (isCardPlaying || simulatedPlaying) ? "bg-neutral-900 text-white" : "bg-white/80 text-neutral-900"
+                      }`}>
+                        {isLoading ? (
+                          <div className="h-3.5 w-3.5 border-2 border-current/40 border-t-current rounded-full animate-spin" />
+                        ) : (
                           <Play className="h-3.5 w-3.5 translate-x-[1px]" />
-                        </span>
-                      </button>
-                    </div>
+                        )}
+                      </span>
+                    </button>
+                  </div>
                   </div>
 
                   {/* Icon Badge */}
@@ -359,7 +418,7 @@ function ExamplesSwiper({
                   </div>
 
                   {/* Playing Indicator */}
-                  {(isCardPlaying || simulatedPlaying) && (
+                  {(isCardPlaying || simulatedPlaying || isLoading) && (
                     <div className="absolute bottom-3 left-3 flex items-center space-x-1">
                       <div className="flex space-x-1">
                         {[...Array(3)].map((_, i) => (

@@ -1,6 +1,6 @@
 -- Fix: Corrigir problema de duplicação de usuários
 -- O problema: quando um usuário faz login após criar música como convidado,
--- um novo registro é criado na tabela users ao invés de consolidar com o existente
+-- um novo registro é criado na tabela user_creations ao invés de consolidar com o existente
 
 BEGIN;
 
@@ -19,19 +19,19 @@ BEGIN
     -- Encontrar device_ids que têm múltiplos usuários
     FOR duplicate_record IN 
         SELECT device_id, array_agg(id ORDER BY created_at) as user_ids
-        FROM users 
+        FROM user_creations 
         WHERE device_id IS NOT NULL
         GROUP BY device_id
         HAVING COUNT(*) > 1
     LOOP
         -- Para cada device_id duplicado, consolidar os usuários
         SELECT * INTO guest_user 
-        FROM users 
+        FROM user_creations 
         WHERE id = duplicate_record.user_ids[1] -- primeiro usuário (mais antigo)
         LIMIT 1;
         
         SELECT * INTO auth_user 
-        FROM users 
+        FROM user_creations 
         WHERE id = duplicate_record.user_ids[2] -- segundo usuário (mais recente, provavelmente autenticado)
         LIMIT 1;
         
@@ -47,13 +47,13 @@ BEGIN
             GET DIAGNOSTICS songs_migrated = ROW_COUNT;
             
             -- Consolidar contador de músicas gratuitas (pegar o maior valor)
-            UPDATE users 
+            UPDATE user_creations 
             SET freesongsused = GREATEST(guest_user.freesongsused, auth_user.freesongsused),
                 updated_at = NOW()
             WHERE id = auth_user.id;
             
             -- Remover o usuário convidado duplicado
-            DELETE FROM users WHERE id = guest_user.id;
+            DELETE FROM user_creations WHERE id = guest_user.id;
             
             consolidated_count := consolidated_count + 1;
             
@@ -89,16 +89,16 @@ BEGIN
 
   -- Verificar se já existe um usuário autenticado com este device_id
   SELECT * INTO existing_auth_user
-  FROM users 
+  FROM user_creations 
   WHERE device_id = p_device_id AND email IS NOT NULL
   LIMIT 1;
   
   -- Se já existe um usuário autenticado com este device_id, não criar duplicado
   IF existing_auth_user.id IS NOT NULL AND existing_auth_user.id != p_user_id THEN
     -- Migrar dados para o usuário existente ao invés de criar novo
-    UPDATE users 
+    UPDATE user_creations 
     SET freesongsused = GREATEST(existing_auth_user.freesongsused, 
-                                (SELECT COALESCE(freesongsused, 0) FROM users WHERE id = p_user_id)),
+                                (SELECT COALESCE(freesongsused, 0) FROM user_creations WHERE id = p_user_id)),
         last_used_ip = COALESCE(p_last_ip, last_used_ip),
         updated_at = NOW()
     WHERE id = existing_auth_user.id;
@@ -111,7 +111,7 @@ BEGIN
     WHERE user_id = p_user_id OR guest_id = p_device_id;
     
     -- Remover o usuário duplicado
-    DELETE FROM users WHERE id = p_user_id AND id != existing_auth_user.id;
+    DELETE FROM user_creations WHERE id = p_user_id AND id != existing_auth_user.id;
     
     RETURN json_build_object(
       'user_id', existing_auth_user.id,
@@ -121,8 +121,8 @@ BEGIN
   END IF;
 
   -- Lógica original da função
-  SELECT * INTO g FROM users WHERE device_id = p_device_id AND email IS NULL LIMIT 1;
-  SELECT * INTO u FROM users WHERE id = p_user_id LIMIT 1;
+  SELECT * INTO g FROM user_creations WHERE device_id = p_device_id AND email IS NULL LIMIT 1;
+  SELECT * INTO u FROM user_creations WHERE id = p_user_id LIMIT 1;
 
   IF g IS NOT NULL AND u IS NOT NULL THEN
     combined := GREATEST(g.freesongsused, u.freesongsused);
@@ -138,15 +138,15 @@ BEGIN
   WHERE guest_id = p_device_id;
 
   -- Remover registro de convidado se existir
-  DELETE FROM users WHERE device_id = p_device_id AND email IS NULL;
+  DELETE FROM user_creations WHERE device_id = p_device_id AND email IS NULL;
 
   -- Atualizar/criar registro do usuário autenticado
-  INSERT INTO users (id, device_id, freesongsused, last_used_ip, updated_at)
+  INSERT INTO user_creations (id, device_id, freesongsused, last_used_ip, updated_at)
   VALUES (p_user_id, p_device_id, combined, p_last_ip, NOW())
   ON CONFLICT (id) DO UPDATE SET
       device_id = p_device_id,
-      freesongsused = GREATEST(users.freesongsused, combined),
-      last_used_ip = COALESCE(p_last_ip, users.last_used_ip),
+      freesongsused = GREATEST(user_creations.freesongsused, combined),
+      last_used_ip = COALESCE(p_last_ip, user_creations.last_used_ip),
       updated_at = NOW();
 
   RETURN json_build_object(
@@ -159,9 +159,9 @@ $$ LANGUAGE plpgsql SECURITY DEFINER;
 
 -- 4. Adicionar constraint para prevenir duplicação futura
 -- Criar índice único parcial para device_id (apenas para registros não-nulos)
-DROP INDEX IF EXISTS idx_users_device_id_unique;
-CREATE UNIQUE INDEX idx_users_device_id_unique 
-ON users (device_id) 
+DROP INDEX IF EXISTS idx_user_creations_device_id_unique;
+CREATE UNIQUE INDEX idx_user_creations_device_id_unique 
+ON user_creations (device_id) 
 WHERE device_id IS NOT NULL;
 
 -- 5. Remover a função temporária
@@ -175,5 +175,5 @@ SELECT
     COUNT(*) as total_users,
     COUNT(DISTINCT device_id) as unique_devices,
     COUNT(*) - COUNT(DISTINCT device_id) as potential_duplicates
-FROM users 
+FROM user_creations 
 WHERE device_id IS NOT NULL;

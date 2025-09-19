@@ -25,17 +25,7 @@
     <!-- Favicon -->
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
 
-    <script>
-      // Prevent flash of incorrect theme before React mounts
-      (function() {
-        try {
-          var theme = localStorage.getItem('theme') || 'system';
-          var preferDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
-          var isDark = theme === 'dark' || (theme === 'system' && preferDark);
-          if (isDark) document.documentElement.classList.add('dark');
-        } catch (e) {}
-      })();
-    </script>
+
 
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">

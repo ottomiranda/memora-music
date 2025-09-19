@@ -7,19 +7,19 @@ SELECT
     COUNT(*) as count,
     array_agg(id ORDER BY created_at) as user_ids,
     array_agg(email ORDER BY created_at) as emails
-FROM users 
+FROM user_creations 
 WHERE device_id IS NOT NULL
 GROUP BY device_id
 HAVING COUNT(*) > 1;
 
--- 2. Verificar estado atual da tabela users
+-- 2. Verificar estado atual da tabela user_creations
 SELECT 
     'current_state' as check_type,
     COUNT(*) as total_users,
     COUNT(CASE WHEN email IS NOT NULL THEN 1 END) as authenticated_users,
     COUNT(CASE WHEN email IS NULL AND device_id IS NOT NULL THEN 1 END) as guest_users,
     COUNT(DISTINCT device_id) as unique_devices
-FROM users;
+FROM user_creations;
 
 -- 3. Verificar se o índice único foi criado corretamente
 SELECT 
@@ -27,8 +27,8 @@ SELECT
     indexname,
     indexdef
 FROM pg_indexes 
-WHERE tablename = 'users' 
-AND indexname = 'idx_users_device_id_unique';
+WHERE tablename = 'user_creations' 
+AND indexname = 'idx_user_creations_device_id_unique';
 
 -- 4. Verificar se a função merge_guest_into_user foi atualizada
 SELECT 
@@ -45,7 +45,7 @@ SELECT
     COUNT(*) as user_count,
     COUNT(CASE WHEN email IS NOT NULL THEN 1 END) as authenticated_count,
     COUNT(CASE WHEN email IS NULL THEN 1 END) as guest_count
-FROM users
+FROM user_creations
 GROUP BY freesongsused
 ORDER BY freesongsused;
 
@@ -63,5 +63,5 @@ SELECT
     'integrity_check' as check_type,
     COUNT(s.id) as songs_with_invalid_user_id
 FROM songs s
-LEFT JOIN users u ON s.user_id = u.id
+LEFT JOIN user_creations u ON s.user_id = u.id
 WHERE s.user_id IS NOT NULL AND u.id IS NULL;

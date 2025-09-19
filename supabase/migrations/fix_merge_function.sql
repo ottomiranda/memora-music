@@ -11,7 +11,7 @@ BEGIN
     -- Buscar o usuário convidado pelo device_id
     SELECT id, freesongsused 
     INTO guest_user_id, guest_free_songs
-    FROM users 
+    FROM user_creations 
     WHERE device_id = guest_device_id 
     AND email IS NULL 
     AND status = 1;
@@ -19,7 +19,7 @@ BEGIN
     -- Buscar o device_id atual do usuário autenticado
     SELECT device_id 
     INTO auth_user_device_id
-    FROM users 
+    FROM user_creations 
     WHERE id = authenticated_user_id;
     
     -- Se encontrou usuário convidado, fazer o merge
@@ -34,20 +34,20 @@ BEGIN
         -- Atualizar freesongsused do usuário autenticado
         -- Só atualizar device_id se o usuário autenticado não tiver um
         IF auth_user_device_id IS NULL THEN
-            UPDATE users 
+            UPDATE user_creations 
             SET freesongsused = COALESCE(freesongsused, 0) + COALESCE(guest_free_songs, 0),
                 device_id = guest_device_id,
                 updated_at = NOW()
             WHERE id = authenticated_user_id;
         ELSE
-            UPDATE users 
+            UPDATE user_creations 
             SET freesongsused = COALESCE(freesongsused, 0) + COALESCE(guest_free_songs, 0),
                 updated_at = NOW()
             WHERE id = authenticated_user_id;
         END IF;
         
         -- Remover o usuário convidado
-        DELETE FROM users WHERE id = guest_user_id;
+        DELETE FROM user_creations WHERE id = guest_user_id;
         
         RAISE NOTICE 'Merged guest user % (device: %) into authenticated user % (device: %)', 
             guest_user_id, guest_device_id, authenticated_user_id, auth_user_device_id;

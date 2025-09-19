@@ -12,7 +12,8 @@ const extractUserIdFromToken = async (jwt) => {
             console.log('[OPTIONAL_AUTH] Usuário autenticado com UUID:', user.id);
             return {
                 id: user.id,
-                email: user.email
+                email: user.email,
+                name: user.user_metadata?.name
             };
         }
         return null;

@@ -1,21 +1,65 @@
 import { createClient } from '@supabase/supabase-js';
 import { DatabaseSongSchema, sanitizeSongTitle } from '../schemas/song.js';
 
-// Lazy initialization of Supabase client
-let supabase = null;
+// Lazy initialization of Supabase clients
+let anonSupabase = null;
+let serviceSupabase = null;
 
-function getSupabaseClient() {
-  if (!supabase) {
+/**
+ * Get Supabase client with anon key (respects RLS)
+ * Use this for operations that should respect Row Level Security
+ */
+function getAnonSupabaseClient() {
+  if (!anonSupabase) {
     const supabaseUrl = process.env.SUPABASE_URL;
-    const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+    const supabaseAnonKey = process.env.SUPABASE_ANON_KEY;
     
-    if (!supabaseUrl || !supabaseKey) {
+    if (!supabaseUrl || !supabaseAnonKey) {
+      throw new Error('Supabase configuration missing. Please check SUPABASE_URL and SUPABASE_ANON_KEY environment variables.');
+    }
+    
+    anonSupabase = createClient(supabaseUrl, supabaseAnonKey);
+  }
+  return anonSupabase;
+}
+
+/**
+ * Get Supabase client with service role key (bypasses RLS)
+ * Use ONLY for admin operations that need to bypass RLS
+ */
+function getServiceSupabaseClient() {
+  if (!serviceSupabase) {
+    const supabaseUrl = process.env.SUPABASE_URL;
+    const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+    
+    if (!supabaseUrl || !supabaseServiceKey) {
       throw new Error('Supabase configuration missing. Please check SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY environment variables.');
     }
     
-    supabase = createClient(supabaseUrl, supabaseKey);
+    serviceSupabase = createClient(supabaseUrl, supabaseServiceKey);
   }
-  return supabase;
+  return serviceSupabase;
+}
+
+/**
+ * Historical helper retained for backwards compatibility.
+ * The legacy code expects `getSupabaseClient` to exist, so expose the
+ * service-role client through this wrapper.
+ */
+function getSupabaseClient() {
+  return getServiceSupabaseClient();
+}
+
+/**
+ * Get authenticated Supabase client with JWT token
+ * This respects RLS and user authentication
+ */
+function getAuthenticatedSupabaseClient(accessToken) {
+  const client = getAnonSupabaseClient();
+  if (accessToken) {
+    client.auth.setSession({ access_token: accessToken, refresh_token: '' });
+  }
+  return client;
 }
 
 export class SongService {
@@ -32,7 +76,8 @@ export class SongService {
       
       console.log(`🎵 Creating song for ${songData.userId ? 'user' : 'guest'} ${songData.userId || songData.guestId}, isPaid: ${isPaid}`);
       
-      const { data, error } = await getSupabaseClient()
+      // Use service role for creation to ensure it works regardless of RLS
+      const { data, error } = await getServiceSupabaseClient()
         .from('songs')
         .insert({
           user_id: songData.userId || null,
@@ -45,7 +90,7 @@ export class SongService {
           image_url: songData.imageUrl || null,
           audio_url_option1: songData.audioUrlOption1 || null,
           audio_url_option2: songData.audioUrlOption2 || null,
-          task_id: songData.taskId || null,
+          suno_task_id: songData.sunoTaskId || songData.taskId || null,
           generation_status: 'completed',
           ispaid: isPaid
         })
@@ -57,8 +102,10 @@ export class SongService {
         throw new Error(`Failed to create song: ${error.message}`);
       }
 
-      // Increment freesongsused counter after successful song creation
-      await this.incrementFreeSongsUsed(songData.userId, songData.guestId);
+      // Increment freesongsused counter only when song consumed a free slot
+      if (!isPaid) {
+        await this.incrementFreeSongsUsed(songData.userId, songData.guestId);
+      }
 
       return this.mapDbToSong(data);
     } catch (error) {
@@ -70,11 +117,12 @@ export class SongService {
   /**
    * Get a random selection of public songs (with cover and audio)
    * Intended for discovery sections on the homepage.
+   * Uses anon client since these are public songs
    */
   static async getRandomPublicSongs(limit = 24) {
     try {
       // Fetch latest pool and randomize in memory for portability
-      const { data, error } = await getSupabaseClient()
+      const { data, error } = await getAnonSupabaseClient()
         .from('songs')
         .select('*')
         .order('created_at', { ascending: false })
@@ -118,7 +166,7 @@ export class SongService {
         return null;
       }
 
-      const client = getSupabaseClient();
+      const client = getServiceSupabaseClient();
       let query = client.from('songs').update({
         ...updates,
         updated_at: new Date().toISOString(),
@@ -148,7 +196,7 @@ export class SongService {
    */
   static async deleteSong(songId, identity = { userId: null, guestId: null }) {
     try {
-      const client = getSupabaseClient();
+      const client = getServiceSupabaseClient();
       let query = client.from('songs').delete().eq('id', songId);
       if (identity?.userId) {
         query = query.eq('user_id', identity.userId);
@@ -168,10 +216,15 @@ export class SongService {
 
   /**
    * Get songs by authenticated user ID
+   * Uses service role for now but should be migrated to use JWT auth
    */
-  static async getSongsByUser(userId, limit = 20, offset = 0) {
+  static async getSongsByUser(userId, limit = 20, offset = 0, accessToken = null) {
     try {
-      const { data, error } = await getSupabaseClient()
+      // For authenticated users, we can use service role since we already validated the user
+      // TODO: Migrate to use JWT token with RLS policies
+      const client = accessToken ? getAuthenticatedSupabaseClient(accessToken) : getServiceSupabaseClient();
+      
+      const { data, error } = await client
         .from('songs')
         .select('*')
         .eq('user_id', userId)
@@ -192,10 +245,12 @@ export class SongService {
 
   /**
    * Get songs by guest ID
+   * Uses service role since guests don't have JWT tokens
    */
   static async getSongsByGuest(guestId, limit = 20, offset = 0) {
     try {
-      const { data, error } = await getSupabaseClient()
+      // Use service role for guest access since they don't have JWT authentication
+      const { data, error } = await getServiceSupabaseClient()
         .from('songs')
         .select('*')
         .eq('guest_id', guestId)
@@ -269,21 +324,43 @@ export class SongService {
    */
   static async getSongByTaskId(taskId) {
     try {
-      const { data, error } = await getSupabaseClient()
+      const client = getSupabaseClient();
+
+      const primary = await client
         .from('songs')
         .select('*')
         .eq('task_id', taskId)
-        .single();
+        .maybeSingle();
 
-      if (error) {
-        if (error.code === 'PGRST116') { // No rows returned
-          return null;
-        }
+      let row = primary.data;
+      let error = primary.error;
+
+      if (error && error.code !== 'PGRST116') {
         console.error('Database error fetching song by task ID:', error);
         throw new Error(`Failed to fetch song by task ID: ${error.message}`);
       }
 
-      return this.mapDbToSong(data);
+      if (!row) {
+        const fallback = await client
+          .from('songs')
+          .select('*')
+          .eq('suno_task_id', taskId)
+          .maybeSingle();
+
+        row = fallback.data;
+        error = fallback.error;
+
+        if (error && error.code !== 'PGRST116') {
+          console.error('Database error fetching song by suno_task_id:', error);
+          throw new Error(`Failed to fetch song by task ID: ${error.message}`);
+        }
+      }
+
+      if (!row) {
+        return null;
+      }
+
+      return this.mapDbToSong(row);
     } catch (error) {
       console.error('Error in getSongByTaskId:', error);
       throw error;
@@ -365,13 +442,48 @@ export class SongService {
 
   /**
    * Get song statistics
+   * @param {string|null} userId - Optional user ID to filter stats
+   * @param {string|null} guestId - Optional guest ID to filter stats
    */
-  static async getSongStats() {
+  static async getSongStats(userId = null, guestId = null) {
     try {
       const today = new Date();
       today.setHours(0, 0, 0, 0);
 
       const client = getSupabaseClient();
+      
+      // If specific user or guest is requested, return their stats
+      if (userId || guestId) {
+        let query = client.from('songs').select('generation_status', { count: 'exact' });
+        
+        if (userId) {
+          query = query.eq('user_id', userId);
+        } else if (guestId) {
+          query = query.eq('guest_id', guestId);
+        }
+        
+        const [totalResult, recentResult] = await Promise.all([
+          query,
+          query.gte('created_at', today.toISOString())
+        ]);
+        
+        // Count by status
+        const byStatus = {};
+        if (totalResult.data) {
+          totalResult.data.forEach(song => {
+            const status = song.generation_status || 'unknown';
+            byStatus[status] = (byStatus[status] || 0) + 1;
+          });
+        }
+        
+        return {
+          total: totalResult.count || 0,
+          byStatus,
+          recent: recentResult.count || 0
+        };
+      }
+      
+      // Global stats (original behavior)
       const [totalResult, userResult, guestResult, todayResult] = await Promise.all([
         client.from('songs').select('id', { count: 'exact', head: true }),
         client.from('songs').select('id', { count: 'exact', head: true }).not('user_id', 'is', null),
@@ -408,21 +520,34 @@ export class SongService {
       let error = null;
       
       if (userId) {
-        // For authenticated users, search by user ID
+        // For authenticated users, search by user_id (not primary key)
         const result = await getSupabaseClient()
-          .from('users')
-          .select('freesongsused')
-          .eq('id', userId)
-          .single();
+          .from('user_creations')
+          .select('freesongsused, user_id, device_id')
+          .eq('user_id', userId)
+          .maybeSingle();
         userData = result.data;
         error = result.error;
+        
+        // Se não encontrar via user_id, tentar associar via device_id igual ao próprio userId
+        if ((!userData || !userData.freesongsused) && !error) {
+          const fallback = await getSupabaseClient()
+            .from('user_creations')
+            .select('freesongsused, user_id, device_id')
+            .eq('device_id', userId)
+            .maybeSingle();
+          if (fallback.data) {
+            userData = fallback.data;
+            error = fallback.error;
+          }
+        }
       } else {
         // For guest users, search by device_id
         const result = await getSupabaseClient()
-          .from('users')
-          .select('freesongsused')
+          .from('user_creations')
+          .select('freesongsused, user_id, device_id')
           .eq('device_id', guestId)
-          .single();
+          .maybeSingle();
         userData = result.data;
         error = result.error;
       }
@@ -502,9 +627,9 @@ export class SongService {
         imageUrl: validatedRow.image_url || null,
         audioUrlOption1: validatedRow.audio_url_option1,
         audioUrlOption2: validatedRow.audio_url_option2,
-        sunoTaskId: validatedRow.task_id,
-        generationStatus: validatedRow.generation_status || validatedRow.status,
-        isPaid: validatedRow.ispaid || false,
+        sunoTaskId: validatedRow.suno_task_id || validatedRow.task_id || dbRow.task_id || null,
+        generationStatus: validatedRow.generation_status,
+        isPaid: false, // Default to false since ispaid column doesn't exist
         createdAt: new Date(validatedRow.created_at),
         updatedAt: new Date(validatedRow.updated_at)
       };

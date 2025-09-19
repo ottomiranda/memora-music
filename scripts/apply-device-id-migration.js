@@ -18,7 +18,7 @@ async function applyDeviceIdMigration() {
     
     // Testar conectividade básica primeiro
     const { data: testData, error: testError } = await supabase
-      .from('users')
+      .from('user_creations')
       .select('id')
       .limit(1);
     
@@ -35,26 +35,26 @@ async function applyDeviceIdMigration() {
     // Como não temos acesso direto ao SQL, vamos tentar uma abordagem diferente
     // Primeiro, vamos tentar fazer uma query que falhe se a coluna não existir
     const { data: checkData, error: checkError } = await supabase
-      .from('users')
+      .from('user_creations')
       .select('device_id')
       .limit(1);
     
     if (!checkError) {
-      console.log('✅ Coluna device_id já existe na tabela users');
+      console.log('✅ Coluna device_id já existe na tabela user_creations');
       return;
     }
     
     if (checkError.code === 'PGRST116' || checkError.message.includes('device_id')) {
       console.log('📋 Coluna device_id não existe. SQL para aplicar manualmente no console do Supabase:');
       console.log('\n--- COPIE E COLE NO CONSOLE DO SUPABASE ---');
-      console.log('-- Adicionar coluna device_id na tabela users');
-      console.log('ALTER TABLE users ADD COLUMN IF NOT EXISTS device_id TEXT;');
+      console.log('-- Adicionar coluna device_id na tabela user_creations');
+      console.log('ALTER TABLE user_creations ADD COLUMN IF NOT EXISTS device_id TEXT;');
       console.log('');
       console.log('-- Criar índice para melhor performance');
-      console.log('CREATE INDEX IF NOT EXISTS idx_users_device_id ON users(device_id);');
+      console.log('CREATE INDEX IF NOT EXISTS idx_user_creations_device_id ON user_creations(device_id);');
       console.log('');
       console.log('-- Adicionar comentário para documentação');
-      console.log("COMMENT ON COLUMN users.device_id IS 'Identificador único do dispositivo para rastreamento de usuários anônimos';");
+      console.log("COMMENT ON COLUMN user_creations.device_id IS 'Identificador único do dispositivo para rastreamento de usuários anônimos';");
       console.log('--- FIM DO SQL ---\n');
       
       console.log('⚠️  Por favor, execute o SQL acima no console do Supabase para adicionar a coluna device_id.');

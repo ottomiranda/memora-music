@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Script para verificar se a coluna device_id foi adicionada na tabela users
+ * Script para verificar se a coluna device_id foi adicionada na tabela user_creations
  * 
  * Como usar:
  * 1. Com accessToken manual:
@@ -76,7 +76,7 @@ function queryDatabase(sql, accessToken) {
 
 async function verifyDeviceIdColumn(accessToken) {
   try {
-    console.log('🔍 Verificando estrutura da tabela users...');
+    console.log('🔍 Verificando estrutura da tabela user_creations...');
     
     // Query para verificar se a coluna device_id existe
     const columnCheckSQL = `
@@ -87,14 +87,14 @@ async function verifyDeviceIdColumn(accessToken) {
         column_default
       FROM information_schema.columns 
       WHERE table_schema = 'public' 
-        AND table_name = 'users' 
+        AND table_name = 'user_creations' 
         AND column_name = 'device_id';
     `;
     
     const columnResult = await queryDatabase(columnCheckSQL, accessToken);
     
     if (columnResult && columnResult.length > 0) {
-      console.log('✅ Coluna device_id encontrada na tabela users!');
+      console.log('✅ Coluna device_id encontrada na tabela user_creations!');
       console.log('📋 Detalhes da coluna:');
       columnResult.forEach(col => {
         console.log(`   - Nome: ${col.column_name}`);
@@ -103,7 +103,7 @@ async function verifyDeviceIdColumn(accessToken) {
         console.log(`   - Default: ${col.column_default || 'NULL'}`);
       });
     } else {
-      console.log('❌ Coluna device_id NÃO encontrada na tabela users');
+      console.log('❌ Coluna device_id NÃO encontrada na tabela user_creations');
       console.log('\n📝 Para adicionar a coluna, execute:');
       console.log('node scripts/supabase-manual-migration.js supabase/migrations/010_add_device_id_column.sql <your-access-token>');
       return false;
@@ -116,7 +116,7 @@ async function verifyDeviceIdColumn(accessToken) {
         indexname,
         indexdef
       FROM pg_indexes 
-      WHERE tablename = 'users' 
+      WHERE tablename = 'user_creations' 
         AND indexdef LIKE '%device_id%';
     `;
     
@@ -131,15 +131,15 @@ async function verifyDeviceIdColumn(accessToken) {
       console.log('⚠️  Nenhum índice encontrado na coluna device_id');
     }
     
-    // Verificar algumas linhas da tabela users
-    console.log('\n🔍 Verificando dados de exemplo na tabela users...');
+    // Verificar algumas linhas da tabela user_creations
+    console.log('\n🔍 Verificando dados de exemplo na tabela user_creations...');
     const dataCheckSQL = `
       SELECT 
         id,
         email,
         device_id,
         created_at
-      FROM users 
+      FROM user_creations 
       ORDER BY created_at DESC 
       LIMIT 3;
     `;
@@ -147,7 +147,7 @@ async function verifyDeviceIdColumn(accessToken) {
     const dataResult = await queryDatabase(dataCheckSQL, accessToken);
     
     if (dataResult && dataResult.length > 0) {
-      console.log('✅ Dados de exemplo da tabela users:');
+      console.log('✅ Dados de exemplo da tabela user_creations:');
       dataResult.forEach((user, index) => {
         console.log(`   ${index + 1}. ID: ${user.id}`);
         console.log(`      Email: ${user.email || 'N/A'}`);
@@ -156,7 +156,7 @@ async function verifyDeviceIdColumn(accessToken) {
         console.log('');
       });
     } else {
-      console.log('ℹ️  Nenhum usuário encontrado na tabela users');
+      console.log('ℹ️  Nenhum usuário encontrado na tabela user_creations');
     }
     
     return true;

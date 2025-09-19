@@ -1,5 +1,7 @@
 import { useState } from "react";
 import { ChevronDown, ChevronUp } from "lucide-react";
+import SectionTitle from '../ui/SectionTitle';
+import SectionSubtitle from '../ui/SectionSubtitle';
 
 const FAQSection = () => {
   const [openFAQ, setOpenFAQ] = useState<number | null>(0);
@@ -26,31 +28,29 @@ const FAQSection = () => {
   };
 
   return (
-    <section className="py-20 bg-background dark:bg-neutral-dark">
+    <section className="py-20">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* FAQ Section */}
         <div className="mb-20">
           <div className="text-center mb-12">
-            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-heading font-bold text-foreground dark:text-white mb-4">
+            <SectionTitle>
               Perguntas Frequentes
-            </h2>
-            <p className="text-xl text-muted-foreground dark:text-white/80 max-w-3xl mx-auto">
-              Tire suas dúvidas sobre como criar sua música personalizada
-            </p>
+            </SectionTitle>
+            <SectionSubtitle>Tire suas dúvidas sobre como criar sua música personalizada</SectionSubtitle>
           </div>
 
           <div className="space-y-4">
             {faqs.map((faq, index) => (
               <div
                 key={index}
-                className="rounded-2xl overflow-hidden transition-all duration-300 hover:shadow-lg bg-white/70 dark:bg-white/10 border border-black/5 dark:border-white/10"
+                className="rounded-2xl overflow-hidden transition-all duration-300 hover:shadow-lg bg-white/70 border border-black/5"
               >
                 <button
                   onClick={() => toggleFAQ(index)}
-                  className="w-full px-6 py-6 text-left flex items-center justify-between hover:bg-black/5 dark:hover:bg-white/5 transition-colors duration-200"
+                  className="w-full px-6 py-6 text-left flex items-center justify-between hover:bg-black/5 transition-colors duration-200"
                   aria-expanded={openFAQ === index}
                 >
-                  <h3 className="text-lg font-heading font-bold text-foreground dark:text-white pr-4">
+                  <h3 className="text-lg font-heading font-bold text-foreground pr-4">
                     {faq.question}
                   </h3>
                   {openFAQ === index ? (
@@ -62,7 +62,7 @@ const FAQSection = () => {
                 
                 {openFAQ === index && (
                   <div className="px-6 pb-6">
-                    <p className="text-muted-foreground dark:text-white/80 leading-relaxed">
+                    <p className="text-muted-foreground leading-relaxed">
                       {faq.answer}
                     </p>
                   </div>

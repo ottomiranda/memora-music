@@ -70,14 +70,14 @@ SUNO_BASE_URL=https://api.sunoaiapi.com/api/v1/gateway
 A coluna `device_id` ainda **NÃO** foi adicionada à tabela `users`. Execute o seguinte SQL no console do Supabase:
 
 ```sql
--- Adicionar coluna device_id à tabela users
-ALTER TABLE users ADD COLUMN IF NOT EXISTS device_id TEXT;
+-- Adicionar coluna device_id à tabela user_creations
+ALTER TABLE user_creations ADD COLUMN IF NOT EXISTS device_id TEXT;
 
 -- Criar índice para melhor performance nas consultas por device_id
-CREATE INDEX IF NOT EXISTS idx_users_device_id ON users(device_id);
+CREATE INDEX IF NOT EXISTS idx_user_creations_device_id ON user_creations(device_id);
 
 -- Comentário da coluna
-COMMENT ON COLUMN users.device_id IS 'Identificador único do dispositivo para usuários anônimos';
+COMMENT ON COLUMN user_creations.device_id IS 'Identificador único do dispositivo para usuários anônimos';
 ```
 
 ### 📋 Como Aplicar a Migração
@@ -167,7 +167,7 @@ COMMENT ON COLUMN users.device_id IS 'Identificador único do dispositivo para u
 
 4. **Paywall não funcionando**:
    - **Verificar**: Logs do servidor para extração do deviceId
-   - **Verificar**: Tabela users no Supabase para registros anônimos
+   - **Verificar**: Tabela user_creations no Supabase para registros anônimos
 
 ## 📊 Arquitetura Final
 

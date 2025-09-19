@@ -14,12 +14,12 @@ async function debugMerge() {
     const testEmail = 'debug-test-' + Date.now() + '@example.com';
     
     // Limpar dados anteriores
-    await supabase.from('users').delete().eq('device_id', testDeviceId);
-    await supabase.from('users').delete().eq('email', testEmail);
+    await supabase.from('user_creations').delete().eq('device_id', testDeviceId);
+    await supabase.from('user_creations').delete().eq('email', testEmail);
     
     // Criar usuário anônimo
     const { data: guestUser } = await supabase
-      .from('users')
+      .from('user_creations')
       .insert({
         device_id: testDeviceId,
         freesongsused: 1,
@@ -37,7 +37,7 @@ async function debugMerge() {
     
     // Criar usuário autenticado
     const { data: authUser } = await supabase
-      .from('users')
+      .from('user_creations')
       .insert({
         email: testEmail,
         name: 'Test User',
@@ -57,7 +57,7 @@ async function debugMerge() {
     
     // Verificar se já existe algum usuário com esse device_id
     const { data: existingUsers } = await supabase
-      .from('users')
+      .from('user_creations')
       .select('*')
       .eq('device_id', testDeviceId);
     
@@ -78,7 +78,7 @@ async function debugMerge() {
       
       // Verificar estado após erro
       const { data: usersAfterError } = await supabase
-        .from('users')
+        .from('user_creations')
         .select('*')
         .or(`id.eq.${authUser.id},device_id.eq.${testDeviceId}`);
       
@@ -91,8 +91,8 @@ async function debugMerge() {
     }
     
     // Limpar
-    await supabase.from('users').delete().eq('device_id', testDeviceId);
-    await supabase.from('users').delete().eq('email', testEmail);
+    await supabase.from('user_creations').delete().eq('device_id', testDeviceId);
+    await supabase.from('user_creations').delete().eq('email', testEmail);
     
   } catch (err) {
     console.error('❌ Erro:', err);

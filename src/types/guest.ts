@@ -27,6 +27,7 @@ export interface Song {
   status?: 'pending' | 'processing' | 'completed' | 'failed' | string;
   userId?: string;
   guestId?: string;
+  sunoTaskId?: string | null;
   createdAt: string;
 }
 

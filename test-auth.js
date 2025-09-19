@@ -41,7 +41,7 @@ async function testSupabaseAuth() {
     try {
       const serviceClient = getSupabaseServiceClient();
       const { data: usersData, error: usersError } = await serviceClient
-        .from('users')
+        .from('user_creations')
         .select('id, email')
         .limit(3);
       
@@ -89,7 +89,7 @@ async function testSupabaseAuth() {
     
     // 5. Teste de permissões
     console.log('\n5. Testando permissões das tabelas...');
-    const tables = ['users', 'songs', 'mvp_feedback'];
+    const tables = ['user_creations', 'songs', 'mvp_feedback'];
     
     for (const table of tables) {
       try {

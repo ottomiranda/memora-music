@@ -7,7 +7,7 @@ const supabase = createClient(
 );
 
 async function checkConstraints() {
-  console.log('🔍 Verificando constraints na tabela users...');
+  console.log('🔍 Verificando constraints na tabela user_creations...');
   
   try {
     // Tentar inserir dois usuários com o mesmo device_id para testar a constraint
@@ -16,12 +16,12 @@ async function checkConstraints() {
     const testDeviceId = `constraint-test-${Date.now()}`;
     
     // Limpar dados anteriores
-    await supabase.from('users').delete().eq('device_id', testDeviceId);
+    await supabase.from('user_creations').delete().eq('device_id', testDeviceId);
     
     // Inserir primeiro usuário
     console.log('📝 Inserindo primeiro usuário...');
     const { data: user1, error: error1 } = await supabase
-      .from('users')
+      .from('user_creations')
       .insert({
         device_id: testDeviceId,
         status: 1
@@ -39,7 +39,7 @@ async function checkConstraints() {
     // Tentar inserir segundo usuário com mesmo device_id
     console.log('📝 Tentando inserir segundo usuário com mesmo device_id...');
     const { data: user2, error: error2 } = await supabase
-      .from('users')
+      .from('user_creations')
       .insert({
         device_id: testDeviceId,
         status: 1
@@ -49,8 +49,8 @@ async function checkConstraints() {
     
     if (error2) {
       console.log('✅ CONSTRAINT ATIVA: Erro esperado ao inserir usuário duplicado:', error2.message);
-      if (error2.message.includes('ux_users_device_id')) {
-        console.log('🔒 Índice único ux_users_device_id ainda está ativo!');
+      if (error2.message.includes('ux_user_creations_device_id')) {
+        console.log('🔒 Índice único ux_user_creations_device_id ainda está ativo!');
       }
     } else {
       console.log('❌ CONSTRAINT REMOVIDA: Segundo usuário foi inserido sem erro!');
@@ -62,7 +62,7 @@ async function checkConstraints() {
     
     // Criar usuário autenticado para teste
     const { data: authUser, error: authError } = await supabase
-      .from('users')
+      .from('user_creations')
       .insert({
         email: `merge-test-${Date.now()}@example.com`,
         status: 0
@@ -84,7 +84,7 @@ async function checkConstraints() {
     
     if (mergeError) {
       console.log('❌ Erro na função merge:', mergeError.message);
-      if (mergeError.message.includes('ux_users_device_id')) {
+      if (mergeError.message.includes('ux_user_creations_device_id')) {
         console.log('🔒 PROBLEMA CONFIRMADO: Constraint única ainda está causando erro no merge!');
       }
     } else {
@@ -93,8 +93,8 @@ async function checkConstraints() {
     
     // Limpar dados de teste
     console.log('\n🧹 Limpando dados de teste...');
-    await supabase.from('users').delete().eq('device_id', testDeviceId);
-    await supabase.from('users').delete().eq('id', authUser.id);
+    await supabase.from('user_creations').delete().eq('device_id', testDeviceId);
+    await supabase.from('user_creations').delete().eq('id', authUser.id);
     
     console.log('\n📋 RESUMO:');
     console.log('- Se a constraint única no device_id ainda existe, ela impede o merge');

@@ -14,7 +14,8 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Play, Download, RotateCcw, ArrowLeft, ArrowRight, Music, Sparkles, Edit, Volume2, Loader2, Wand2, RefreshCw, Pause, Check, Search, X } from "lucide-react";
+import { Play, Download, RotateCcw, ArrowLeft, ArrowRight, Music, Sparkles, Edit, Volume2, Loader2, Wand2, RefreshCw, Pause, Check, Search, X, Clock } from "lucide-react";
+import CountdownTimer from '../components/CountdownTimer';
 import { useMusicStore } from '@/store/musicStore';
 import { useAuthStore } from '@/store/authStore';
 import { useUiStore } from '@/store/uiStore';
@@ -793,17 +794,27 @@ export default function Criar() {
 
             {(isPreviewLoading || isPolling) && (!musicStore.audioClips || musicStore.audioClips.length === 0) ? (
               <div className="text-center space-y-6 py-12">
-                <div className="w-16 h-16 bg-accent-turquoise/20 rounded-full flex items-center justify-center mx-auto">
-                  <Loader2 className="w-8 h-8 text-accent-turquoise animate-spin" />
-                </div>
+                {/* Mostrar loading inicial ou cronômetro baseado no estado */}
+                {!currentTaskId ? (
+                  <div className="flex flex-col items-center space-y-4">
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+                    <p className="text-sm text-muted-foreground">Conectando com a Suno API...</p>
+                  </div>
+                ) : (
+                  <CountdownTimer className="mb-6" />
+                )}
+                
                 <div>
                   <h3 className="text-xl font-bold font-heading mb-2">
-                    {musicGenerationStatus === 'PROCESSING' ? 'Criando sua música...' : 'Iniciando geração...'}
+                    {!currentTaskId ? 'Iniciando geração...' : 
+                     musicGenerationStatus === 'processing' ? 'Criando sua música...' : 'Processando...'}
                   </h3>
                   <p className="text-muted-foreground">
-                    {totalExpected > 0 
-                      ? `Gerando ${totalExpected} versões da sua música personalizada.`
-                      : 'Estamos finalizando os últimos detalhes da sua música personalizada.'
+                    {!currentTaskId ? 
+                      'Conectando com a API da Suno e iniciando o processo de geração...' :
+                      totalExpected > 0 
+                        ? `Gerando ${totalExpected} versões da sua música personalizada.`
+                        : 'Estamos finalizando os últimos detalhes da sua música personalizada.'
                     }
                   </p>
                   {/* Indicador de progresso */}

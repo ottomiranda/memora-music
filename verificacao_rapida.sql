@@ -11,7 +11,7 @@ SELECT
     END as status_coluna
 FROM information_schema.columns 
 WHERE table_schema = 'public' 
-    AND table_name = 'users' 
+    AND table_name = 'user_creations' 
     AND column_name = 'last_used_ip';
 
 -- 2. Verificar se os índices existem
@@ -22,10 +22,10 @@ SELECT
         ELSE '❌ Nenhum índice encontrado'
     END as status_indices
 FROM pg_indexes 
-WHERE tablename = 'users' 
+WHERE tablename = 'user_creations' 
     AND (indexname LIKE '%last_used_ip%' OR indexname LIKE '%device_ip%');
 
--- 3. Verificar estrutura da tabela users
+-- 3. Verificar estrutura da tabela user_creations
 SELECT 
     column_name,
     data_type,
@@ -38,7 +38,7 @@ SELECT
     END as tipo
 FROM information_schema.columns 
 WHERE table_schema = 'public' 
-    AND table_name = 'users'
+    AND table_name = 'user_creations'
 ORDER BY ordinal_position;
 
 -- 4. Contar registros na tabela
@@ -46,7 +46,7 @@ SELECT
     COUNT(*) as total_usuarios,
     COUNT(device_id) as usuarios_com_device_id,
     COUNT(last_used_ip) as usuarios_com_ip
-FROM users;
+FROM user_creations;
 
 -- 5. Verificar se RLS está ativo
 SELECT 
@@ -58,4 +58,4 @@ SELECT
         ELSE '⚠️ RLS Inativo'
     END as status_rls
 FROM pg_tables 
-WHERE tablename = 'users';
+WHERE tablename = 'user_creations';

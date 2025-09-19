@@ -94,8 +94,6 @@ const StripePaymentForm: React.FC<StripePaymentFormProps> = ({
   };
 
   const paymentElementOptions = useMemo(() => ({
-    // Reordena métodos no componente (Stripe ignora no Elements root)
-    paymentMethodOrder: ['pix', 'card', 'boleto'],
     defaultValues: {
       billingDetails: {
         name: user?.name || undefined,

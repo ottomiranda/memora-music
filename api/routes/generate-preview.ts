@@ -2,6 +2,7 @@ import express, { type Request, type Response } from 'express';
 import { z } from 'zod';
 import OpenAI from 'openai';
 import fetch from 'node-fetch';
+import multer from 'multer';
 import { SongService } from '../../src/lib/services/songService.js';
 import { executeSupabaseQuery, getSupabaseServiceClient, testSupabaseConnection } from '../../src/lib/supabase-client.js';
 
@@ -11,6 +12,40 @@ function getSupabaseClient() {
 }
 
 const router = express.Router();
+
+// Configuração do multer para processar multipart/form-data
+const upload = multer({ storage: multer.memoryStorage() });
+
+interface UserCreationRow {
+  user_id: string | null;
+  device_id: string | null;
+  freesongsused?: number | null;
+  last_used_ip?: string | null;
+  ip?: string | null;
+  creations?: number | null;
+}
+
+interface SunoJobClip {
+  id?: string;
+  title?: string;
+  audioUrl?: string;
+  sourceAudioUrl?: string;
+  imageUrl?: string;
+  sourceImageUrl?: string;
+}
+
+interface SunoJobResponse {
+  sunoData?: SunoJobClip[];
+}
+
+interface SunoStatusData {
+  status?: string;
+  response?: SunoJobResponse | SunoJobResponse[];
+}
+
+interface SunoStatusPayload {
+  data?: SunoStatusData;
+}
 
 // Validação dos dados do formulário com Zod - Schema flexível para wizard em duas etapas
 const generatePreviewSchema = z.object({
@@ -181,6 +216,14 @@ async function autoSaveSongToDatabase(task: Record<string, unknown>, userId?: st
       hasMetadata: !!task.metadata
     });
     
+    // VALIDAÇÃO CRÍTICA: Verificar se pelo menos um identificador está presente
+    if (!userId && !guestId) {
+      const errorMsg = `[DB_SAVE_ERROR] CRÍTICO: Nenhum identificador (userId ou guestId) fornecido para taskId ${task.taskId}`;
+      console.error(errorMsg);
+      task.metadata.saveError = 'Missing user identification';
+      throw new Error('Cannot save song without user identification');
+    }
+    
     // Verificar se há clipes de áudio para salvar
     if (!task.audioClips || task.audioClips.length === 0) {
       console.log(`[DB_SAVE] ⚠️ Nenhum clipe de áudio encontrado para salvar - taskId: ${task.taskId}`);
@@ -204,12 +247,42 @@ async function autoSaveSongToDatabase(task: Record<string, unknown>, userId?: st
     
     console.log('[DB_SAVE] Dados a serem inseridos:', songData);
     
-    // Salvar no banco de dados
-    const savedSong = await SongService.createSong(songData);
+    // Salvar no banco de dados com tratamento robusto de erros
+    let savedSong;
+    try {
+      savedSong = await SongService.createSong(songData);
+    } catch (dbError) {
+      console.error(`[DB_SAVE_ERROR] Falha na criação da música no DB para taskId ${task.taskId}:`, dbError.message);
+      
+      // Verificar tipos específicos de erro
+      if (dbError.message?.includes('songs_user_or_guest_check')) {
+        console.error(`[DB_SAVE_ERROR] CONSTRAINT VIOLATION: Check constraint songs_user_or_guest_check falhou - userId: ${userId}, guestId: ${guestId}`);
+        task.metadata.saveError = 'User identification constraint violation';
+        throw new Error('Database constraint violation: missing user identification');
+      }
+      
+      if (dbError.message?.includes('Supabase configuration missing')) {
+        console.error(`[DB_SAVE_ERROR] CONFIGURAÇÃO CRÍTICA: Supabase não configurado adequadamente`);
+        task.metadata.saveError = 'Database configuration error';
+        throw new Error('Database configuration missing');
+      }
+      
+      if (dbError.message?.includes('relation "user_creations" does not exist')) {
+        console.error(`[DB_SAVE_ERROR] SCHEMA MISSING: Tabela user_creations não existe`);
+        task.metadata.saveError = 'Database schema incomplete';
+        throw new Error('Database schema incomplete: missing user_creations table');
+      }
+      
+      // Erro genérico do banco
+      task.metadata.saveError = dbError.message;
+      throw dbError;
+    }
     
     if (!savedSong || !savedSong.id) {
-      console.error(`[DB_SAVE_ERROR] Falha ao inserir música no DB para taskId ${task.taskId}: savedSong é null ou sem ID`);
-      return; // Interrompe a função se o salvamento falhar
+      const errorMsg = `[DB_SAVE_ERROR] CRÍTICO: Falha ao inserir música no DB para taskId ${task.taskId}: savedSong é null ou sem ID`;
+      console.error(errorMsg);
+      task.metadata.saveError = 'Song creation returned null';
+      throw new Error('Song creation failed: null result');
     }
     
     console.log(`[DB_SAVE] Música para taskId ${task.taskId} inserida com sucesso. ID: ${savedSong.id}`);
@@ -226,8 +299,22 @@ async function autoSaveSongToDatabase(task: Record<string, unknown>, userId?: st
   } catch (error) {
     console.error(`[DB_SAVE_ERROR] Erro geral ao salvar música no banco de dados para taskId ${task.taskId}:`, error.message);
     console.error(`[DB_SAVE_ERROR] Stack trace:`, error.stack);
-    // Não interromper o fluxo principal em caso de erro no salvamento
+    
+    // Marcar erro nos metadados para rastreamento
+    if (!task.metadata) task.metadata = {};
     task.metadata.saveError = error.message;
+    task.metadata.saveFailedAt = new Date().toISOString();
+    
+    // Para erros críticos, re-lançar a exceção para interromper o fluxo
+    if (error.message?.includes('CRÍTICO') || 
+        error.message?.includes('constraint violation') ||
+        error.message?.includes('Database configuration missing') ||
+        error.message?.includes('Database schema incomplete')) {
+      throw error;
+    }
+    
+    // Para outros erros, apenas logar (não interromper o fluxo principal)
+    console.log(`[DB_SAVE_ERROR] Erro não-crítico, continuando o fluxo para taskId ${task.taskId}`);
   }
 }
 
@@ -357,10 +444,29 @@ async function pollCoverUntilReady(coverTaskId: string, originalTaskId: string, 
       }, 2);
       if (res.ok) {
         const bodyText = await res.text();
-        let json: any = {};
-        try { json = JSON.parse(bodyText); } catch { json = {}; }
-        const status = json?.data?.status || json?.status;
-        const imageUrl = json?.data?.imageUrl || json?.data?.image_url || json?.imageUrl || json?.image_url;
+        let parsed: unknown;
+        try {
+          parsed = JSON.parse(bodyText);
+        } catch {
+          parsed = {};
+        }
+
+        const coverPayload = parsed as {
+          status?: string;
+          imageUrl?: string;
+          image_url?: string;
+          data?: {
+            status?: string;
+            imageUrl?: string;
+            image_url?: string;
+          };
+        };
+
+        const status = coverPayload.data?.status ?? coverPayload.status;
+        const imageUrl = coverPayload.data?.imageUrl
+          ?? coverPayload.data?.image_url
+          ?? coverPayload.imageUrl
+          ?? coverPayload.image_url;
         console.log('[SUNO_COVER_POLL]', coverTaskId, 'status:', status, imageUrl ? 'img: yes' : 'img: no');
         if ((status === 'SUCCESS' || status === 'COMPLETED') && imageUrl) {
           const client = getSupabaseServiceClient();
@@ -523,7 +629,7 @@ function mapDurationToModel(duration: string): string {
 }
 
 // Endpoint principal
-router.post('/', async (req: Request, res: Response) => {
+router.post('/', upload.none(), async (req: Request, res: Response) => {
   try {
     // ---> PASSO DE DEBUG: Log do payload recebido <---
     console.log('\n=== DEBUG GENERATE PREVIEW ENDPOINT ===');
@@ -534,6 +640,9 @@ router.post('/', async (req: Request, res: Response) => {
     console.log('🔍 Body completo recebido:', JSON.stringify(req.body, null, 2));
     console.log('🔍 Tipo do body:', typeof req.body);
     console.log('🔍 Keys do body:', Object.keys(req.body || {}));
+    console.log('🔍 Files recebidos:', req.files);
+    console.log('🔍 Tipo dos files:', typeof req.files);
+    console.log('🔍 req.body após multer:', JSON.stringify(req.body, null, 2));
     
     // Verificar campos específicos importantes
     const importantFields = ['songTitle', 'recipientName', 'occasion', 'relationship', 'emotionalTone', 'genre', 'mood', 'tempo', 'duration', 'lyricsOnly'];
@@ -570,11 +679,12 @@ router.post('/', async (req: Request, res: Response) => {
 
     const formData = validationResult.data;
     const lyricsOnly = req.body.lyricsOnly === true;
+    const shouldEnforcePaywall = !lyricsOnly;
     
     // Extrair userId, guestId, deviceId e clientIp da requisição
     const authHeader = req.headers.authorization;
-    const guestId = req.headers['x-guest-id'] as string;
-    const deviceId = req.headers['x-device-id'] as string;
+    const guestId = req.headers['x-guest-id'] as string | undefined;
+    const deviceId = req.headers['x-device-id'] as string | undefined;
     // Obter IP real do cliente
     const clientIp = req.ip; // Graças ao 'trust proxy'
     
@@ -583,6 +693,31 @@ router.post('/', async (req: Request, res: Response) => {
     console.log('[HEADERS] X-Device-ID recebido:', deviceId);
     console.log('[HEADERS] X-Guest-ID recebido:', guestId);
     console.log('[HEADERS] Client IP extraído/simulado:', clientIp);
+    
+    // ===== VALIDAÇÃO OBRIGATÓRIA DE HEADERS =====
+    // Validar que pelo menos um identificador está presente
+    if (!guestId && !deviceId && !authHeader) {
+      console.error('[HEADER_VALIDATION] Nenhum identificador fornecido (X-Guest-ID, X-Device-ID ou Authorization)');
+      return res.status(400).json({
+        success: false,
+        error: 'BAD_REQUEST',
+        message: 'Pelo menos um identificador é obrigatório: X-Guest-ID, X-Device-ID ou token de autorização.',
+        requiredHeaders: ['X-Guest-ID', 'X-Device-ID', 'Authorization']
+      });
+    }
+    
+    // Para usuários não autenticados, pelo menos um dos headers deve estar presente
+    if (!authHeader && !guestId && !deviceId) {
+      console.error('[HEADER_VALIDATION] Usuário não autenticado sem X-Guest-ID ou X-Device-ID');
+      return res.status(400).json({
+        success: false,
+        error: 'BAD_REQUEST',
+        message: 'Para usuários não autenticados, X-Guest-ID ou X-Device-ID é obrigatório.',
+        requiredHeaders: ['X-Guest-ID', 'X-Device-ID']
+      });
+    }
+    
+    console.log('[HEADER_VALIDATION] ✅ Validação de headers passou');
     
     // Se há token de autorização, extrair userId usando Supabase Auth
     if (authHeader && authHeader.startsWith('Bearer ')) {
@@ -608,10 +743,15 @@ router.post('/', async (req: Request, res: Response) => {
           // Salvar device_id no perfil do usuário se fornecido
           if (deviceId) {
             try {
-              const { error: updateError } = await supabase
-                .from('users')
-                .update({ device_id: deviceId })
-                .eq('id', userId);
+              // Atualizar device_id nos metadados do usuário no auth.users
+              const { error: updateError } = await supabase.auth.admin.updateUserById(
+                userId,
+                {
+                  user_metadata: {
+                    device_id: deviceId
+                  }
+                }
+              );
               
               if (updateError) {
                 console.error('[AUTH] Erro ao salvar device_id no perfil:', updateError);
@@ -640,10 +780,15 @@ router.post('/', async (req: Request, res: Response) => {
     // ===== NOVA ORDEM DE OPERAÇÕES DO PAYWALL =====
     // Definir limite de músicas gratuitas
     const FREE_SONG_LIMIT = 1;
-    let existingUser = null;
+    let existingUser: {
+      user_id: string | null;
+      device_id: string | null;
+      freesongsused: number;
+      last_used_ip?: string | null;
+    } | null = null;
     
-    // Verificar se o usuário pode criar uma nova música (apenas para modo completo, não lyricsOnly)
-    if (!lyricsOnly) {
+    // Verificar se o usuário pode criar uma nova música
+    if (shouldEnforcePaywall) {
       console.log('[PAYWALL] Iniciando nova ordem de operações do paywall');
       console.log('[PAYWALL] UserId:', userId);
       console.log('[PAYWALL] DeviceId:', deviceId);
@@ -654,18 +799,19 @@ router.post('/', async (req: Request, res: Response) => {
         // ===== PASSO 1: CONSULTAR USUÁRIO (SEM MODIFICAR) =====
         console.log('[PAYWALL_STEP1] Consultando usuário existente...');
         
-        if (userId) {
-          // Usuário autenticado - buscar por user_id
-          console.log('[PAYWALL_STEP1] Buscando usuário autenticado:', userId);
-          
-          const { data: userData, error: userError } = await supabase
-            .from('users')
-            .select('id, freesongsused, device_id, last_used_ip')
-            .eq('id', userId)
-            .single();
+        const selectColumns = 'user_id, device_id, freesongsused, last_used_ip, creations';
 
-          if (userError && userError.code !== 'PGRST116') { // PGRST116 = not found
-            console.error('[PAYWALL_ERROR] Erro ao buscar usuário autenticado:', userError);
+        if (userId) {
+          console.log('[PAYWALL_STEP1] Buscando registro em user_creations para usuário autenticado:', userId);
+
+          const { data: userRow, error: userError } = await supabase
+            .from('user_creations')
+            .select(selectColumns)
+            .eq('user_id', userId)
+            .maybeSingle();
+
+          if (userError && userError.code !== 'PGRST116') {
+            console.error('[PAYWALL_ERROR] Erro ao buscar usuário autenticado em user_creations:', userError);
             return res.status(500).json({
               success: false,
               error: 'Erro interno do servidor',
@@ -674,38 +820,203 @@ router.post('/', async (req: Request, res: Response) => {
             });
           }
 
-          existingUser = userData;
-          console.log('[PAYWALL_STEP1] Usuário autenticado encontrado:', existingUser);
-          
-        } else if (deviceId || clientIp) {
-          // Usuário não autenticado - buscar por device_id ou IP
-          console.log('[PAYWALL_STEP1] Buscando usuário anônimo por deviceId ou IP');
-          console.log('[PAYWALL_STEP1] DeviceId:', deviceId);
-          console.log('[PAYWALL_STEP1] ClientIp:', clientIp);
-          
-          // Buscar por deviceId OU IP
-          const { data: anonymousUsers, error: searchError } = await supabase
-            .from('users')
-            .select('id, freesongsused, device_id, last_used_ip')
-            .or(`device_id.eq.${deviceId},last_used_ip.eq.${clientIp}`)
-            .is('email', null)
-            .limit(1);
+          if (userRow) {
+            existingUser = {
+              user_id: userRow.user_id ?? userId,
+              device_id: userRow.device_id ?? deviceId ?? null,
+              freesongsused: userRow.freesongsused ?? 0,
+              last_used_ip: userRow.last_used_ip ?? null
+            };
+            console.log('[PAYWALL_STEP1] Registro encontrado para usuário autenticado:', existingUser);
 
-          if (searchError) {
-            console.error('[PAYWALL_ERROR] Erro ao buscar usuário anônimo:', searchError);
-            return res.status(500).json({
-              success: false,
-              error: 'Erro interno do servidor',
-              message: 'Não foi possível verificar seu status de dispositivo.',
-              debug: process.env.NODE_ENV === 'development' ? searchError : undefined
-            });
+            // Se o deviceId atual ainda possuir contadores maiores (ex: migração recente), fazer o merge
+            if (deviceId && deviceId !== existingUser.device_id) {
+              const { data: deviceMergeRow, error: deviceMergeError } = await supabase
+                .from<UserCreationRow>('user_creations')
+                .select(selectColumns)
+                .eq('device_id', deviceId)
+                .maybeSingle();
+
+              if (deviceMergeError && deviceMergeError.code !== 'PGRST116') {
+                console.warn('[PAYWALL_STEP1] Erro ao buscar registro adicional por deviceId para merge:', deviceMergeError);
+              } else if (deviceMergeRow) {
+                existingUser = {
+                  user_id: existingUser.user_id ?? deviceMergeRow.user_id ?? null,
+                  device_id: existingUser.device_id ?? deviceMergeRow.device_id ?? deviceId,
+                  freesongsused: Math.max(existingUser.freesongsused ?? 0, deviceMergeRow.freesongsused ?? 0),
+                  last_used_ip: deviceMergeRow.last_used_ip ?? existingUser.last_used_ip ?? null
+                };
+                console.log('[PAYWALL_STEP1] Registro do usuário atualizado com dados do device atual:', existingUser);
+              }
+            }
+          } else {
+            console.log('[PAYWALL_STEP1] Nenhum registro existente para usuário autenticado - será criado após geração');
+          }
+        }
+
+        if (!existingUser) {
+          console.log('[PAYWALL_STEP1] Buscando registro em user_creations para convidado');
+          console.log('[PAYWALL_STEP1] DeviceId:', deviceId);
+          console.log('[PAYWALL_STEP1] GuestId:', guestId);
+          console.log('[PAYWALL_STEP1] ClientIp:', clientIp);
+
+          let deviceRecord: UserCreationRow | null = null;
+          if (deviceId) {
+            const { data, error } = await supabase
+              .from<UserCreationRow>('user_creations')
+              .select(selectColumns)
+              .eq('device_id', deviceId)
+              .maybeSingle();
+
+            if (error && error.code !== 'PGRST116') {
+              console.error('[PAYWALL_ERROR] Erro ao buscar usuário por deviceId em user_creations:', error);
+              return res.status(500).json({
+                success: false,
+                error: 'Erro interno do servidor',
+                message: 'Não foi possível verificar seu status de dispositivo.',
+                debug: process.env.NODE_ENV === 'development' ? error : undefined
+              });
+            }
+
+            if (data) {
+              deviceRecord = data;
+              console.log('[PAYWALL_STEP1] Registro encontrado via deviceId:', data);
+            }
           }
 
-          existingUser = anonymousUsers && anonymousUsers.length > 0 ? anonymousUsers[0] : null;
-          console.log('[PAYWALL_STEP1] Usuário anônimo encontrado:', existingUser);
-          
-        } else {
-          console.log('[PAYWALL_ERROR] Nem userId nem deviceId fornecidos');
+          let guestRecord: UserCreationRow | null = null;
+          if (guestId && (!deviceId || guestId !== deviceId)) {
+            const { data, error } = await supabase
+              .from<UserCreationRow>('user_creations')
+              .select(selectColumns)
+              .eq('device_id', guestId)
+              .maybeSingle();
+
+            if (error && error.code !== 'PGRST116') {
+              console.error('[PAYWALL_ERROR] Erro ao buscar usuário por guestId em user_creations:', error);
+              return res.status(500).json({
+                success: false,
+                error: 'Erro interno do servidor',
+                message: 'Não foi possível verificar seu status de convidado.',
+                debug: process.env.NODE_ENV === 'development' ? error : undefined
+              });
+            }
+
+            if (data) {
+              guestRecord = data;
+              console.log('[PAYWALL_STEP1] Registro encontrado via guestId:', data);
+            }
+          }
+
+          let mergedLastIp: string | null = null;
+
+          if (deviceRecord && guestRecord && deviceRecord.device_id !== guestRecord.device_id) {
+            console.log('[PAYWALL_STEP1] Detectada duplicação de registros (deviceId e guestId). Consolidando...');
+
+            const canonicalDeviceId = guestId || deviceId || guestRecord.device_id;
+            const combinedFreeSongs = Math.max(deviceRecord.freesongsused ?? 0, guestRecord.freesongsused ?? 0);
+            const combinedCreations = Math.max(deviceRecord.creations ?? 0, guestRecord.creations ?? 0);
+            const combinedLastIp = clientIp ?? guestRecord.last_used_ip ?? deviceRecord.last_used_ip ?? null;
+            mergedLastIp = combinedLastIp;
+
+            const { data: mergedGuest, error: mergeUpdateError } = await supabase
+              .from<UserCreationRow>('user_creations')
+              .update({
+                device_id: canonicalDeviceId,
+                freesongsused: combinedFreeSongs,
+                creations: combinedCreations,
+                last_used_ip: combinedLastIp,
+                updated_at: new Date().toISOString()
+              })
+              .eq('device_id', guestRecord.device_id)
+              .select(selectColumns)
+              .maybeSingle();
+
+            if (mergeUpdateError) {
+              console.error('[PAYWALL_ERROR] Falha ao consolidar registros duplicados:', mergeUpdateError);
+            } else {
+              guestRecord = mergedGuest ?? guestRecord;
+              const { error: deleteError } = await supabase
+                .from<UserCreationRow>('user_creations')
+                .delete()
+                .eq('device_id', deviceRecord.device_id);
+
+              if (deleteError) {
+                console.error('[PAYWALL_ERROR] Falha ao remover registro duplicado:', deleteError);
+              } else {
+                console.log('[PAYWALL_STEP1] Registro duplicado removido com sucesso (deviceId).');
+                deviceRecord = null;
+              }
+            }
+          }
+
+          if (guestRecord) {
+            existingUser = {
+              user_id: guestRecord.user_id ?? null,
+              device_id: guestRecord.device_id ?? guestId ?? deviceId ?? null,
+              freesongsused: guestRecord.freesongsused ?? 0,
+              last_used_ip: mergedLastIp ?? guestRecord.last_used_ip ?? clientIp ?? null
+            };
+            console.log('[PAYWALL_STEP1] Registro consolidado para convidado:', existingUser);
+          } else if (deviceRecord) {
+            existingUser = {
+              user_id: deviceRecord.user_id ?? null,
+              device_id: deviceRecord.device_id ?? deviceId ?? null,
+              freesongsused: deviceRecord.freesongsused ?? 0,
+              last_used_ip: deviceRecord.last_used_ip ?? clientIp ?? null
+            };
+            console.log('[PAYWALL_STEP1] Registro encontrado para convidado via deviceId:', existingUser);
+          }
+
+          // FALLBACK POR IP DESABILITADO TEMPORARIAMENTE
+          // O fallback por IP estava causando bloqueios incorretos para usuários com deviceId diferentes
+          // mas mesmo IP (ex: usuários na mesma rede/empresa)
+          if (!existingUser && clientIp && !deviceId && !guestId) {
+            console.log('[PAYWALL_STEP1] Fallback por IP desabilitado - deviceId/guestId devem ser únicos');
+            // Código do fallback por IP comentado para evitar bloqueios incorretos
+            /*
+            const ttlDays = Number(process.env.IP_FALLBACK_TTL_DAYS || '7');
+            const cutoff = new Date(Date.now() - ttlDays * 24 * 60 * 60 * 1000).toISOString();
+
+            const { data: ipRow, error: ipError } = await supabase
+              .from<UserCreationRow>('user_creations')
+              .select(selectColumns)
+              .is('user_id', null)
+              .eq('last_used_ip', clientIp)
+              .gte('created_at', cutoff)
+              .order('created_at', { ascending: false })
+              .limit(1)
+              .maybeSingle();
+
+            if (ipError && ipError.code !== 'PGRST116') {
+              console.error('[PAYWALL_ERROR] Erro ao buscar usuário convidado por IP em user_creations:', ipError);
+              return res.status(500).json({
+                success: false,
+                error: 'Erro interno do servidor',
+                message: 'Não foi possível verificar seu status de dispositivo.',
+                debug: process.env.NODE_ENV === 'development' ? ipError : undefined
+              });
+            }
+
+            if (ipRow) {
+              existingUser = {
+                user_id: ipRow.user_id ?? null,
+                device_id: ipRow.device_id ?? deviceId ?? guestId ?? null,
+                freesongsused: ipRow.freesongsused ?? 0,
+                last_used_ip: ipRow.last_used_ip ?? clientIp ?? null
+              };
+              console.log('[PAYWALL_STEP1] Registro encontrado via fallback de IP:', existingUser);
+            }
+            */
+          }
+
+          if (!existingUser) {
+            console.log('[PAYWALL_STEP1] Nenhum registro existente para convidado - será criado após geração');
+          }
+        }
+
+        if (!userId && !deviceId && !guestId) {
+          console.log('[PAYWALL_ERROR] Nem userId, deviceId ou guestId fornecidos');
           return res.status(400).json({
             success: false,
             error: 'BAD_REQUEST',
@@ -717,22 +1028,119 @@ router.post('/', async (req: Request, res: Response) => {
         console.log('[PAYWALL_STEP2] Verificando permissões...');
         
         if (existingUser && existingUser.freesongsused >= FREE_SONG_LIMIT) {
-          const identifier = userId ? `usuário ${userId}` : `dispositivo ${deviceId}`;
+          const identifier = userId
+            ? `usuário ${userId}`
+            : `dispositivo ${deviceId || guestId || existingUser.device_id || 'desconhecido'}`;
           console.log(`[PAYWALL_BLOCK] Limite atingido para ${identifier}. FreeSongsUsed: ${existingUser.freesongsused}`);
           
           return res.status(402).json({
             success: false,
             error: 'PAYMENT_REQUIRED',
-            message: 'Você já usou sua criação de música gratuita. Por favor, faça um upgrade para criar mais.',
+            message: 'Você já usou suas criações de música gratuitas. Por favor, faça um upgrade para criar mais.',
             freeSongsUsed: existingUser.freesongsused,
             maxFreeSongs: FREE_SONG_LIMIT,
             requiresPayment: true
           });
         }
 
-        const identifier = userId ? `usuário ${userId}` : `dispositivo ${deviceId}`;
+        const identifier = userId
+          ? `usuário ${userId}`
+          : `dispositivo ${deviceId || guestId || existingUser?.device_id || 'desconhecido'}`;
         const currentCount = existingUser?.freesongsused || 0;
         console.log(`[PAYWALL_ALLOW] Permissão concedida para ${identifier}. Músicas usadas: ${currentCount}/${FREE_SONG_LIMIT}`);
+        
+        // === INCREMENTAR CONTADOR IMEDIATAMENTE APÓS VERIFICAÇÃO ===
+        console.log('🎵 Incrementando contador ANTES da geração para bloquear múltiplas tentativas...');
+        
+        const supabaseClient = getSupabaseClient();
+        const canonicalIdentifier = (guestId && guestId.trim())
+          || (deviceId && deviceId.trim())
+          || existingUser?.device_id
+          || userId
+          || clientIp
+          || `guest-${Date.now()}`;
+
+        try {
+          if (!existingUser) {
+            // Novo usuário: criar registro com freesongsused = 1
+            console.log('🎵 Criando novo registro em user_creations com contador = 1');
+            
+           const insertData: Record<string, unknown> = {
+             freesongsused: 1,
+             last_used_ip: clientIp
+           };
+           
+           if (userId) {
+             insertData.user_id = userId;
+              insertData.device_id = userId;
+            } else {
+              insertData.device_id = canonicalIdentifier;
+            }
+            
+            const { error: insertError } = await supabaseClient
+              .from('user_creations')
+              .insert(insertData);
+            
+            if (insertError) {
+              console.error('[PAYWALL_DB_ERROR] Erro ao criar registro:', insertError);
+              return res.status(500).json({
+                success: false,
+                error: 'Erro interno do servidor',
+                message: 'Não foi possível processar sua solicitação.'
+              });
+            } else {
+              console.log('✅ Contador criado com sucesso: 1');
+            }
+          } else {
+            // Usuário existente: incrementar contador
+            console.log('🎵 Incrementando contador do usuário existente');
+            
+            const newCount = (existingUser.freesongsused ?? 0) + 1;
+            const updateData: Record<string, unknown> = {
+              freesongsused: newCount,
+              last_used_ip: clientIp || existingUser.last_used_ip
+            };
+            
+            if (userId) {
+              updateData.user_id = userId;
+            }
+            if (!existingUser.user_id && canonicalIdentifier) {
+              updateData.device_id = canonicalIdentifier;
+            }
+            
+            let updateQuery = supabaseClient
+              .from('user_creations')
+              .update(updateData);
+            
+            if (existingUser.user_id) {
+              updateQuery = updateQuery.eq('user_id', existingUser.user_id);
+            } else if (existingUser.device_id) {
+              updateQuery = updateQuery.eq('device_id', existingUser.device_id);
+            } else if (canonicalIdentifier) {
+              updateQuery = updateQuery.eq('device_id', canonicalIdentifier);
+            }
+            
+            const { error: updateError } = await updateQuery;
+            
+            if (updateError) {
+              console.error('[PAYWALL_DB_ERROR] Erro ao incrementar contador:', updateError);
+              return res.status(500).json({
+                success: false,
+                error: 'Erro interno do servidor',
+                message: 'Não foi possível processar sua solicitação.'
+              });
+            } else {
+              console.log(`✅ Contador incrementado para ${newCount}`);
+            }
+          }
+        } catch (error) {
+          console.error('[PAYWALL_DB_ERROR] Erro ao incrementar contador antes da geração:', error);
+          return res.status(500).json({
+            success: false,
+            error: 'Erro interno do servidor',
+            message: 'Não foi possível processar sua solicitação.'
+          });
+        }
         
       } catch (error) {
         console.error('[PAYWALL_DB_ERROR] Erro na verificação do paywall:', error);
@@ -744,6 +1152,8 @@ router.post('/', async (req: Request, res: Response) => {
           debug: process.env.NODE_ENV === 'development' ? error : undefined
         });
       }
+    } else {
+      console.log('[PAYWALL] Fluxo lyricsOnly detectado - pulando verificação de cota.');
     }
     // ===== FIM DA NOVA ORDEM DE OPERAÇÕES DO PAYWALL =====
 
@@ -1044,6 +1454,7 @@ router.post('/', async (req: Request, res: Response) => {
       
       // Inicializar tarefa
       global.musicTasks.set(backgroundTaskId, {
+        taskId: taskId, // Adicionar taskId da Suno API
         status: 'PROCESSING',
         jobIds: jobIds,
         idsString: idsString,
@@ -1072,65 +1483,8 @@ router.post('/', async (req: Request, res: Response) => {
         lastUpdate: Date.now()
       });
       
-      // === PASSO 4: ATUALIZAR BANCO DE DADOS (APENAS APÓS SUCESSO) ===
-      console.log('🎵 Passo 4: Atualizando banco de dados após sucesso da geração...');
-      
-      // Obter cliente Supabase para operações de banco de dados
-      const supabaseClient = getSupabaseClient();
-      
-      try {
-        if (!existingUser) {
-          // Novo usuário: criar registro com freesongsused = 1
-          console.log('🎵 Criando novo usuário anônimo com contador = 1');
-          
-          const insertData: any = {
-            freesongsused: 1,
-            last_used_ip: clientIp
-          };
-          
-          if (userId) {
-            // Em nossa tabela principal, o identificador do usuário autenticado é a coluna 'id'
-            insertData.id = userId;
-          } else {
-            insertData.device_id = deviceId;
-          }
-          
-          const { error: insertError } = await supabaseClient
-            .from('users')
-            .insert([insertData]);
-          
-          if (insertError) {
-            console.error('❌ Erro ao criar usuário anônimo:', insertError);
-            // Log do erro mas não falha a operação pois música já foi gerada
-          } else {
-            console.log('✅ Usuário anônimo criado com sucesso');
-          }
-        } else {
-          // Usuário existente: incrementar contador
-          console.log('🎵 Incrementando contador do usuário existente');
-          
-          const newCount = (existingUser.freesongsused || 0) + 1;
-          const updateData: any = {
-            freesongsused: newCount,
-            last_used_ip: clientIp
-          };
-          
-          const { error: updateError } = await supabaseClient
-            .from('users')
-            .update(updateData)
-            .eq('id', existingUser.id);
-          
-          if (updateError) {
-            console.error('❌ Erro ao incrementar contador:', updateError);
-            // Log do erro mas não falha a operação pois música já foi gerada
-          } else {
-            console.log(`✅ Contador incrementado para ${newCount}`);
-          }
-        }
-      } catch (dbError) {
-        console.error('❌ Erro na atualização do banco de dados:', dbError);
-        // Log do erro mas não falha a operação pois música já foi gerada
-      }
+      // === CONTADOR SERÁ INCREMENTADO APÓS GERAÇÃO BEM-SUCEDIDA ===
+      console.log('🎵 Passo 4: Contador será incrementado apenas após geração bem-sucedida');
       
       // Iniciar processamento em background
       processTaskInBackground(backgroundTaskId);
@@ -1304,29 +1658,34 @@ async function processTaskInBackground(taskId: string) {
           }
         }
         
-        const statusData = await statusResponse.json();
-        console.log(`✅ [${taskId}] Status dos jobs (tentativa ${attempts}):`, JSON.stringify(statusData, null, 2));
-        
+        const statusJson: unknown = await statusResponse.json();
+        console.log(`✅ [${taskId}] Status dos jobs (tentativa ${attempts}):`, JSON.stringify(statusJson, null, 2));
+
         // Verificar a estrutura da resposta da Suno API
-        if (!statusData.data) {
+        const statusPayload = statusJson as SunoStatusPayload;
+
+        if (!statusPayload.data) {
           console.log(`❌ [${taskId}] Resposta de status inválida: campo data ausente`);
           throw new Error('Resposta de status inválida: campo data ausente');
         }
-        
-        const jobData = statusData.data;
+
+        const jobData = statusPayload.data;
         console.log(`🎵 [${taskId}] Status do job:`, jobData.status);
         
         // Verificar se o job está completo
         if ((jobData.status === 'SUCCESS' || jobData.status === 'FIRST_SUCCESS') && jobData.response) {
           // Job completo - extrair os dados dos clipes
-          const jobsArray = Array.isArray(jobData.response) ? jobData.response : [jobData.response];
+          const jobResponse = jobData.response;
+          const jobsArray = jobResponse
+            ? (Array.isArray(jobResponse) ? jobResponse : [jobResponse])
+            : [];
           console.log(`🎵 [${taskId}] Job completo! Dados extraídos:`, JSON.stringify(jobsArray, null, 2));
           
           // Processar novos clipes
           const newAudioClips = [];
           
           jobsArray.forEach((job, jobIndex) => {
-            if (job.sunoData && Array.isArray(job.sunoData)) {
+            if (job?.sunoData && Array.isArray(job.sunoData)) {
               job.sunoData.forEach((clip, clipIndex) => {
                 if (clip.audioUrl || clip.sourceAudioUrl) {
                   const clipId = clip.id || `clip_${jobIndex}_${clipIndex}`;
@@ -1364,12 +1723,17 @@ async function processTaskInBackground(taskId: string) {
             task.metadata.processingTime = `${attempts} tentativas`;
             console.log(`🎉 [${taskId}] Todas as músicas foram processadas!`);
             
+            // === CONTADOR JÁ FOI INCREMENTADO ANTES DA GERAÇÃO ===
+            console.log('✅ Contador já foi incrementado antes da geração - não é necessário incrementar novamente');
+            
             // Salvar automaticamente no banco de dados
             await autoSaveSongToDatabase(task, task.metadata.userId, task.metadata.guestId);
 
             // Disparar geração de capa (cover) após salvar a música
             try {
-              const savedSongId = (task.metadata as any)?.savedSongId as string | undefined;
+              const savedSongId = typeof task.metadata?.savedSongId === 'string'
+                ? task.metadata.savedSongId
+                : undefined;
               await triggerSunoCoverGeneration(task.taskId, savedSongId);
             } catch (e) {
               console.warn('[SUNO_COVER] Falha ao disparar geração de capa:', e);

@@ -61,7 +61,7 @@ async function testServiceRoleConnection() {
     
     // Teste básico de conectividade
     const { data, error } = await client
-      .from('users')
+      .from('user_creations')
       .select('count')
       .limit(1);
     
@@ -87,7 +87,7 @@ async function testAnonConnection() {
     
     // Teste básico de conectividade
     const { data, error } = await client
-      .from('users')
+      .from('user_creations')
       .select('count')
       .limit(1);
     
@@ -107,7 +107,7 @@ async function testAnonConnection() {
 async function testTableAccess() {
   log('\n=== TESTE DE ACESSO ÀS TABELAS ===', 'bold');
   
-  const tables = ['users', 'songs', 'mvp_feedback'];
+  const tables = ['user_creations', 'songs', 'mvp_feedback'];
   const client = getSupabaseServiceClient();
   
   for (const table of tables) {
@@ -210,7 +210,7 @@ async function testRetryMechanism() {
     
     const result = await executeSupabaseQuery(async (client) => {
       return await client
-        .from('users')
+        .from('user_creations')
         .select('count')
         .limit(1);
     });

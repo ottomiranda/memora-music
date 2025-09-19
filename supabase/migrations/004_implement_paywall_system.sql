@@ -2,16 +2,16 @@
 -- Created: 2024
 -- Description: Adds paywall functionality with free song tracking, mock transactions, and paid song marking
 
--- Add freeSongsUsed field to users table
-ALTER TABLE users ADD COLUMN freeSongsUsed INTEGER DEFAULT 0;
+-- Add freeSongsUsed field to user_creations table
+ALTER TABLE user_creations ADD COLUMN freeSongsUsed INTEGER DEFAULT 0;
 
 -- Create index for optimizing queries on freeSongsUsed
-CREATE INDEX idx_users_free_songs_used ON users(freeSongsUsed);
+CREATE INDEX idx_user_creations_free_songs_used ON user_creations(freeSongsUsed);
 
 -- Create mock_transactions table for simulated payments
 CREATE TABLE mock_transactions (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    userId UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    userId UUID NOT NULL REFERENCES user_creations(id) ON DELETE CASCADE,
     transactionId VARCHAR(255) UNIQUE NOT NULL,
     amount INTEGER NOT NULL,
     paymentMethod VARCHAR(50) NOT NULL DEFAULT 'mock_card',
@@ -59,6 +59,6 @@ CREATE INDEX idx_songs_is_paid ON songs(isPaid);
 UPDATE songs SET isPaid = FALSE WHERE isPaid IS NULL;
 
 -- Add comment to document the new columns
-COMMENT ON COLUMN users.freeSongsUsed IS 'Number of free songs already used by the user';
+COMMENT ON COLUMN user_creations.freeSongsUsed IS 'Number of free songs already used by the user';
 COMMENT ON COLUMN songs.isPaid IS 'Whether this song generation required payment';
 COMMENT ON TABLE mock_transactions IS 'Stores simulated payment transactions for paywall system';

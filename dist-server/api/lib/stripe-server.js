@@ -37,7 +37,7 @@ export const getStripeServer = () => {
             throw new Error('STRIPE_SECRET_KEY inválida: deve começar com "sk_"');
         }
         stripeInstance = new Stripe(env.STRIPE_SECRET_KEY, {
-            apiVersion: '2024-12-18.acacia',
+            // Use SDK default API version; avoids invalid or future date strings
             typescript: true,
             telemetry: false, // Disable telemetry for privacy
         });

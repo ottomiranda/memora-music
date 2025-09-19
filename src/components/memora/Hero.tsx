@@ -21,7 +21,7 @@ const Hero = () => {
 
 
   return (
-    <section className="relative h-screen flex items-center justify-center bg-gradient-to-br from-[#4D2699] via-[#231733] to-[#160D27]">
+    <section className="relative h-screen flex items-center justify-center">
       {/* Particles and Waves Animation Background */}
       <ParticlesAndWaves className="opacity-50" />
       

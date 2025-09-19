@@ -56,22 +56,22 @@ node scripts/verify-device-id-column.js
 - [ ] Confirmar que o índice foi criado na coluna `device_id`
 
 ### ✅ Configuração de Permissões
-- [ ] Verificar permissões da tabela `users`:
+- [ ] Verificar permissões da tabela `user_creations`:
   ```sql
   SELECT grantee, table_name, privilege_type 
   FROM information_schema.role_table_grants 
   WHERE table_schema = 'public' 
-    AND table_name = 'users' 
+    AND table_name = 'user_creations' 
     AND grantee IN ('anon', 'authenticated') 
   ORDER BY table_name, grantee;
   ```
 - [ ] Se necessário, conceder permissões:
   ```sql
   -- Para usuários não autenticados (leitura básica)
-  GRANT SELECT ON users TO anon;
+  GRANT SELECT ON user_creations TO anon;
   
   -- Para usuários autenticados (acesso completo)
-  GRANT ALL PRIVILEGES ON users TO authenticated;
+  GRANT ALL PRIVILEGES ON user_creations TO authenticated;
   ```
 
 ### ✅ Teste de Conectividade
@@ -99,7 +99,7 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJ...
 
 ## 🚨 Troubleshooting
 
-### Erro: "permission denied for table users"
+### Erro: "permission denied for table user_creations"
 
 **Causa**: Falta de permissões para a role `anon` ou `authenticated`.
 
@@ -107,10 +107,10 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJ...
 1. Execute no SQL Editor do Supabase:
    ```sql
    -- Para usuários anônimos
-   GRANT SELECT ON users TO anon;
+   GRANT SELECT ON user_creations TO anon;
    
    -- Para usuários autenticados
-   GRANT ALL PRIVILEGES ON users TO authenticated;
+   GRANT ALL PRIVILEGES ON user_creations TO authenticated;
    ```
 
 ### Erro: "accessToken is required"

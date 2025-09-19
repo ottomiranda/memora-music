@@ -10,7 +10,7 @@ SELECT
     last_used_ip,
     created_at,
     updated_at
-FROM users 
+FROM user_creations 
 ORDER BY created_at DESC;
 
 -- 2. Verificar usuários com mesmo device_id (se houver duplicatas)
@@ -20,7 +20,7 @@ SELECT
     array_agg(id) as user_ids,
     array_agg(email) as emails,
     array_agg(freesongsused) as free_songs_counts
-FROM users 
+FROM user_creations 
 WHERE device_id IS NOT NULL
 GROUP BY device_id
 HAVING COUNT(*) > 1;
@@ -30,14 +30,14 @@ SELECT
     'anonymous' as user_type,
     COUNT(*) as count,
     SUM(freesongsused) as total_free_songs
-FROM users 
+FROM user_creations 
 WHERE email IS NULL
 UNION ALL
 SELECT 
     'authenticated' as user_type,
     COUNT(*) as count,
     SUM(freesongsused) as total_free_songs
-FROM users 
+FROM user_creations 
 WHERE email IS NOT NULL;
 
 -- 4. Verificar músicas por usuário para entender a distribuição
@@ -47,7 +47,7 @@ SELECT
     u.device_id,
     u.freesongsused,
     COUNT(s.id) as songs_count
-FROM users u
+FROM user_creations u
 LEFT JOIN songs s ON (s.user_id = u.id OR s.guest_id = u.id::text)
 GROUP BY u.id, u.email, u.device_id, u.freesongsused
 ORDER BY u.created_at DESC;
@@ -59,4 +59,4 @@ SELECT
     indexname,
     indexdef
 FROM pg_indexes 
-WHERE tablename = 'users' AND indexname LIKE '%device_id%';
+WHERE tablename = 'user_creations' AND indexname LIKE '%device_id%';

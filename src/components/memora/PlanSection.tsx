@@ -1,5 +1,7 @@
 import { Check, Clock, Music, Mic, Download, Sparkles } from "lucide-react";
 import { useCreationStatus } from "../../hooks/useCreationStatus";
+import SectionTitle from '../ui/SectionTitle';
+import SectionSubtitle from '../ui/SectionSubtitle';
 
 const PlanSection = () => {
   const { isFree: isFirstSong, isLoading, error } = useCreationStatus();
@@ -23,16 +25,14 @@ const PlanSection = () => {
   ];
 
   return (
-    <section className="py-20 bg-background">
+    <section className="py-20">
       <div className="container mx-auto px-4">
         {/* Header */}
         <div className="text-center mb-16">
-          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-heading font-bold text-foreground mb-4">
+          <SectionTitle>
             Um presente que toca o coração
-          </h2>
-          <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
-            Crie memórias musicais únicas que ficarão para sempre
-          </p>
+          </SectionTitle>
+          <SectionSubtitle>Crie memórias musicais únicas que ficarão para sempre</SectionSubtitle>
         </div>
 
         {/* Plan Card */}
@@ -40,7 +40,7 @@ const PlanSection = () => {
           <div className="relative surface-1 rounded-2xl shadow-2xl">
             {/* Badge */}
             <div className="absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-[60]">
-              <div className="bg-gradient-to-r from-memora-secondary to-memora-coral px-6 py-2 rounded-full shadow-lg border-2 border-white/20">
+              <div className="bg-memora-secondary px-6 py-2 rounded-full shadow-lg border-2 border-white/20">
                 <span className="text-white font-heading font-bold text-sm">
                   🎉 Primeira música é grátis!
                 </span>
@@ -102,7 +102,7 @@ const PlanSection = () => {
               {/* CTA Button */}
               <div className="text-center mb-6">
                 <button 
-                  className="w-full bg-gradient-to-r from-memora-primary to-memora-secondary hover:from-memora-primary/90 hover:to-memora-secondary/90 text-white font-heading font-bold py-4 px-8 rounded-2xl shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all duration-300"
+                  className="w-full bg-memora-primary hover:bg-memora-primary/90 text-white font-heading font-bold py-4 px-8 rounded-2xl shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all duration-300"
                   data-attr="plan-cta-button"
                 >
                   <div className="flex items-center justify-center space-x-2">

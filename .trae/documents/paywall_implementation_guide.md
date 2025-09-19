@@ -15,13 +15,13 @@ Este documento detalha a implementação de um sistema de paywall seguro para a 
 
 ### 2.1 Atualização do Modelo de Usuário
 
-**Tabela: users**
+**Tabela: user_creations**
 ```sql
 -- Adicionar campo para rastrear músicas gratuitas utilizadas
-ALTER TABLE users ADD COLUMN free_songs_used INTEGER DEFAULT 0;
+ALTER TABLE user_creations ADD COLUMN free_songs_used INTEGER DEFAULT 0;
 
 -- Índice para otimizar consultas
-CREATE INDEX idx_users_free_songs_used ON users(free_songs_used);
+CREATE INDEX idx_user_creations_free_songs_used ON user_creations(free_songs_used);
 ```
 
 **Schema TypeScript:**

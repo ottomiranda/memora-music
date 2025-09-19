@@ -15,7 +15,7 @@ SELECT
     is_nullable
 FROM information_schema.columns 
 WHERE table_schema = 'public' 
-    AND table_name = 'users' 
+    AND table_name = 'user_creations' 
     AND column_name = 'last_used_ip';
 ```
 
@@ -33,20 +33,20 @@ WHERE table_schema = 'public'
 Se a verificação do Passo 1 não retornou resultados, execute este script:
 
 ```sql
--- MIGRAÇÃO: Adicionar coluna last_used_ip à tabela users
+-- MIGRAÇÃO: Adicionar coluna last_used_ip à tabela user_creations
 -- Copie e cole este código completo no SQL Editor:
 
--- Adicionar coluna last_used_ip à tabela users
-ALTER TABLE users ADD COLUMN IF NOT EXISTS last_used_ip TEXT;
+-- Adicionar coluna last_used_ip à tabela user_creations
+ALTER TABLE user_creations ADD COLUMN IF NOT EXISTS last_used_ip TEXT;
 
 -- Criar índice para melhor performance nas consultas por IP
-CREATE INDEX IF NOT EXISTS idx_users_last_used_ip ON users(last_used_ip);
+CREATE INDEX IF NOT EXISTS idx_user_creations_last_used_ip ON user_creations(last_used_ip);
 
 -- Criar índice composto para consultas que verificam device_id OU last_used_ip
-CREATE INDEX IF NOT EXISTS idx_users_device_ip_security ON users(device_id, last_used_ip);
+CREATE INDEX IF NOT EXISTS idx_user_creations_device_ip_security ON user_creations(device_id, last_used_ip);
 
 -- Adicionar comentário à coluna
-COMMENT ON COLUMN users.last_used_ip IS 'Último endereço IP usado pelo usuário para verificação de segurança contra abusos';
+COMMENT ON COLUMN user_creations.last_used_ip IS 'Último endereço IP usado pelo usuário para verificação de segurança contra abusos';
 
 -- Verificar se a migração foi aplicada corretamente
 DO $$
@@ -54,19 +54,19 @@ BEGIN
     IF EXISTS (
         SELECT 1 
         FROM information_schema.columns 
-        WHERE table_name = 'users' 
+        WHERE table_name = 'user_creations' 
         AND column_name = 'last_used_ip'
     ) THEN
-        RAISE NOTICE '✅ Coluna last_used_ip adicionada com sucesso à tabela users';
+        RAISE NOTICE '✅ Coluna last_used_ip adicionada com sucesso à tabela user_creations';
     ELSE
-        RAISE EXCEPTION '❌ Falha ao adicionar coluna last_used_ip à tabela users';
+        RAISE EXCEPTION '❌ Falha ao adicionar coluna last_used_ip à tabela user_creations';
     END IF;
 END $$;
 ```
 
 ### 📝 Resultado Esperado:
-- Mensagem: `✅ Coluna last_used_ip adicionada com sucesso à tabela users`
-- Se aparecer erro, verifique se a tabela `users` existe
+- Mensagem: `✅ Coluna last_used_ip adicionada com sucesso à tabela user_creations`
+- Se aparecer erro, verifique se a tabela `user_creations` existe
 
 ---
 
@@ -82,7 +82,7 @@ SELECT
     data_type as detalhes
 FROM information_schema.columns 
 WHERE table_schema = 'public' 
-    AND table_name = 'users' 
+    AND table_name = 'user_creations' 
     AND column_name = 'last_used_ip'
 
 UNION ALL
@@ -92,17 +92,17 @@ SELECT
     indexname as nome,
     indexdef as detalhes
 FROM pg_indexes 
-WHERE tablename = 'users' 
+WHERE tablename = 'user_creations' 
     AND (indexname LIKE '%last_used_ip%' OR indexname LIKE '%device_ip_security%');
 ```
 
 ### ✅ Resultado Esperado:
 ```
-tipo    | nome                           | detalhes
---------|--------------------------------|------------------
-Coluna  | last_used_ip                   | text
-Índice  | idx_users_last_used_ip         | CREATE INDEX...
-Índice  | idx_users_device_ip_security   | CREATE INDEX...
+tipo    | nome                                  | detalhes
+--------|---------------------------------------|------------------
+Coluna  | last_used_ip                          | text
+Índice  | idx_user_creations_last_used_ip       | CREATE INDEX...
+Índice  | idx_user_creations_device_ip_security | CREATE INDEX...
 ```
 
 ---
@@ -128,9 +128,9 @@ Após confirmar que a migração foi aplicada com sucesso:
 
 ## 🚨 Troubleshooting
 
-### Erro: "relation 'users' does not exist"
+### Erro: "relation 'user_creations' does not exist"
 - Verifique se você está no projeto correto do Supabase
-- Confirme se a tabela `users` foi criada anteriormente
+- Confirme se a tabela `user_creations` foi criada anteriormente
 
 ### Erro: "permission denied"
 - Verifique se você tem permissões de administrador no projeto

@@ -1,5 +1,5 @@
 /**
- * Script para verificar se a coluna device_id foi adicionada corretamente à tabela users
+ * Script para verificar se a coluna device_id foi adicionada corretamente à tabela user_creations
  * Pode usar tanto accessToken manual quanto SUPABASE_SERVICE_ROLE_KEY do .env
  */
 
@@ -59,7 +59,7 @@ function makeRequest(url, options) {
 }
 
 async function verifyDeviceIdColumn() {
-  console.log('🔍 Verificando se a coluna device_id foi adicionada à tabela users...');
+  console.log('🔍 Verificando se a coluna device_id foi adicionada à tabela user_creations...');
   
   // Carregar variáveis de ambiente
   const envVars = loadEnvVars();
@@ -90,12 +90,12 @@ async function verifyDeviceIdColumn() {
   console.log(`   Fonte do token: ${manualToken ? 'Manual (argumento)' : 'Arquivo .env'}`);
   
   try {
-    // Consultar a estrutura da tabela users
+    // Consultar a estrutura da tabela user_creations
     const query = `
       SELECT column_name, data_type, is_nullable, column_default
       FROM information_schema.columns 
       WHERE table_schema = 'public' 
-      AND table_name = 'users'
+      AND table_name = 'user_creations'
       ORDER BY ordinal_position;
     `;
     
@@ -110,7 +110,7 @@ async function verifyDeviceIdColumn() {
       }
     };
     
-    console.log('\n🔍 Consultando estrutura da tabela users...');
+    console.log('\n🔍 Consultando estrutura da tabela user_creations...');
     
     const req = https.request(url, options, (res) => {
       let data = '';
@@ -127,7 +127,7 @@ async function verifyDeviceIdColumn() {
             const result = JSON.parse(data);
             
             if (Array.isArray(result) && result.length > 0) {
-              console.log('\n✅ Estrutura da tabela users:');
+              console.log('\n✅ Estrutura da tabela user_creations:');
               console.log('┌─────────────────────┬─────────────────┬─────────────┬─────────────────┐');
               console.log('│ Column Name         │ Data Type       │ Nullable    │ Default         │');
               console.log('├─────────────────────┼─────────────────┼─────────────┼─────────────────┤');
@@ -150,16 +150,16 @@ async function verifyDeviceIdColumn() {
               console.log('└─────────────────────┴─────────────────┴─────────────┴─────────────────┘');
               
               if (deviceIdFound) {
-                console.log('\n🎉 SUCESSO: A coluna device_id foi encontrada na tabela users!');
+                console.log('\n🎉 SUCESSO: A coluna device_id foi encontrada na tabela user_creations!');
                 console.log('✅ A migração foi aplicada corretamente.');
               } else {
-                console.log('\n❌ ERRO: A coluna device_id NÃO foi encontrada na tabela users.');
+                console.log('\n❌ ERRO: A coluna device_id NÃO foi encontrada na tabela user_creations.');
                 console.log('💡 Execute a migração manualmente no console do Supabase:');
-                console.log('   ALTER TABLE users ADD COLUMN device_id TEXT;');
+                console.log('   ALTER TABLE user_creations ADD COLUMN device_id TEXT;');
               }
               
             } else {
-              console.log('❌ Nenhuma coluna encontrada na tabela users');
+              console.log('❌ Nenhuma coluna encontrada na tabela user_creations');
               console.log('Resposta:', JSON.stringify(result, null, 2));
             }
             

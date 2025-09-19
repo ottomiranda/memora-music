@@ -1,0 +1,30 @@
+* {
+  box-sizing: border-box;
+}
+
+.background {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: flex-start;
+  border: 2px solid #ced4da;
+  border-radius: 8px;
+  background: #ffffff;
+  width: 1440px;
+  height: 7080px;
+  overflow: hidden;
+
+  .body {
+    flex-shrink: 0;
+    width: 1440px;
+    height: 7080px;
+    overflow: hidden;
+    background-image: linear-gradient(
+      11.5deg,
+      #0f0f23 63.48%,
+      #1a1a3e 81.16%,
+      #2d1b69 98.84%,
+      #4c1d95 116.51%,
+      #7c2d92 134.19%
+    );
+  }
+}

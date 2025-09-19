@@ -1,10 +1,12 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Music, Share2, Download, Loader2, ArrowLeft, Play, Pause } from 'lucide-react';
 import { songsApi, API_BASE_URL } from '@/config/api';
 import { triggerDownload } from '@/utils/download';
 import { useAudioPlayerStore } from '@/store/audioPlayerStore';
 import KaraokeLyrics from '@/components/KaraokeLyrics';
+import { getSunoAudioLinks } from '@/lib/sunoAudio';
+import { toast } from 'sonner';
 
 interface PublicSong {
   id: string;
@@ -15,6 +17,8 @@ interface PublicSong {
   audioUrlOption2?: string | null;
   createdAt: string;
   generationStatus?: string | null;
+  sunoTaskId?: string | null;
+  taskId?: string | null;
 }
 
 const MusicaPublica: React.FC = () => {
@@ -24,7 +28,39 @@ const MusicaPublica: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [currentUrl, setCurrentUrl] = useState<string | null>(null);
+  const [loadingPlayback, setLoadingPlayback] = useState(false);
+  const audioCache = useRef(new Map<string, { playbackUrl: string; downloadUrl?: string | null }>());
   const { currentId, isPlaying, play, pause } = useAudioPlayerStore();
+
+  const resolveAudioForSong = async (data: PublicSong | null) => {
+    if (!data) return null;
+    const cacheKey = data.id;
+    const cached = audioCache.current.get(cacheKey);
+    if (cached) return cached;
+
+    const localUrl = data.audioUrlOption1 || data.audioUrlOption2 || null;
+    const taskId = data.sunoTaskId || data.taskId || (typeof data.id === 'string' && data.id.startsWith('suno_') ? data.id.replace('suno_', '') : null);
+
+    if (taskId) {
+      const links = await getSunoAudioLinks(taskId);
+      if (links?.streamUrl) {
+        const entry = {
+          playbackUrl: links.streamUrl,
+          downloadUrl: links.audioUrl || localUrl || null,
+        };
+        audioCache.current.set(cacheKey, entry);
+        return entry;
+      }
+    }
+
+    if (localUrl) {
+      const entry = { playbackUrl: localUrl, downloadUrl: localUrl };
+      audioCache.current.set(cacheKey, entry);
+      return entry;
+    }
+
+    return null;
+  };
 
   useEffect(() => {
     const fetchSong = async () => {
@@ -34,8 +70,15 @@ const MusicaPublica: React.FC = () => {
         if (!id) return;
         const resp: any = await songsApi.getPublic(id);
         const data: PublicSong = resp?.data || resp; // compat
-        setSong(data);
-        const url = data.audioUrlOption1 || data.audioUrlOption2 || null;
+        // Enriquecer com campo sunoTaskId, respeitando diferentes formatos da API
+        const enriched: PublicSong = {
+          ...data,
+          sunoTaskId: data.sunoTaskId || (data as any).suno_task_id || data.taskId || (data as any).task_id || null,
+          taskId: data.taskId || (data as any).task_id || null,
+        };
+        setSong(enriched);
+        const resolved = await resolveAudioForSong(enriched);
+        const url = resolved?.playbackUrl || enriched.audioUrlOption1 || enriched.audioUrlOption2 || null;
         setCurrentUrl(url);
       } catch (e: any) {
         console.error('Erro ao carregar música pública:', e);
@@ -48,11 +91,41 @@ const MusicaPublica: React.FC = () => {
   }, [id]);
 
   const isThisSongPlaying = useMemo(() => currentId === song?.id && isPlaying, [currentId, song?.id, isPlaying]);
+  const currentVersionLabel = useMemo(() => {
+    if (!song) return 'Versão A';
+    if (!currentUrl) return 'Versão A';
+    if (song.audioUrlOption2 && currentUrl === song.audioUrlOption2) return 'Versão B';
+    if (song.audioUrlOption1 && currentUrl === song.audioUrlOption1) return 'Versão A';
+    return 'Versão Suno';
+  }, [song, currentUrl]);
 
-  const handlePlay = (url?: string | null, label?: 'A' | 'B') => {
-    const toPlay = url || currentUrl;
-    if (!toPlay || !song) return;
-    play(song.id, toPlay, { title: song.title, versionLabel: label });
+  const handlePlay = async (url?: string | null, label?: 'A' | 'B') => {
+    if (!song) return;
+
+    try {
+      setLoadingPlayback(true);
+
+      let toPlay = url || currentUrl;
+      if (!toPlay) {
+        const resolved = await resolveAudioForSong(song);
+        toPlay = resolved?.playbackUrl || null;
+        if (resolved?.playbackUrl) {
+          setCurrentUrl(resolved.playbackUrl);
+        }
+      }
+
+      if (!toPlay) {
+        toast.error('Não foi possível carregar o áudio desta música.');
+        return;
+      }
+
+      play(song.id, toPlay, { title: song.title, versionLabel: label });
+    } catch (error) {
+      console.error('Erro ao reproduzir música pública:', error);
+      toast.error('Falha ao reproduzir esta música. Tente novamente.');
+    } finally {
+      setLoadingPlayback(false);
+    }
   };
 
   const handlePause = () => {
@@ -63,7 +136,7 @@ const MusicaPublica: React.FC = () => {
     if (!song) return;
     const url = which === 'A' ? (song.audioUrlOption1 || null) : (song.audioUrlOption2 || null);
     setCurrentUrl(url);
-    if (url) handlePlay(url, which);
+    if (url) void handlePlay(url, which);
   };
 
   const handleShare = async () => {
@@ -80,8 +153,17 @@ const MusicaPublica: React.FC = () => {
 
   const handleDownload = async (label?: 'A' | 'B') => {
     if (!song) return;
-    const url = label === 'A' ? song.audioUrlOption1 : label === 'B' ? song.audioUrlOption2 : currentUrl;
-    if (!url) return;
+    let url = label === 'A' ? song.audioUrlOption1 : label === 'B' ? song.audioUrlOption2 : currentUrl;
+    if (!url) {
+      const resolved = await resolveAudioForSong(song);
+      url = resolved?.downloadUrl || resolved?.playbackUrl || null;
+    }
+
+    if (!url) {
+      toast.error('Não foi possível localizar o arquivo para download.');
+      return;
+    }
+
     const friendly = `${song.title}${label ? `_${label}` : ''}.mp3`;
     try {
       const proxyUrl = `${API_BASE_URL}/api/download?url=${encodeURIComponent(url)}&filename=${encodeURIComponent(friendly)}`;
@@ -153,12 +235,23 @@ const MusicaPublica: React.FC = () => {
                     <Pause className="w-5 h-5 text-white" />
                   </button>
                 ) : (
-                  <button onClick={() => handlePlay(undefined, currentUrl === song.audioUrlOption2 ? 'B' : 'A')} className="w-10 h-10 rounded-full bg-blue-600 hover:bg-blue-700 flex items-center justify-center">
-                    <Play className="w-5 h-5 text-white" />
+                  <button
+                    onClick={() => {
+                      const label = currentUrl === song.audioUrlOption2 ? 'B' : currentUrl === song.audioUrlOption1 ? 'A' : undefined;
+                      void handlePlay(undefined, label as 'A' | 'B' | undefined);
+                    }}
+                    disabled={loadingPlayback}
+                    className="w-10 h-10 rounded-full bg-blue-600 hover:bg-blue-700 flex items-center justify-center"
+                  >
+                    {loadingPlayback ? (
+                      <div className="w-5 h-5 border-2 border-white/40 border-t-white rounded-full animate-spin" />
+                    ) : (
+                      <Play className="w-5 h-5 text-white" />
+                    )}
                   </button>
                 )}
                 <div className="text-sm">
-                  <div className="font-medium">Reproduzindo {currentUrl === song.audioUrlOption2 ? 'Versão B' : 'Versão A'}</div>
+                  <div className="font-medium">Reproduzindo {currentVersionLabel}</div>
                   <div className="text-white/70">Selecione outra versão abaixo</div>
                 </div>
               </div>
@@ -168,7 +261,13 @@ const MusicaPublica: React.FC = () => {
                   <div className="flex items-center justify-between mb-2">
                     <div className="font-medium">Versão A</div>
                     <div className="flex items-center gap-2">
-                      <button onClick={() => handlePickVersion('A')} className="px-2 py-1 text-xs rounded-md bg-blue-600 hover:bg-blue-700">Reproduzir</button>
+                      <button
+                        onClick={() => handlePickVersion('A')}
+                        disabled={loadingPlayback}
+                        className={`px-2 py-1 text-xs rounded-md bg-blue-600 hover:bg-blue-700 ${loadingPlayback ? 'opacity-70 cursor-not-allowed' : ''}`}
+                      >
+                        Reproduzir
+                      </button>
                       <button onClick={() => handleDownload('A')} className="px-2 py-1 text-xs rounded-md bg-white/10 hover:bg-white/20">Baixar</button>
                     </div>
                   </div>
@@ -178,7 +277,13 @@ const MusicaPublica: React.FC = () => {
                   <div className="flex items-center justify-between mb-2">
                     <div className="font-medium">Versão B</div>
                     <div className="flex items-center gap-2">
-                      <button onClick={() => handlePickVersion('B')} className="px-2 py-1 text-xs rounded-md bg-blue-600 hover:bg-blue-700">Reproduzir</button>
+                      <button
+                        onClick={() => handlePickVersion('B')}
+                        disabled={loadingPlayback}
+                        className={`px-2 py-1 text-xs rounded-md bg-blue-600 hover:bg-blue-700 ${loadingPlayback ? 'opacity-70 cursor-not-allowed' : ''}`}
+                      >
+                        Reproduzir
+                      </button>
                       <button onClick={() => handleDownload('B')} className="px-2 py-1 text-xs rounded-md bg-white/10 hover:bg-white/20">Baixar</button>
                     </div>
                   </div>

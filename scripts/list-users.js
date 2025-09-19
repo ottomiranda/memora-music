@@ -15,11 +15,11 @@ const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
 async function listUsers() {
   try {
-    console.log('🔍 Listando usuários na tabela users...');
+    console.log('🔍 Listando usuários na tabela user_creations...');
     
     // Buscar todos os usuários
     const { data: users, error } = await supabase
-      .from('users')
+      .from('user_creations')
       .select('id, email, freesongsused, created_at')
       .order('created_at', { ascending: false })
       .limit(10);
@@ -30,7 +30,7 @@ async function listUsers() {
     }
     
     if (!users || users.length === 0) {
-      console.log('📭 Nenhum usuário encontrado na tabela users.');
+      console.log('📭 Nenhum usuário encontrado na tabela user_creations.');
       console.log('💡 Dica: Talvez você precise fazer login na aplicação primeiro para criar um usuário.');
       return;
     }

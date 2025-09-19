@@ -5,7 +5,7 @@ DECLARE
     updated_user RECORD;
 BEGIN
     -- Incrementa o contador freesongsused para o usuário com o device_id fornecido
-    UPDATE public.users 
+    UPDATE public.user_creations 
     SET freesongsused = freesongsused + 1,
         updated_at = NOW()
     WHERE device_id = user_device_id

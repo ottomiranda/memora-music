@@ -18,8 +18,8 @@ async function testRealPaywallFlow() {
     const testEmail = 'paywall-test-' + Date.now() + '@example.com';
     
     // Limpar dados anteriores
-    await supabase.from('users').delete().eq('device_id', testDeviceId);
-    await supabase.from('users').delete().eq('email', testEmail);
+    await supabase.from('user_creations').delete().eq('device_id', testDeviceId);
+    await supabase.from('user_creations').delete().eq('email', testEmail);
     
     console.log('\n📱 CENÁRIO 1: Usuário anônimo - primeira música');
     
@@ -44,7 +44,7 @@ async function testRealPaywallFlow() {
     
     // Criar usuário anônimo com 1 música usada (simular após primeira música)
     const { data: guestUser } = await supabase
-      .from('users')
+      .from('user_creations')
       .insert({
         device_id: testDeviceId,
         freesongsused: 1,
@@ -80,7 +80,7 @@ async function testRealPaywallFlow() {
     
     // Criar usuário autenticado
     const { data: authUser } = await supabase
-      .from('users')
+      .from('user_creations')
       .insert({
         email: testEmail,
         name: 'Test User',
@@ -113,7 +113,7 @@ async function testRealPaywallFlow() {
     
     // Verificar usuário após merge
     const { data: userAfterMerge } = await supabase
-      .from('users')
+      .from('user_creations')
       .select('*')
       .eq('id', authUser.id)
       .single();
@@ -183,7 +183,7 @@ async function testRealPaywallFlow() {
     console.log('O usuário autenticado com freesongsused=1 NÃO é mais bloqueado!');
     
     // Limpar
-    await supabase.from('users').delete().eq('id', authUser.id);
+    await supabase.from('user_creations').delete().eq('id', authUser.id);
     
   } catch (err) {
     console.error('❌ Erro:', err);

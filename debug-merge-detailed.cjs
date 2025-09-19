@@ -15,7 +15,7 @@ async function debugMergeDetailed() {
     
     console.log('\n📝 1. Criando usuário anônimo...');
     const { data: guestUser, error: guestError } = await supabase
-      .from('users')
+      .from('user_creations')
       .insert({
         device_id: testDeviceId,
         status: 1,
@@ -38,7 +38,7 @@ async function debugMergeDetailed() {
     
     console.log('\n📝 2. Criando usuário autenticado...');
     const { data: authUser, error: authError } = await supabase
-      .from('users')
+      .from('user_creations')
       .insert({
         email: testEmail,
         status: 0,
@@ -62,7 +62,7 @@ async function debugMergeDetailed() {
     
     console.log('\n📝 3. Verificando estado antes do merge...');
     const { data: beforeUsers, error: beforeError } = await supabase
-      .from('users')
+      .from('user_creations')
       .select('*')
       .or(`id.eq.${guestUser.id},id.eq.${authUser.id}`);
     
@@ -94,7 +94,7 @@ async function debugMergeDetailed() {
       
       console.log('\n📝 5. Verificando estado após o merge...');
       const { data: afterUsers, error: afterError } = await supabase
-        .from('users')
+        .from('user_creations')
         .select('*')
         .or(`id.eq.${guestUser.id},id.eq.${authUser.id}`);
       
@@ -125,7 +125,7 @@ async function debugMergeDetailed() {
     
     // Limpar dados de teste
     console.log('\n🧹 Limpando dados de teste...');
-    await supabase.from('users').delete().or(`id.eq.${guestUser.id},id.eq.${authUser.id}`);
+    await supabase.from('user_creations').delete().or(`id.eq.${guestUser.id},id.eq.${authUser.id}`);
     
   } catch (error) {
     console.error('❌ Erro geral:', error);

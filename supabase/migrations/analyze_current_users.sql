@@ -13,7 +13,7 @@ SELECT
         WHEN device_id IS NOT NULL THEN 'guest'
         ELSE 'unknown'
     END as user_type
-FROM users 
+FROM user_creations 
 ORDER BY created_at DESC
 LIMIT 20;
 
@@ -26,7 +26,7 @@ SELECT
     array_agg(email) as emails,
     array_agg(freesongsused) as free_songs_used,
     array_agg(created_at ORDER BY created_at) as creation_dates
-FROM users 
+FROM user_creations 
 WHERE device_id IS NOT NULL
 GROUP BY device_id
 HAVING COUNT(*) > 1
@@ -40,7 +40,7 @@ SELECT
     array_agg(id) as user_ids,
     array_agg(device_id) as device_ids,
     array_agg(freesongsused) as free_songs_used
-FROM users 
+FROM user_creations 
 WHERE email IS NOT NULL
 GROUP BY email
 HAVING COUNT(*) > 1;
@@ -56,7 +56,7 @@ SELECT
     u.device_id as user_device_id,
     u.freesongsused
 FROM songs s
-LEFT JOIN users u ON s.user_id = u.id
+LEFT JOIN user_creations u ON s.user_id = u.id
 WHERE s.created_at > NOW() - INTERVAL '7 days'
 ORDER BY s.created_at DESC
 LIMIT 10;
@@ -76,7 +76,7 @@ SELECT
         WHEN s.guest_id IS NOT NULL THEN 'guest_only'
     END as ownership_type
 FROM songs s
-LEFT JOIN users u ON s.user_id = u.id
+LEFT JOIN user_creations u ON s.user_id = u.id
 WHERE s.guest_id = u.device_id -- Possível conflito
 LIMIT 10;
 
@@ -85,17 +85,17 @@ SELECT
     'general_stats' as analysis_type,
     (
         SELECT COUNT(*) 
-        FROM users 
+        FROM user_creations 
         WHERE email IS NOT NULL
     ) as authenticated_users,
     (
         SELECT COUNT(*) 
-        FROM users 
+        FROM user_creations 
         WHERE email IS NULL AND device_id IS NOT NULL
     ) as guest_users,
     (
         SELECT COUNT(*) 
-        FROM users 
+        FROM user_creations 
         WHERE email IS NULL AND device_id IS NULL
     ) as orphan_users,
     (

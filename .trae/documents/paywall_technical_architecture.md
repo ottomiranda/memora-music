@@ -170,10 +170,10 @@ erDiagram
 **Atualização da Tabela de Usuários**
 ```sql
 -- Adicionar campo freeSongsUsed à tabela existente
-ALTER TABLE users ADD COLUMN freeSongsUsed INTEGER DEFAULT 0;
+ALTER TABLE user_creations ADD COLUMN freeSongsUsed INTEGER DEFAULT 0;
 
 -- Criar índice para otimizar consultas
-CREATE INDEX idx_users_free_songs_used ON users(freeSongsUsed);
+CREATE INDEX idx_user_creations_free_songs_used ON user_creations(freeSongsUsed);
 ```
 
 **Tabela de Transações Simuladas**

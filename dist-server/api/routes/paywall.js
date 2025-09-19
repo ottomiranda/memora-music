@@ -10,6 +10,30 @@ const router = Router();
 const getSupabaseClient = () => {
     return getSupabaseServiceClient();
 };
+const ipFallbackMetrics = {
+    totalAttempts: 0,
+    totalHits: 0,
+    byDay: {},
+    byTtlDays: {},
+};
+const recordIpFallback = (used, ttlDays) => {
+    try {
+        const day = new Date().toISOString().slice(0, 10);
+        ipFallbackMetrics.totalAttempts += 1;
+        ipFallbackMetrics.byDay[day] = ipFallbackMetrics.byDay[day] || { attempts: 0, hits: 0 };
+        ipFallbackMetrics.byTtlDays[String(ttlDays)] = ipFallbackMetrics.byTtlDays[String(ttlDays)] || { attempts: 0, hits: 0 };
+        ipFallbackMetrics.byDay[day].attempts += 1;
+        ipFallbackMetrics.byTtlDays[String(ttlDays)].attempts += 1;
+        if (used) {
+            ipFallbackMetrics.totalHits += 1;
+            ipFallbackMetrics.byDay[day].hits += 1;
+            ipFallbackMetrics.byTtlDays[String(ttlDays)].hits += 1;
+        }
+    }
+    catch (e) {
+        // Não quebrar o fluxo por causa de métricas
+    }
+};
 // Função auxiliar para extrair userId do token usando Supabase Auth
 const extractUserIdFromToken = async (jwt) => {
     try {
@@ -46,51 +70,91 @@ router.get('/creation-status', optionalAuthMiddleware, async (req, res) => {
         // Extrair userId de forma segura usando optional chaining
         const userId = req.user?.id;
         const deviceId = req.headers['x-device-id'];
+        const guestId = req.headers['x-guest-id'];
         const clientIp = req.ip;
         console.log('[DEBUG] Dados de identificação:', { userId, deviceId, clientIp });
         const supabase = getSupabaseClient();
-        let userQuery = supabase.from('users').select('freesongsused');
+        let findError = null;
+        let maxFreeSongs = 0;
+        let foundAny = false;
+        const updateMax = (value) => {
+            if (value != null) {
+                maxFreeSongs = Math.max(maxFreeSongs, value);
+                foundAny = true;
+            }
+        };
+        const accumulate = async (selector) => {
+            const { data, error } = await selector();
+            if (data) {
+                updateMax(data.freesongsused || 0);
+            }
+            if (error && error.code !== 'PGRST116') {
+                findError = error;
+            }
+        };
         if (userId) {
-            // Se o usuário está logado, a busca principal é pelo ID dele
-            console.log('[DEBUG] Verificando status para usuário autenticado:', userId);
-            userQuery = userQuery.eq('id', userId);
+            console.log('[DEBUG] Verificando status para usuário autenticado (prioridade 1):', userId);
+            await accumulate(() => supabase
+                .from('user_creations')
+                .select('freesongsused, device_id')
+                .eq('user_id', userId)
+                .maybeSingle());
+            if (deviceId) {
+                await accumulate(() => supabase
+                    .from('user_creations')
+                    .select('freesongsused')
+                    .eq('device_id', deviceId)
+                    .maybeSingle());
+            }
         }
-        else if (deviceId || clientIp) {
-            // Se não está logado, construímos a busca por deviceId OU IP
-            console.log('[DEBUG] Usuário convidado - buscando por deviceId ou IP');
-            const filters = [];
-            if (deviceId)
-                filters.push(`device_id.eq.${deviceId}`);
-            if (clientIp)
-                filters.push(`last_used_ip.eq.${clientIp}`);
-            userQuery = userQuery.or(filters.join(','));
+        if (deviceId) {
+            console.log('[DEBUG] Usuário convidado - buscando por deviceId (prioridade 2):', deviceId);
+            await accumulate(() => supabase
+                .from('user_creations')
+                .select('freesongsused')
+                .eq('device_id', deviceId)
+                .maybeSingle());
         }
-        else {
-            // Se não temos NENHUMA informação (raro), consideramos um novo usuário
-            console.log('[DEBUG] Nenhuma informação de identificação - novo usuário');
-            res.status(200).json({
-                success: true,
-                isFree: true,
-                freeSongsUsed: 0,
-                message: 'Primeira música é gratuita para novos usuários',
-                userType: 'new_guest'
-            });
-            return;
+        if (guestId) {
+            console.log('[DEBUG] Usuário convidado - fallback por guestId (prioridade 2.5):', guestId);
+            await accumulate(() => supabase
+                .from('user_creations')
+                .select('freesongsused')
+                .eq('device_id', guestId)
+                .maybeSingle());
         }
-        const { data: user, error } = await userQuery.limit(1).maybeSingle();
-        if (error) {
-            console.error('[ERROR] Erro ao buscar usuário no Supabase:', error);
+        if (!foundAny && clientIp) {
+            const ttlDays = Number(process.env.IP_FALLBACK_TTL_DAYS || '7');
+            const cutoff = new Date(Date.now() - ttlDays * 24 * 60 * 60 * 1000).toISOString();
+            console.log('[DEBUG] Fallback por IP (prioridade 3):', { clientIp, ttlDays, cutoff });
+            const { data, error } = await supabase
+                .from('user_creations')
+                .select('freesongsused')
+                .eq('last_used_ip', clientIp)
+                .is('user_id', null)
+                .gte('created_at', cutoff)
+                .order('created_at', { ascending: false })
+                .maybeSingle();
+            recordIpFallback(!!data, ttlDays);
+            if (data) {
+                updateMax(data.freesongsused || 0);
+            }
+            if (error)
+                findError = error;
+        }
+        if (findError) {
+            console.error('[ERROR] Erro ao buscar usuário no Supabase:', findError);
             // Em caso de erro, assumir novo usuário para não bloquear o fluxo
             res.status(200).json({
                 success: true,
                 isFree: true,
                 freeSongsUsed: 0,
                 message: 'Primeira música é gratuita (fallback por erro)',
-                userType: userId ? 'authenticated' : 'guest'
+                userType: userId ? 'authenticated' : (deviceId ? 'guest_device' : 'guest_ip')
             });
             return;
         }
-        if (!user) {
+        if (!foundAny) {
             // Se NENHUM usuário foi encontrado com os critérios, é um novo convidado
             console.log('[DEBUG] Nenhum usuário encontrado - novo convidado');
             res.status(200).json({
@@ -98,20 +162,20 @@ router.get('/creation-status', optionalAuthMiddleware, async (req, res) => {
                 isFree: true,
                 freeSongsUsed: 0,
                 message: 'Primeira música é gratuita para convidados',
-                userType: userId ? 'new_authenticated' : 'new_guest'
+                userType: userId ? 'new_authenticated' : (deviceId ? 'new_guest_device' : 'new_guest_ip')
             });
             return;
         }
         // Se um usuário foi encontrado, verifique sua cota
-        const freeSongsUsed = user.freesongsused || 0;
-        const isFree = freeSongsUsed < 1;
-        console.log('[DEBUG] Status do usuário encontrado:', { freeSongsUsed, isFree, userType: userId ? 'authenticated' : 'guest' });
+        const freeSongsUsed = maxFreeSongs;
+        const isFree = freeSongsUsed < 1; // Usuário é bloqueado quando freeSongsUsed >= 1
+        console.log('[DEBUG] Status do usuário encontrado:', { freeSongsUsed, isFree, userType: userId ? 'authenticated' : (deviceId ? 'guest_device' : 'guest_ip') });
         res.status(200).json({
             success: true,
             isFree,
             freeSongsUsed,
             message: isFree ? 'Próxima música é gratuita' : 'Próxima música será paga',
-            userType: userId ? 'authenticated' : 'guest'
+            userType: userId ? 'authenticated' : (deviceId ? 'guest_device' : 'guest_ip')
         });
     }
     catch (error) {
@@ -121,6 +185,10 @@ router.get('/creation-status', optionalAuthMiddleware, async (req, res) => {
             message: 'Erro interno do servidor'
         });
     }
+});
+// Endpoint auxiliar para consultar métricas de fallback por IP (uso interno/diagnóstico)
+router.get('/creation-status/metrics', (req, res) => {
+    res.status(200).json({ success: true, metrics: ipFallbackMetrics });
 });
 /**
  * Confirm Mock Payment

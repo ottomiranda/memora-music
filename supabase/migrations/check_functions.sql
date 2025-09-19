@@ -18,29 +18,29 @@ WHERE pronamespace = (SELECT oid FROM pg_namespace WHERE nspname = 'public')
 AND proname NOT LIKE 'pg_%'
 ORDER BY proname;
 
--- Verificar constraints e índices na tabela users
+-- Verificar constraints e índices na tabela user_creations
 SELECT 
     conname as constraint_name,
     contype as constraint_type,
     pg_get_constraintdef(oid) as constraint_definition
 FROM pg_constraint 
-WHERE conrelid = 'public.users'::regclass;
+WHERE conrelid = 'public.user_creations'::regclass;
 
 -- Verificar índices únicos
 SELECT 
     indexname,
     indexdef
 FROM pg_indexes 
-WHERE tablename = 'users' 
+WHERE tablename = 'user_creations' 
 AND schemaname = 'public';
 
--- Verificar se existe campo status na tabela users
+-- Verificar se existe campo status na tabela user_creations
 SELECT 
     column_name,
     data_type,
     is_nullable,
     column_default
 FROM information_schema.columns 
-WHERE table_name = 'users' 
+WHERE table_name = 'user_creations' 
 AND table_schema = 'public'
 ORDER BY ordinal_position;

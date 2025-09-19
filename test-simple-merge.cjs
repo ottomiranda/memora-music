@@ -15,13 +15,13 @@ async function testSimpleMerge() {
     
     // 1. Limpar dados anteriores
     console.log('🧹 Limpando dados anteriores...');
-    await supabase.from('users').delete().eq('device_id', testDeviceId);
-    await supabase.from('users').delete().eq('email', testEmail);
+    await supabase.from('user_creations').delete().eq('device_id', testDeviceId);
+    await supabase.from('user_creations').delete().eq('email', testEmail);
     
     // 2. Criar apenas usuário anônimo
     console.log('👤 Criando usuário anônimo...');
     const { data: guestUser, error: guestError } = await supabase
-      .from('users')
+      .from('user_creations')
       .insert({
         device_id: testDeviceId,
         freesongsused: 1,
@@ -40,7 +40,7 @@ async function testSimpleMerge() {
     // 3. Criar usuário autenticado SEM device_id
     console.log('🔐 Criando usuário autenticado...');
     const { data: authUser, error: authError } = await supabase
-      .from('users')
+      .from('user_creations')
       .insert({
         email: testEmail,
         name: 'Test User',
@@ -76,7 +76,7 @@ async function testSimpleMerge() {
     console.log('🔍 Verificando resultado...');
     
     const { data: finalUser } = await supabase
-      .from('users')
+      .from('user_creations')
       .select('*')
       .eq('id', authUser.id)
       .single();
@@ -91,7 +91,7 @@ async function testSimpleMerge() {
     
     // Verificar se usuário anônimo foi removido
     const { data: remainingGuests } = await supabase
-      .from('users')
+      .from('user_creations')
       .select('*')
       .eq('device_id', testDeviceId);
     
@@ -99,7 +99,7 @@ async function testSimpleMerge() {
     
     // 6. Limpar
     console.log('🧹 Limpando...');
-    await supabase.from('users').delete().eq('id', authUser.id);
+    await supabase.from('user_creations').delete().eq('id', authUser.id);
     
     console.log('\n🎉 Teste concluído!');
     console.log('✅ Device_id transferido:', finalUser.device_id === testDeviceId);

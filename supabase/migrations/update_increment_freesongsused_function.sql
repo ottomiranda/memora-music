@@ -6,7 +6,7 @@ DECLARE
     updated_user RECORD;
 BEGIN
     -- Primeiro tenta encontrar por device_id (usuários convidados)
-    UPDATE public.users 
+    UPDATE public.user_creations 
     SET freesongsused = freesongsused + 1,
         updated_at = NOW()
     WHERE device_id = user_device_id
@@ -14,7 +14,7 @@ BEGIN
     
     -- Se não encontrou por device_id, tenta por id (usuários autenticados)
     IF updated_user IS NULL THEN
-        UPDATE public.users 
+        UPDATE public.user_creations 
         SET freesongsused = freesongsused + 1,
             updated_at = NOW()
         WHERE id::text = user_device_id

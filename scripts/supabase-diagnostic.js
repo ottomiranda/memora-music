@@ -89,7 +89,7 @@ async function testSupabaseAuth() {
     const serviceClient = createClient(supabaseUrl, supabaseServiceKey);
     
     const { data, error } = await serviceClient
-      .from('users')
+      .from('songs')
       .select('count')
       .limit(1);
     
@@ -110,7 +110,7 @@ async function testSupabaseAuth() {
     const anonClient = createClient(supabaseUrl, supabaseAnonKey);
     
     const { data, error } = await anonClient
-      .from('users')
+      .from('songs')
       .select('count')
       .limit(1);
     
@@ -130,7 +130,7 @@ async function checkTableStructure() {
   logSection('📋 VERIFICAÇÃO DE ESTRUTURA DAS TABELAS');
   
   const client = createClient(supabaseUrl, supabaseServiceKey);
-  const tables = ['users', 'songs', 'mvp_feedback'];
+  const tables = ['songs', 'user_creations'];
   
   for (const tableName of tables) {
     try {
@@ -173,14 +173,14 @@ async function testCRUDOperations() {
   const testDeviceId = `test-diagnostic-${Date.now()}`;
   
   try {
-    // CREATE - Inserir usuário de teste
+    // CREATE - Inserir registro de teste na user_creations
     log('Testando INSERT...', 'blue');
     const { data: insertData, error: insertError } = await client
-      .from('users')
+      .from('user_creations')
       .insert({
         device_id: testDeviceId,
-        freesongsused: 0,
-        last_used_ip: '127.0.0.1'
+        creations: 0,
+        ip: '127.0.0.1'
       })
       .select()
       .single();
@@ -190,15 +190,14 @@ async function testCRUDOperations() {
       return false;
     }
     
-    log(`✅ INSERT bem-sucedido: ID ${insertData.id}`, 'green');
-    const testUserId = insertData.id;
+    log(`✅ INSERT bem-sucedido: device_id ${insertData.device_id}`, 'green');
     
-    // READ - Ler usuário
+    // READ - Ler registro
     log('Testando SELECT...', 'blue');
     const { data: selectData, error: selectError } = await client
-      .from('users')
+      .from('user_creations')
       .select('*')
-      .eq('id', testUserId)
+      .eq('device_id', testDeviceId)
       .single();
     
     if (selectError) {
@@ -207,27 +206,27 @@ async function testCRUDOperations() {
       log(`✅ SELECT bem-sucedido: ${JSON.stringify(selectData)}`, 'green');
     }
     
-    // UPDATE - Atualizar usuário
+    // UPDATE - Atualizar registro
     log('Testando UPDATE...', 'blue');
     const { data: updateData, error: updateError } = await client
-      .from('users')
-      .update({ freesongsused: 1 })
-      .eq('id', testUserId)
+      .from('user_creations')
+      .update({ creations: 1 })
+      .eq('device_id', testDeviceId)
       .select()
       .single();
     
     if (updateError) {
       log(`❌ Erro no UPDATE: ${updateError.message}`, 'red');
     } else {
-      log(`✅ UPDATE bem-sucedido: freesongsused = ${updateData.freesongsused}`, 'green');
+      log(`✅ UPDATE bem-sucedido: creations = ${updateData.creations}`, 'green');
     }
     
-    // DELETE - Remover usuário de teste
+    // DELETE - Remover registro de teste
     log('Testando DELETE...', 'blue');
     const { error: deleteError } = await client
-      .from('users')
+      .from('user_creations')
       .delete()
-      .eq('id', testUserId);
+      .eq('device_id', testDeviceId);
     
     if (deleteError) {
       log(`❌ Erro no DELETE: ${deleteError.message}`, 'red');
@@ -252,18 +251,18 @@ async function checkRLSPolicies() {
     // Testar RLS tentando acessar tabelas com cliente anônimo
     const anonClient = createClient(supabaseUrl, supabaseAnonKey);
     
-    log('Testando RLS na tabela users...', 'blue');
-    const { data: usersData, error: usersError } = await anonClient
-      .from('users')
-      .select('id')
+    log('Testando RLS na tabela user_creations...', 'blue');
+    const { data: userCreationsData, error: userCreationsError } = await anonClient
+      .from('user_creations')
+      .select('device_id')
       .limit(1);
     
-    if (usersError && usersError.code === 'PGRST116') {
-      log('  users: 🔒 RLS ATIVO (acesso negado para anon)', 'green');
-    } else if (usersError) {
-      log(`  users: ❓ Erro inesperado: ${usersError.message}`, 'yellow');
+    if (userCreationsError && userCreationsError.code === 'PGRST116') {
+      log('  user_creations: 🔒 RLS ATIVO (acesso negado para anon)', 'green');
+    } else if (userCreationsError) {
+      log(`  user_creations: ❓ Erro inesperado: ${userCreationsError.message}`, 'yellow');
     } else {
-      log('  users: 🔓 RLS pode estar inativo (acesso permitido)', 'yellow');
+      log('  user_creations: 🔓 RLS pode estar inativo (acesso permitido)', 'yellow');
     }
     
     log('Testando RLS na tabela songs...', 'blue');
@@ -299,7 +298,7 @@ async function checkPermissions() {
     
     // Testar permissões do service role (deve ter acesso total)
     const { data: serviceData, error: serviceError } = await serviceClient
-      .from('users')
+      .from('songs')
       .select('count')
       .limit(1);
     
@@ -314,7 +313,7 @@ async function checkPermissions() {
     
     // Testar permissões do anon key
     const { data: anonData, error: anonError } = await anonClient
-      .from('users')
+      .from('songs')
       .select('count')
       .limit(1);
     
@@ -332,9 +331,8 @@ async function checkPermissions() {
     log('Testando operações CRUD com Service Role...', 'blue');
     
     const testOperations = [
-      { table: 'users', operation: 'SELECT' },
       { table: 'songs', operation: 'SELECT' },
-      { table: 'mvp_feedback', operation: 'SELECT' }
+      { table: 'user_creations', operation: 'SELECT' }
     ];
     
     for (const test of testOperations) {
@@ -371,7 +369,7 @@ async function testConnectionStability() {
       
       const start = Date.now();
       const { data, error } = await client
-        .from('users')
+        .from('songs')
         .select('count')
         .limit(1);
       const duration = Date.now() - start;

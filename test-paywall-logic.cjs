@@ -18,12 +18,12 @@ async function testPaywallLogic() {
   try {
     // Limpar dados anteriores
     console.log('🧹 Limpando dados de teste...');
-    await supabase.from('users').delete().eq('device_id', testDeviceId);
-    await supabase.from('users').delete().eq('email', testEmail);
+    await supabase.from('user_creations').delete().eq('device_id', testDeviceId);
+    await supabase.from('user_creations').delete().eq('email', testEmail);
     
     console.log('\n📱 PASSO 1: Criar usuário anônimo com 1 música usada');
     const { data: guestUser, error: guestError } = await supabase
-      .from('users')
+      .from('user_creations')
       .insert({
         device_id: testDeviceId,
         freesongsused: 1,
@@ -68,7 +68,7 @@ async function testPaywallLogic() {
     
     console.log('\n🔐 PASSO 3: Criar usuário autenticado');
     const { data: authUser, error: authError } = await supabase
-      .from('users')
+      .from('user_creations')
       .insert({
         email: testEmail,
         status: 0 // autenticado
@@ -104,7 +104,7 @@ async function testPaywallLogic() {
     
     // Verificar usuário após merge
     const { data: userAfterMerge } = await supabase
-      .from('users')
+      .from('user_creations')
       .select('*')
       .eq('id', authUser.id)
       .single();
@@ -175,7 +175,7 @@ async function testPaywallLogic() {
     }
     
     console.log('\n🧹 Limpando dados de teste...');
-    await supabase.from('users').delete().eq('id', authUser.id);
+    await supabase.from('user_creations').delete().eq('id', authUser.id);
     
     console.log('\n🎯 RESUMO:');
     console.log('1. Usuário anônimo com freesongsused=1 deve ser bloqueado');

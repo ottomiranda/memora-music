@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 /**
- * Script para adicionar coluna device_id à tabela users
+ * Script para adicionar coluna device_id à tabela user_creations
  * Versão simplificada usando apenas operações básicas do Supabase
  */
 
@@ -26,7 +26,7 @@ async function testConnection() {
     console.log('🔗 Testando conexão com Supabase...');
     
     const { data, error } = await supabase
-      .from('users')
+      .from('user_creations')
       .select('id')
       .limit(1);
     
@@ -48,7 +48,7 @@ async function checkIfColumnExists() {
     
     // Tentar fazer uma query que usa a coluna device_id
     const { data, error } = await supabase
-      .from('users')
+      .from('user_creations')
       .select('device_id')
       .limit(1);
     
@@ -80,12 +80,12 @@ async function showManualInstructions() {
   console.log('3. Vá em "SQL Editor" > "New query"');
   console.log('4. Cole e execute este SQL:');
   console.log('\n```sql');
-  console.log('ALTER TABLE users ADD COLUMN device_id TEXT;');
-  console.log('CREATE INDEX idx_users_device_id ON users(device_id);');
+  console.log('ALTER TABLE user_creations ADD COLUMN device_id TEXT;');
+  console.log('CREATE INDEX idx_user_creations_device_id ON user_creations(device_id);');
   console.log('```');
   
   console.log('\n🔧 OPÇÃO 2: Via Table Editor (Mais Simples)');
-  console.log('1. Vá em "Table Editor" > tabela "users"');
+  console.log('1. Vá em "Table Editor" > tabela "user_creations"');
   console.log('2. Clique em "+ Add column"');
   console.log('3. Nome: device_id');
   console.log('4. Tipo: text');
@@ -103,7 +103,7 @@ async function testAfterMigration() {
     console.log('\n🧪 Testando se a migração foi aplicada...');
     
     const { data, error } = await supabase
-      .from('users')
+      .from('user_creations')
       .select('id, device_id')
       .limit(1);
     
@@ -116,7 +116,7 @@ async function testAfterMigration() {
     }
     
     console.log('✅ Migração aplicada com sucesso!');
-    console.log('✅ A coluna device_id está disponível na tabela users');
+    console.log('✅ A coluna device_id está disponível na tabela user_creations');
     return true;
     
   } catch (error) {

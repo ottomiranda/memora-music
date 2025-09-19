@@ -56,6 +56,10 @@ export const API_ENDPOINTS = {
   
   // Endpoint do paywall
   PAYWALL: `${API_BASE_URL}/api/user`,
+  
+  // Endpoints da Suno API
+  SUNO_GENERATE: 'https://api.sunoapi.org/api/generate',
+  SUNO_GET_TASK: 'https://api.sunoapi.org/api/get',
 } as const;
 
 // Funções de API específicas para o sistema de músicas
@@ -139,9 +143,203 @@ export const authApi = {
     }),
 };
 
+// Configuração da Suno API
+const SUNO_API_KEY = import.meta.env.VITE_SUNO_API_KEY;
+
+// Função helper para requisições da Suno API
+const sunoApiRequest = async <T = unknown>(
+  endpoint: string,
+  options: ApiRequestOptions = {}
+): Promise<SunoApiResponse<T>> => {
+  const { method = 'GET', body, headers = {} } = options;
+  
+  if (!SUNO_API_KEY) {
+    console.warn('[SUNO API] API Key não configurada');
+    return {
+      success: false,
+      error: 'API Key da Suno não configurada'
+    } as SunoApiResponse<T>;
+  }
+  
+  try {
+    const requestHeaders: Record<string, string> = {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${SUNO_API_KEY}`,
+      ...headers
+    };
+    
+    const config: RequestInit = {
+      method,
+      headers: requestHeaders,
+      ...(body && { body: typeof body === 'string' ? body : JSON.stringify(body) })
+    };
+    
+    console.debug(`[SUNO API] ${method} ${endpoint}`);
+    
+    const response = await fetch(endpoint, config);
+    
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error(`[SUNO API] Erro ${response.status}:`, errorText);
+      
+      return {
+        success: false,
+        error: `Erro da Suno API: ${response.status} ${response.statusText}`,
+        message: errorText
+      } as SunoApiResponse<T>;
+    }
+    
+    const data = await response.json();
+    console.debug('[SUNO API] Resposta recebida:', data);
+    
+    return {
+      success: true,
+      ...data
+    } as SunoApiResponse<T>;
+  } catch (error) {
+    console.error('[SUNO API] Erro na requisição:', error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Erro desconhecido'
+    } as SunoApiResponse<T>;
+  }
+};
+
+// Funções de API da Suno
+export const sunoApi = {
+  // Gerar músicas usando a Suno API
+  generate: async (prompt: string, options: Partial<SunoGenerateRequest> = {}) => {
+    const requestBody: SunoGenerateRequest = {
+      customMode: false, // Modo simples por padrão
+      instrumental: false,
+      model: 'V4',
+      callBackUrl: `${window.location.origin}/api/suno-callback`, // Callback fictício
+      prompt,
+      ...options
+    };
+    
+    return sunoApiRequest<SunoGenerateResponse>(API_ENDPOINTS.SUNO_GENERATE, {
+      method: 'POST',
+      body: requestBody
+    });
+  },
+  
+  // Obter status de uma tarefa de geração
+  getTask: async (taskId: string) => {
+    return sunoApiRequest<SunoTaskStatus>(`${API_ENDPOINTS.SUNO_GET_TASK}?ids=${taskId}`);
+  },
+
+  // Obter detalhes de uma música gerada usando o endpoint correto
+  getMusicDetails: async (taskId: string): Promise<SunoMusicDetailsResponse> => {
+    try {
+      const base = API_BASE_URL || '';
+      const url = `${base}/api/suno/music/${taskId}`;
+
+      const response = await fetch(url, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error(`[Suno API] Erro ${response.status}:`, errorText);
+        return {
+          success: false,
+          error: `API Error: ${response.status} ${response.statusText}`,
+          message: errorText
+        };
+      }
+
+      const data = await response.json();
+
+      if (data?.success && data?.data) {
+        return {
+          success: true,
+          data: data.data as SunoMusicDetails
+        };
+      }
+
+      return {
+        success: false,
+        error: data?.error || 'Resposta inválida da API Suno',
+        message: data?.message
+      };
+    } catch (error) {
+      console.error('[Suno API] Erro ao obter detalhes da música:', error);
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Erro desconhecido',
+        message: 'Falha ao conectar com a API da Suno'
+      };
+    }
+  },
+  
+  // Converter música da Suno para formato da aplicação
+  convertToAppSong: (sunoSong: any): SunoToAppSong => {
+    return {
+      id: `suno_${sunoSong.id}`,
+      title: sunoSong.title || 'Música Suno',
+      audioUrl: sunoSong.audio_url,
+      audioUrlOption1: sunoSong.audio_url,
+      audioUrlOption2: undefined,
+      coverUrl: sunoSong.image_url || 'https://trae-api-us.mchost.guru/api/ide/v1/text_to_image?prompt=music%20album%20cover%20abstract%20colorful&image_size=square',
+      duration: sunoSong.duration,
+      genre: sunoSong.tags || 'Gerada por IA',
+      artist: 'Suno AI',
+      createdAt: sunoSong.created_at || new Date().toISOString(),
+      source: 'suno'
+    };
+  },
+  
+  // Buscar músicas de exemplo/demo da Suno (simulado)
+  getExampleSongs: async (): Promise<SunoToAppSong[]> => {
+    // Como a Suno API requer geração, vamos simular algumas músicas de exemplo
+    // Em uma implementação real, você poderia ter músicas pré-geradas ou usar um cache
+    const exampleSongs: SunoToAppSong[] = [
+      {
+        id: 'suno_example_1',
+        title: 'Melodia Relaxante',
+        audioUrl: 'https://file-examples.com/storage/fe68c8777d66f45d7a9f0c5/2017/11/file_example_MP3_700KB.mp3',
+        audioUrlOption1: 'https://file-examples.com/storage/fe68c8777d66f45d7a9f0c5/2017/11/file_example_MP3_700KB.mp3',
+        coverUrl: 'https://trae-api-us.mchost.guru/api/ide/v1/text_to_image?prompt=peaceful%20nature%20music%20album%20cover&image_size=square',
+        duration: 180,
+        genre: 'Ambient',
+        artist: 'Suno AI',
+        createdAt: new Date().toISOString(),
+        source: 'suno'
+      },
+      {
+        id: 'suno_example_2',
+        title: 'Ritmo Energético',
+        audioUrl: 'https://www.learningcontainer.com/wp-content/uploads/2020/02/Kalimba.mp3',
+        audioUrlOption1: 'https://www.learningcontainer.com/wp-content/uploads/2020/02/Kalimba.mp3',
+        coverUrl: 'https://trae-api-us.mchost.guru/api/ide/v1/text_to_image?prompt=energetic%20electronic%20music%20album%20cover&image_size=square',
+        duration: 210,
+        genre: 'Electronic',
+        artist: 'Suno AI',
+        createdAt: new Date().toISOString(),
+        source: 'suno'
+      }
+    ];
+    
+    return exampleSongs;
+  }
+};
+
 // Importações necessárias para o sistema de identidade
 import { getOrCreateGuestId } from '../utils/guest';
 import { ApiRequestOptions, ApiResponse, GUEST_ID_HEADER } from '../types/guest';
+import { 
+  SunoGenerateRequest, 
+  SunoGenerateResponse, 
+  SunoTaskStatus, 
+  SunoToAppSong,
+  SunoApiResponse,
+  SunoMusicDetails,
+  SunoMusicDetailsResponse
+} from '../types/suno';
 
 // Função helper para fazer requisições com tratamento de erro e identidade
 export const apiRequest = async <T = unknown>(

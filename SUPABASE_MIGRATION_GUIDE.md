@@ -20,27 +20,27 @@ O erro "Unable to find snippet with ID" indica que o Supabase está tentando enc
 
 3. **Execute o SQL limpo**
    ```sql
-   -- Adicionar coluna device_id à tabela users
-   ALTER TABLE users ADD COLUMN IF NOT EXISTS device_id TEXT;
+   -- Adicionar coluna device_id à tabela user_creations
+   ALTER TABLE user_creations ADD COLUMN IF NOT EXISTS device_id TEXT;
    
-   -- Adicionar coluna last_used_ip à tabela users (NOVA - Para segurança avançada)
-   ALTER TABLE users ADD COLUMN IF NOT EXISTS last_used_ip TEXT;
+   -- Adicionar coluna last_used_ip à tabela user_creations (NOVA - Para segurança avançada)
+   ALTER TABLE user_creations ADD COLUMN IF NOT EXISTS last_used_ip TEXT;
    
    -- Criar índices para melhor performance
-   CREATE INDEX IF NOT EXISTS idx_users_device_id ON users(device_id);
-   CREATE INDEX IF NOT EXISTS idx_users_last_used_ip ON users(last_used_ip);
-   CREATE INDEX IF NOT EXISTS idx_users_device_ip_security ON users(device_id, last_used_ip);
+   CREATE INDEX IF NOT EXISTS idx_user_creations_device_id ON user_creations(device_id);
+   CREATE INDEX IF NOT EXISTS idx_user_creations_last_used_ip ON user_creations(last_used_ip);
+   CREATE INDEX IF NOT EXISTS idx_user_creations_device_ip_security ON user_creations(device_id, last_used_ip);
    
    -- Adicionar comentários às colunas
-   COMMENT ON COLUMN users.device_id IS 'Identificador único do dispositivo para usuários anônimos';
-   COMMENT ON COLUMN users.last_used_ip IS 'Último endereço IP usado pelo usuário para verificação de segurança contra abusos';
+   COMMENT ON COLUMN user_creations.device_id IS 'Identificador único do dispositivo para usuários anônimos';
+   COMMENT ON COLUMN user_creations.last_used_ip IS 'Último endereço IP usado pelo usuário para verificação de segurança contra abusos';
    ```
 
 4. **Verificar se funcionou**
    ```sql
    SELECT column_name, data_type, is_nullable 
    FROM information_schema.columns 
-   WHERE table_name = 'users' AND column_name = 'device_id';
+   WHERE table_name = 'user_creations' AND column_name = 'device_id';
    ```
 
 ### Opção 2: Table Editor (Mais Simples)
@@ -61,7 +61,7 @@ O erro "Unable to find snippet with ID" indica que o Supabase está tentando enc
 
 4. **Criar índice manualmente**
    - Vá para "SQL Editor"
-   - Execute: `CREATE INDEX idx_users_device_id ON users(device_id);`
+   - Execute: `CREATE INDEX idx_user_creations_device_id ON user_creations(device_id);`
 
 ### Opção 3: Script Node.js (Para Desenvolvedores)
 
@@ -82,14 +82,14 @@ O erro "Unable to find snippet with ID" indica que o Supabase está tentando enc
        
        // Adicionar coluna
        const { error: alterError } = await supabase.rpc('exec_sql', {
-         sql: 'ALTER TABLE users ADD COLUMN IF NOT EXISTS device_id TEXT;'
+         sql: 'ALTER TABLE user_creations ADD COLUMN IF NOT EXISTS device_id TEXT;'
        });
        
        if (alterError) throw alterError;
        
        // Criar índice
        const { error: indexError } = await supabase.rpc('exec_sql', {
-         sql: 'CREATE INDEX IF NOT EXISTS idx_users_device_id ON users(device_id);'
+         sql: 'CREATE INDEX IF NOT EXISTS idx_user_creations_device_id ON user_creations(device_id);'
        });
        
        if (indexError) throw indexError;
@@ -100,7 +100,7 @@ O erro "Unable to find snippet with ID" indica que o Supabase está tentando enc
        const { data, error } = await supabase
          .from('information_schema.columns')
          .select('column_name, data_type, is_nullable')
-         .eq('table_name', 'users')
+         .eq('table_name', 'user_creations')
          .eq('column_name', 'device_id');
        
        if (error) throw error;
@@ -129,7 +129,7 @@ curl -X POST 'https://your-project.supabase.co/rest/v1/rpc/exec_sql' \
   -H "Authorization: Bearer YOUR_SERVICE_ROLE_KEY" \
   -H "Content-Type: application/json" \
   -d '{
-    "sql": "ALTER TABLE users ADD COLUMN IF NOT EXISTS device_id TEXT;"
+    "sql": "ALTER TABLE user_creations ADD COLUMN IF NOT EXISTS device_id TEXT;"
   }'
 ```
 
@@ -159,10 +159,10 @@ curl -X POST 'https://your-project.supabase.co/rest/v1/rpc/exec_sql' \
 -- Verificar se já existe
 SELECT column_name 
 FROM information_schema.columns 
-WHERE table_name = 'users' AND column_name = 'device_id';
+WHERE table_name = 'user_creations' AND column_name = 'device_id';
 
 -- Se existir, apenas criar o índice
-CREATE INDEX IF NOT EXISTS idx_users_device_id ON users(device_id);
+CREATE INDEX IF NOT EXISTS idx_user_creations_device_id ON user_creations(device_id);
 ```
 
 ## Validação Final
@@ -171,7 +171,7 @@ Após aplicar qualquer uma das opções, execute esta query para confirmar:
 
 ```sql
 -- Verificar estrutura da tabela
-\d users;
+\d user_creations;
 
 -- Ou usar information_schema
 SELECT 
@@ -180,13 +180,13 @@ SELECT
   is_nullable,
   column_default
 FROM information_schema.columns 
-WHERE table_name = 'users' 
+WHERE table_name = 'user_creations' 
 ORDER BY ordinal_position;
 
 -- Verificar índices
 SELECT indexname, indexdef 
 FROM pg_indexes 
-WHERE tablename = 'users' AND indexname LIKE '%device_id%';
+WHERE tablename = 'user_creations' AND indexname LIKE '%device_id%';
 ```
 
 ## Próximos Passos

@@ -3,7 +3,7 @@
 
 -- 1. Limpar dados de teste anteriores (se existirem)
 DELETE FROM songs WHERE title LIKE 'Test Song%';
-DELETE FROM users WHERE email LIKE 'test%@example.com' OR device_id LIKE 'test-device%';
+DELETE FROM user_creations WHERE email LIKE 'test%@example.com' OR device_id LIKE 'test-device%';
 
 -- 2. Simular criação de usuário convidado (primeira música)
 DO $$
@@ -14,7 +14,7 @@ DECLARE
     existing_user_count INTEGER;
 BEGIN
     -- Criar usuário convidado
-    INSERT INTO users (id, device_id, freesongsused, created_at, updated_at)
+    INSERT INTO user_creations (id, device_id, freesongsused, created_at, updated_at)
     VALUES (
         gen_random_uuid(),
         'test-device-123',
@@ -38,7 +38,7 @@ BEGIN
     RAISE NOTICE 'Created guest song: % for device: test-device-123', song_id;
     
     -- 3. Simular login/signup (criação de usuário autenticado com device_id diferente)
-    INSERT INTO users (id, email, device_id, freesongsused, created_at, updated_at)
+    INSERT INTO user_creations (id, email, device_id, freesongsused, created_at, updated_at)
     VALUES (
         gen_random_uuid(),
         'test-user@example.com',
@@ -64,7 +64,7 @@ SELECT
     COUNT(*) as total_users,
     COUNT(CASE WHEN email IS NOT NULL THEN 1 END) as authenticated_users,
     COUNT(CASE WHEN email IS NULL THEN 1 END) as guest_users
-FROM users 
+FROM user_creations 
 WHERE device_id IN ('test-device-123', 'test-device-456')
 GROUP BY device_id
 ORDER BY device_id;
@@ -79,7 +79,7 @@ SELECT
     u.device_id,
     u.freesongsused
 FROM songs s
-LEFT JOIN users u ON s.user_id = u.id
+LEFT JOIN user_creations u ON s.user_id = u.id
 WHERE s.title LIKE 'Test Song%';
 
 -- 7. Verificar se não há usuários duplicados por device_id
@@ -89,7 +89,7 @@ SELECT
     COUNT(*) as user_count,
     array_agg(email) as emails,
     array_agg(freesongsused) as free_songs_used
-FROM users 
+FROM user_creations 
 WHERE device_id IN ('test-device-123', 'test-device-456')
 GROUP BY device_id
 HAVING COUNT(*) > 1;
@@ -99,7 +99,7 @@ SELECT
     'integrity_final_check' as test_phase,
     (
         SELECT COUNT(*) 
-        FROM users 
+        FROM user_creations 
         WHERE device_id IN ('test-device-123', 'test-device-456')
     ) as users_with_test_devices,
     (
@@ -136,6 +136,6 @@ SELECT
 
 -- 11. Limpar dados de teste
 DELETE FROM songs WHERE title LIKE 'Test Song%';
-DELETE FROM users WHERE email LIKE 'test%@example.com' OR device_id LIKE 'test-device%';
+DELETE FROM user_creations WHERE email LIKE 'test%@example.com' OR device_id LIKE 'test-device%';
 
 SELECT 'test_cleanup_completed' as final_status;

@@ -58,31 +58,35 @@ router.post('/', async (req, res) => {
         // Converter preço para número
         const priceAsNumber = parsePriceWillingness(feedbackData.priceWillingness);
         // Salvar no Supabase
-        const supabase = getSupabase();
-        const { data, error } = await supabase
-            .from('mvp_feedback')
-            .insert({
-            difficulty: feedbackData.difficulty,
-            would_recommend: feedbackData.wouldRecommend,
-            price_willingness: priceAsNumber
-        })
-            .select()
-            .single();
-        if (error) {
-            console.error('Erro ao salvar feedback no Supabase:', error);
-            return res.status(500).json({
-                success: false,
-                error: 'Failed to save feedback to database'
-            });
-        }
-        // Resposta de sucesso
-        return res.status(201).json({
-            success: true,
-            message: 'Feedback saved successfully',
-            data: {
+        let savedRecord = null;
+        try {
+            const supabase = getSupabase();
+            const { data, error } = await supabase
+                .from('mvp_feedback')
+                .insert({
+                difficulty: feedbackData.difficulty,
+                would_recommend: feedbackData.wouldRecommend,
+                price_willingness: priceAsNumber
+            })
+                .select()
+                .single();
+            if (error) {
+                throw error;
+            }
+            savedRecord = {
                 id: data.id,
                 created_at: data.created_at
-            }
+            };
+        }
+        catch (dbError) {
+            console.warn('[MVP] Falha ao salvar feedback no Supabase. Continuando fluxo mesmo assim.', dbError);
+        }
+        // Responder com sucesso mesmo se não salvou no banco (não bloquear fluxo do usuário)
+        return res.status(201).json({
+            success: true,
+            message: savedRecord ? 'Feedback saved successfully' : 'Feedback received (not persisted)',
+            data: savedRecord,
+            persisted: Boolean(savedRecord)
         });
     }
     catch (error) {

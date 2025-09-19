@@ -14,14 +14,14 @@ async function testCompleteMergeFlow() {
     const testEmail = 'complete-test-' + Date.now() + '@example.com';
     
     // Limpar dados anteriores
-    await supabase.from('users').delete().eq('device_id', testDeviceId);
-    await supabase.from('users').delete().eq('email', testEmail);
+    await supabase.from('user_creations').delete().eq('device_id', testDeviceId);
+    await supabase.from('user_creations').delete().eq('email', testEmail);
     
     console.log('\n📱 PASSO 1: Usuário anônimo usa uma música grátis');
     
     // Criar usuário anônimo com 1 música usada
     const { data: guestUser } = await supabase
-      .from('users')
+      .from('user_creations')
       .insert({
         device_id: testDeviceId,
         freesongsused: 1,
@@ -46,7 +46,7 @@ async function testCompleteMergeFlow() {
     
     // Criar usuário autenticado
     const { data: authUser } = await supabase
-      .from('users')
+      .from('user_creations')
       .insert({
         email: testEmail,
         name: 'Test User',
@@ -84,7 +84,7 @@ async function testCompleteMergeFlow() {
     
     // Verificar usuário após merge
     const { data: userAfterMerge } = await supabase
-      .from('users')
+      .from('user_creations')
       .select('*')
       .eq('id', authUser.id)
       .single();
@@ -100,7 +100,7 @@ async function testCompleteMergeFlow() {
     
     // Verificar se usuário anônimo foi removido
     const { data: remainingGuests } = await supabase
-      .from('users')
+      .from('user_creations')
       .select('*')
       .eq('device_id', testDeviceId)
       .neq('id', authUser.id);
@@ -131,7 +131,7 @@ async function testCompleteMergeFlow() {
     }
     
     // Limpar
-    await supabase.from('users').delete().eq('id', authUser.id);
+    await supabase.from('user_creations').delete().eq('id', authUser.id);
     
   } catch (err) {
     console.error('❌ Erro:', err);

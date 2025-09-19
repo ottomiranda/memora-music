@@ -6,6 +6,7 @@ import { useAudioPlayerStore } from '@/store/audioPlayerStore';
 interface SongCardProps {
   song: Song;
   isPlaying?: boolean;
+  isLoading?: boolean;
   onPlay?: (song: Song, urlOverride?: string, versionLabel?: 'A' | 'B') => void;
   onPause?: () => void;
   className?: string;
@@ -16,6 +17,7 @@ interface SongCardProps {
 export const SongCard: React.FC<SongCardProps> = ({
   song,
   isPlaying = false,
+  isLoading = false,
   onPlay,
   onPause,
   className = '',
@@ -25,6 +27,7 @@ export const SongCard: React.FC<SongCardProps> = ({
   const { currentTime, duration } = useAudioPlayerStore();
 
   const handlePlayPause = () => {
+    if (isLoading) return;
     if (isPlaying) {
       onPause?.();
     } else {
@@ -73,10 +76,13 @@ export const SongCard: React.FC<SongCardProps> = ({
         
         <button
           onClick={handlePlayPause}
+          disabled={isLoading}
           className="flex-shrink-0 ml-3 w-12 h-12 bg-blue-600 hover:bg-blue-700 text-white rounded-full flex items-center justify-center transition-colors duration-200"
-          aria-label={isPlaying ? 'Pausar música' : 'Reproduzir música'}
+          aria-label={isLoading ? 'Carregando música' : isPlaying ? 'Pausar música' : 'Reproduzir música'}
         >
-          {isPlaying ? (
+          {isLoading ? (
+            <div className="w-5 h-5 border-2 border-white/40 border-t-white rounded-full animate-spin" />
+          ) : isPlaying ? (
             <Pause className="w-5 h-5" />
           ) : (
             <Play className="w-5 h-5 ml-0.5" />
@@ -114,7 +120,8 @@ export const SongCard: React.FC<SongCardProps> = ({
                 <div className="flex items-center gap-2">
                   <button
                     onClick={() => onPlay?.(song, (song as any).audioUrlOption1, 'A')}
-                    className={`px-2 py-1 text-xs rounded-md ${isPlaying && playingVersionLabel === 'A' ? 'bg-blue-700 text-white' : 'bg-blue-600 text-white hover:bg-blue-700'}`}
+                    disabled={isLoading}
+                    className={`px-2 py-1 text-xs rounded-md ${isPlaying && playingVersionLabel === 'A' ? 'bg-blue-700 text-white' : 'bg-blue-600 text-white hover:bg-blue-700'} ${isLoading ? 'opacity-70 cursor-not-allowed' : ''}`}
                     aria-label="Reproduzir versão A"
                   >
                     <Play className="w-3 h-3 inline mr-1" /> Reproduzir
@@ -142,7 +149,8 @@ export const SongCard: React.FC<SongCardProps> = ({
                 <div className="flex items-center gap-2">
                   <button
                     onClick={() => onPlay?.(song, (song as any).audioUrlOption2, 'B')}
-                    className={`px-2 py-1 text-xs rounded-md ${isPlaying && playingVersionLabel === 'B' ? 'bg-blue-700 text-white' : 'bg-blue-600 text-white hover:bg-blue-700'}`}
+                    disabled={isLoading}
+                    className={`px-2 py-1 text-xs rounded-md ${isPlaying && playingVersionLabel === 'B' ? 'bg-blue-700 text-white' : 'bg-blue-600 text-white hover:bg-blue-700'} ${isLoading ? 'opacity-70 cursor-not-allowed' : ''}`}
                     aria-label="Reproduzir versão B"
                   >
                     <Play className="w-3 h-3 inline mr-1" /> Reproduzir

@@ -82,7 +82,7 @@ router.post('/', optionalAuthMiddleware, async (req, res) => {
       // Primeiro, verificar se já existe um usuário convidado com este deviceId
       if (deviceId) {
         const { data: existingGuest, error: guestCheckError } = await supabase
-          .from('users')
+          .from('user_creations')
           .select('*')
           .eq('device_id', deviceId)
           .eq('status', 1) // status 1 = convidado
@@ -107,7 +107,7 @@ router.post('/', optionalAuthMiddleware, async (req, res) => {
       };
       
       const { error: upsertErr } = await supabase
-        .from('users')
+        .from('user_creations')
         .upsert(upsertPayload, { onConflict: 'id' });
       if (upsertErr) {
         console.warn('⚠️ Falha ao criar/atualizar users:', upsertErr);

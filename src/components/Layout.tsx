@@ -12,8 +12,13 @@ const Layout = ({ children }: LayoutProps) => {
 
   return (
     <>
+      {/* Gradiente de fundo da página */}
+      <div className="fixed inset-0 z-0 pointer-events-none bg-gradient-to-br from-[#4D2699] via-[#231733] to-[#160D27]" />
+      
       {/* O conteúdo da página atual será renderizado aqui */}
-      {children}
+      <div className="min-h-screen flex flex-col relative z-10">
+        {children}
+      </div>
 
       {/* Player global persistente */}
       <GlobalAudioPlayer />

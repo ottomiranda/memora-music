@@ -3,13 +3,34 @@ import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import path from 'path';
+import fs from 'fs';
 
 // Define o caminho raiz do projeto de forma robusta
-// Usa a variável de ambiente da Render se disponível, senão, usa /app como padrão.
-const projectRoot = process.env.RENDER_ROOT || '/app';
+// Usa a variável de ambiente da Render se disponível, senão tenta o diretório atual.
+const candidateRoots = [process.env.RENDER_ROOT, process.cwd()].filter(Boolean);
+let projectRoot = process.cwd(); // Valor padrão
 
-// Carrega as variáveis de ambiente a partir da raiz do projeto
-dotenv.config({ path: path.join(projectRoot, '.env') });
+let hasLoadedEnv = false;
+for (const root of candidateRoots) {
+  try {
+    const envPath = path.join(root as string, '.env');
+    if (fs.existsSync(envPath)) {
+      dotenv.config({ path: envPath });
+      console.log(`🌱 Variáveis de ambiente carregadas de ${envPath}`);
+      projectRoot = root as string; // Define projectRoot como o diretório onde encontrou o .env
+      hasLoadedEnv = true;
+      break;
+    }
+  } catch (err) {
+    console.warn('⚠️ Falha ao carregar .env em', root, err instanceof Error ? err.message : err);
+  }
+}
+
+if (!hasLoadedEnv) {
+  // Fallback para o comportamento padrão do dotenv
+  dotenv.config();
+  console.log('🌱 Variáveis de ambiente carregadas usando dotenv padrão');
+}
 
 // Importar rotas
 import generatePreviewRoute from './routes/generate-preview.js';
@@ -24,6 +45,7 @@ import downloadRoute from './routes/download.js';
 import stripeRoute from './routes/stripe.js';
 import supabasePublicRoute from './routes/supabase-public.js';
 import sunoCoverCallbackRoute from './routes/suno-cover-callback.js';
+import sunoMusicRoute from './routes/suno-music.js';
 
 // Criar rota de health check como Express Router
 import { Router } from 'express';
@@ -106,7 +128,11 @@ if (!global.musicTasks) {
 // Middleware específico para webhook do Stripe (deve vir ANTES do express.json)
 app.use('/api/stripe/webhook', express.raw({ type: 'application/json' }));
 
-// Middleware para parsing de JSON
+// Middleware para parsing de JSON (exceto para rotas que usam multer)
+app.use('/api/generate-preview', (req, res, next) => {
+  // Pular body parsing para esta rota - será tratado pelo multer
+  next();
+});
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
@@ -136,6 +162,7 @@ app.use('/api/download', downloadRoute);
 app.use('/api/stripe', stripeRoute);
 app.use('/api/supabase', supabasePublicRoute);
 app.use('/api/suno-cover-callback', sunoCoverCallbackRoute);
+app.use('/api/suno', sunoMusicRoute);
 
 console.log('📋 Rotas registradas:');
 console.log('  - /api/health');
@@ -151,6 +178,7 @@ console.log('  - /api/download');
 console.log('  - /api/stripe');
 console.log('  - /api/supabase');
 console.log('  - /api/suno-cover-callback');
+console.log('  - /api/suno');
 console.log('🔄 Sistema de salvamento automático ativo');
 
 // Rota de teste simples

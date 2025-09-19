@@ -21,6 +21,9 @@ export class SongService {
         try {
             // Sanitize and validate data
             const sanitizedTitle = sanitizeSongTitle(songData.title);
+            // Determine if this song should be paid based on user's freesongsused count
+            const isPaid = await this.shouldSongBePaid(songData.userId, songData.guestId);
+            console.log(`🎵 Creating song for ${songData.userId ? 'user' : 'guest'} ${songData.userId || songData.guestId}, isPaid: ${isPaid}`);
             const { data, error } = await getSupabaseClient()
                 .from('songs')
                 .insert({
@@ -31,10 +34,12 @@ export class SongService {
                 prompt: songData.prompt || null,
                 genre: songData.genre || null,
                 mood: songData.mood || null,
+                image_url: songData.imageUrl || null,
                 audio_url_option1: songData.audioUrlOption1 || null,
                 audio_url_option2: songData.audioUrlOption2 || null,
-                suno_task_id: songData.sunoTaskId || null,
-                generation_status: 'completed'
+                suno_task_id: songData.sunoTaskId || songData.taskId || null,
+                generation_status: 'completed',
+                ispaid: isPaid
             })
                 .select()
                 .single();
@@ -42,10 +47,115 @@ export class SongService {
                 console.error('Database error creating song:', error);
                 throw new Error(`Failed to create song: ${error.message}`);
             }
+            // Increment freesongsused counter only for free creations
+            if (!isPaid) {
+                await this.incrementFreeSongsUsed(songData.userId, songData.guestId);
+            }
             return this.mapDbToSong(data);
         }
         catch (error) {
             console.error('Error in createSong:', error);
+            throw error;
+        }
+    }
+    /**
+     * Get a random selection of public songs (with cover and audio)
+     * Intended for discovery sections on the homepage.
+     */
+    static async getRandomPublicSongs(limit = 24) {
+        try {
+            // Fetch latest pool and randomize in memory for portability
+            const { data, error } = await getSupabaseClient()
+                .from('songs')
+                .select('*')
+                .order('created_at', { ascending: false })
+                .limit(Math.max(limit * 8, 200));
+            if (error) {
+                console.error('Database error fetching discovery songs:', error);
+                throw new Error(`Failed to fetch discovery songs: ${error.message}`);
+            }
+            const pool = (data || []).filter((row) => {
+                const hasCover = !!row.image_url;
+                const hasAudio = !!row.audio_url_option1 || !!row.audio_url_option2;
+                const isComplete = (row.generation_status || row.status) === 'completed' || row.generation_status == null;
+                return hasCover && hasAudio && isComplete;
+            });
+            // Shuffle (Fisher–Yates)
+            for (let i = pool.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [pool[i], pool[j]] = [pool[j], pool[i]];
+            }
+            const selected = pool.slice(0, limit).map(this.mapDbToSong.bind(this));
+            return selected;
+        }
+        catch (error) {
+            console.error('Error in getRandomPublicSongs:', error);
+            throw error;
+        }
+    }
+    /**
+     * Update song fields (title/lyrics) owned by user or guest
+     */
+    static async updateSong(songId, fields, identity = { userId: null, guestId: null }) {
+        try {
+            const updates = {};
+            if (typeof fields?.title === 'string')
+                updates['title'] = sanitizeSongTitle(fields.title);
+            if (typeof fields?.lyrics === 'string')
+                updates['lyrics'] = fields.lyrics;
+            if (Object.keys(updates).length === 0) {
+                return null;
+            }
+            const client = getSupabaseClient();
+            let query = client.from('songs').update({
+                ...updates,
+                updated_at: new Date().toISOString(),
+            }).eq('id', songId);
+            if (identity?.userId) {
+                query = query.eq('user_id', identity.userId);
+            }
+            else if (identity?.guestId) {
+                query = query.eq('guest_id', identity.guestId);
+            }
+            else {
+                // No identity: refuse
+                throw new Error('Missing identity for update');
+            }
+            const { data, error } = await query.select('*').maybeSingle();
+            if (error)
+                throw error;
+            if (!data)
+                return null;
+            return this.mapDbToSong(data);
+        }
+        catch (error) {
+            console.error('Error in updateSong:', error);
+            throw error;
+        }
+    }
+    /**
+     * Delete a song if owned by user or guest
+     */
+    static async deleteSong(songId, identity = { userId: null, guestId: null }) {
+        try {
+            const client = getSupabaseClient();
+            let query = client.from('songs').delete().eq('id', songId);
+            if (identity?.userId) {
+                query = query.eq('user_id', identity.userId);
+            }
+            else if (identity?.guestId) {
+                query = query.eq('guest_id', identity.guestId);
+            }
+            else {
+                throw new Error('Missing identity for delete');
+            }
+            const { data, error } = await query.select('id');
+            if (error)
+                throw error;
+            return Array.isArray(data) && data.length > 0;
+        }
+        catch (error) {
+            console.error('Error in deleteSong:', error);
             throw error;
         }
     }
@@ -98,7 +208,9 @@ export class SongService {
      */
     static async migrateGuestSongs(guestId, userId) {
         try {
-            // First, check how many songs exist for migration
+            // Importante: esta função deve apenas migrar músicas.
+            // A consolidação do contador e do device_id ocorre via RPC merge_guest_into_user.
+            // Check how many songs exist for migration
             const { data: existingSongs, error: countError } = await getSupabaseClient()
                 .from('songs')
                 .select('id')
@@ -139,22 +251,59 @@ export class SongService {
      */
     static async getSongByTaskId(taskId) {
         try {
-            const { data, error } = await getSupabaseClient()
+            const client = getSupabaseClient();
+            const primary = await client
                 .from('songs')
                 .select('*')
-                .eq('suno_task_id', taskId)
-                .single();
-            if (error) {
-                if (error.code === 'PGRST116') { // No rows returned
-                    return null;
-                }
+                .eq('task_id', taskId)
+                .maybeSingle();
+            let row = primary.data;
+            let error = primary.error;
+            if (error && error.code !== 'PGRST116') {
                 console.error('Database error fetching song by task ID:', error);
                 throw new Error(`Failed to fetch song by task ID: ${error.message}`);
             }
-            return this.mapDbToSong(data);
+            if (!row) {
+                const fallback = await client
+                    .from('songs')
+                    .select('*')
+                    .eq('suno_task_id', taskId)
+                    .maybeSingle();
+                row = fallback.data;
+                error = fallback.error;
+                if (error && error.code !== 'PGRST116') {
+                    console.error('Database error fetching song by suno_task_id:', error);
+                    throw new Error(`Failed to fetch song by task ID: ${error.message}`);
+                }
+            }
+            if (!row) {
+                return null;
+            }
+            return this.mapDbToSong(row);
         }
         catch (error) {
             console.error('Error in getSongByTaskId:', error);
+            throw error;
+        }
+    }
+    /**
+     * Get song by ID (server-side, service role)
+     */
+    static async getSongById(songId) {
+        try {
+            const { data, error } = await getSupabaseClient()
+                .from('songs')
+                .select('*')
+                .eq('id', songId)
+                .maybeSingle();
+            if (error)
+                throw error;
+            if (!data)
+                return null;
+            return this.mapDbToSong(data);
+        }
+        catch (error) {
+            console.error('Error in getSongById:', error);
             throw error;
         }
     }
@@ -234,6 +383,93 @@ export class SongService {
         }
     }
     /**
+     * Check if a song should be paid based on user's current freesongsused count
+     */
+    static async shouldSongBePaid(userId, guestId) {
+        try {
+            const deviceId = userId || guestId;
+            if (!deviceId) {
+                console.warn('No user_id or guest_id provided for checking payment status');
+                return true; // Default to paid if no user info
+            }
+            // Get current user data to check freesongsused count
+            let userData = null;
+            let error = null;
+            if (userId) {
+                // For authenticated users, search by user_id
+                const result = await getSupabaseClient()
+                    .from('user_creations')
+                    .select('freesongsused, user_id, device_id')
+                    .eq('user_id', userId)
+                    .maybeSingle();
+                userData = result.data;
+                error = result.error;
+                if ((!userData || !userData.freesongsused) && !error) {
+                    const fallback = await getSupabaseClient()
+                        .from('user_creations')
+                        .select('freesongsused, user_id, device_id')
+                        .eq('device_id', userId)
+                        .maybeSingle();
+                    if (fallback.data) {
+                        userData = fallback.data;
+                        error = fallback.error;
+                    }
+                }
+            }
+            else {
+                // For guest users, search by device_id
+                const result = await getSupabaseClient()
+                    .from('user_creations')
+                    .select('freesongsused, user_id, device_id')
+                    .eq('device_id', guestId)
+                    .maybeSingle();
+                userData = result.data;
+                error = result.error;
+            }
+            if (error || !userData) {
+                console.log(`⚠️ User not found for device_id: ${deviceId}, defaulting to free song`);
+                return false; // First song is always free for new users
+            }
+            const currentCount = userData.freesongsused || 0;
+            const shouldBePaid = currentCount >= 1; // First song (count 0) is free, subsequent songs are paid
+            console.log(`💰 Payment check for device_id ${deviceId}: freesongsused=${currentCount}, shouldBePaid=${shouldBePaid}`);
+            return shouldBePaid;
+        }
+        catch (error) {
+            console.error('❌ Error checking payment status:', error);
+            return false; // Default to free on error
+        }
+    }
+    /**
+     * Increment the freesongsused counter for a user or guest
+     */
+    static async incrementFreeSongsUsed(userId, guestId) {
+        try {
+            // Determine the device_id to use (user_id takes priority over guest_id)
+            const deviceId = userId || guestId;
+            if (!deviceId) {
+                console.warn('No user_id or guest_id provided for incrementing freesongsused');
+                return;
+            }
+            console.log(`🔄 Incrementing freesongsused for device_id: ${deviceId} (${userId ? 'user' : 'guest'})`);
+            // Call the RPC function to increment freesongsused
+            const { data, error } = await getSupabaseClient()
+                .rpc('increment_freesongsused', {
+                user_device_id: deviceId
+            });
+            if (error) {
+                console.error('❌ Error incrementing freesongsused:', error);
+                throw new Error(`Failed to increment freesongsused: ${error.message}`);
+            }
+            console.log(`✅ Successfully incremented freesongsused for device_id: ${deviceId}`, data);
+        }
+        catch (error) {
+            console.error('❌ Error in incrementFreeSongsUsed:', error);
+            // Don't throw the error to avoid breaking song creation
+            // Just log it for monitoring purposes
+        }
+    }
+    /**
      * Map database row to Song object
      */
     static mapDbToSong(dbRow) {
@@ -251,10 +487,12 @@ export class SongService {
                 prompt: validatedRow.prompt,
                 genre: validatedRow.genre,
                 mood: validatedRow.mood,
+                imageUrl: validatedRow.image_url || null,
                 audioUrlOption1: validatedRow.audio_url_option1,
                 audioUrlOption2: validatedRow.audio_url_option2,
-                sunoTaskId: validatedRow.task_id,
-                generationStatus: validatedRow.status,
+                sunoTaskId: validatedRow.suno_task_id || validatedRow.task_id || dbRow.task_id || null,
+                generationStatus: validatedRow.generation_status,
+                isPaid: false, // Default to false since ispaid column doesn't exist
                 createdAt: new Date(validatedRow.created_at),
                 updatedAt: new Date(validatedRow.updated_at)
             };

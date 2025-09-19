@@ -24,28 +24,28 @@ BEGIN
   PERFORM pg_advisory_xact_lock(hashtext(COALESCE(p_device_id, '')));
 
   -- Load rows
-  SELECT * INTO g FROM users WHERE device_id = p_device_id LIMIT 1;
-  SELECT * INTO u FROM users WHERE id = p_user_id LIMIT 1;
+  SELECT * INTO g FROM user_creations WHERE device_id = p_device_id LIMIT 1;
+  SELECT * INTO u FROM user_creations WHERE id = p_user_id LIMIT 1;
 
   -- Ensure user row exists
   IF u IS NULL THEN
-    INSERT INTO users(id, freesongsused, created_at, updated_at)
+    INSERT INTO user_creations(id, freesongsused, created_at, updated_at)
     VALUES (p_user_id, 0, NOW(), NOW())
     ON CONFLICT (id) DO NOTHING;
-    SELECT * INTO u FROM users WHERE id = p_user_id LIMIT 1;
+    SELECT * INTO u FROM user_creations WHERE id = p_user_id LIMIT 1;
   END IF;
 
-  -- Compute consolidated counter (soma os valores ao invés de pegar apenas o maior)
-  combined := COALESCE(u.freesongsused, 0) + COALESCE(g.freesongsused, 0);
+  -- Compute consolidated counter (preserva o maior valor para não ultrapassar o limite)
+  combined := GREATEST(COALESCE(u.freesongsused, 0), COALESCE(g.freesongsused, 0));
 
   -- Remove guest first to free unique(device_id)
   IF g IS NOT NULL THEN
-    DELETE FROM users WHERE id = g.id;
+    DELETE FROM user_creations WHERE id = g.id;
   END IF;
 
   -- Assign device_id and consolidated counter to authenticated user
   -- Also set status = 0 to mark as authenticated user
-  UPDATE users
+  UPDATE user_creations
   SET device_id = p_device_id,
       freesongsused = combined,
       status = 0,

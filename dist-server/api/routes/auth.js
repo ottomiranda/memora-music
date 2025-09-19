@@ -3,6 +3,7 @@
  * Handle user registration, login, token management, etc.
  */
 import { Router } from 'express';
+import { v4 as uuidv4 } from 'uuid';
 const router = Router();
 // Função auxiliar para gerar token simulado
 const generateToken = () => {
@@ -53,7 +54,7 @@ router.post('/signup', async (req, res) => {
         console.log('[DEBUG] Criando novo usuário:', { email, name });
         // Simular criação do usuário
         const newUser = {
-            id: `user_${Date.now()}`,
+            id: uuidv4(),
             email,
             name: name || email.split('@')[0]
         };
@@ -165,7 +166,7 @@ router.post('/login', async (req, res) => {
         console.log('[DEBUG] Verificando credenciais:', { email });
         // Simular usuário encontrado
         const user = {
-            id: `user_${Date.now()}`,
+            id: uuidv4(),
             email,
             name: email.split('@')[0]
         };

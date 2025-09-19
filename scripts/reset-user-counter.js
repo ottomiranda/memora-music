@@ -19,7 +19,7 @@ async function resetUserCounter(userEmail) {
     
     // Buscar o usuário pelo email
     const { data: users, error: searchError } = await supabase
-      .from('users')
+      .from('user_creations')
       .select('id, email, freesongsused')
       .eq('email', userEmail)
       .limit(1);
@@ -42,7 +42,7 @@ async function resetUserCounter(userEmail) {
     
     // Resetar o contador para 0
     const { data: updateData, error: updateError } = await supabase
-      .from('users')
+      .from('user_creations')
       .update({ freesongsused: 0 })
       .eq('id', user.id)
       .select('id, email, freesongsused');

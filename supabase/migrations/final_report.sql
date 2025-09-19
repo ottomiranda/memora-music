@@ -8,13 +8,13 @@ PROBLEMA IDENTIFICADO:
 O usuário relatou que ao criar uma música como convidado (status=1) e depois fazer login,
 era criado um segundo usuário (status=0) ao invés de consolidar os dados em um único usuário.
 Isso causava:
-1. Duplicação de registros na tabela users
+1. Duplicação de registros na tabela user_creations
 2. Falha no bloqueio da segunda música (limite de músicas grátis)
 3. Perda de dados do usuário convidado
 
 CAUSAS IDENTIFICADAS:
 ==================
-1. Ausência do campo 'status' na tabela users
+1. Ausência do campo 'status' na tabela user_creations
 2. Ausência da função merge_guest_into_user no banco de dados
 3. Falta de constraint única para device_id
 4. Lógica de merge inadequada que causava conflitos de constraint
@@ -23,12 +23,12 @@ SOLUÇÕES IMPLEMENTADAS:
 =====================
 
 1. ADICIONADO CAMPO STATUS:
-   - ALTER TABLE users ADD COLUMN status INTEGER DEFAULT 1
+   - ALTER TABLE user_creations ADD COLUMN status INTEGER DEFAULT 1
    - status = 0: usuário autenticado
    - status = 1: usuário convidado
 
 2. CRIADA CONSTRAINT ÚNICA:
-   - CREATE UNIQUE INDEX ux_users_device_id ON users(device_id)
+   - CREATE UNIQUE INDEX ux_user_creations_device_id ON user_creations(device_id)
    - Previne duplicação por device_id
 
 3. CRIADA FUNÇÃO MERGE_GUEST_INTO_USER:
@@ -74,10 +74,10 @@ PRÓXIMOS PASSOS RECOMENDADOS:
 SELECT 
     'final_system_state' as report_section,
     (
-        SELECT COUNT(*) FROM users WHERE status = 0
+        SELECT COUNT(*) FROM user_creations WHERE status = 0
     ) as authenticated_users,
     (
-        SELECT COUNT(*) FROM users WHERE status = 1  
+        SELECT COUNT(*) FROM user_creations WHERE status = 1  
     ) as guest_users,
     (
         SELECT COUNT(*) FROM songs
@@ -85,7 +85,7 @@ SELECT
     (
         SELECT EXISTS(
             SELECT 1 FROM information_schema.table_constraints 
-            WHERE constraint_name = 'ux_users_device_id'
+            WHERE constraint_name = 'ux_user_creations_device_id'
         )
     ) as unique_constraint_exists,
     (

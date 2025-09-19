@@ -82,17 +82,22 @@ router.post('/finalize', paymentRateLimit, optionalAuthMiddleware, async (req: R
       targetUserId = metaUserId;
     }
 
-    // Reset freesongsused accordingly
+    // Reset quota by updating freesongsused counter to 0 (keep records for history)
     const results: Array<{ target: string; updated: boolean }> = [];
 
     try {
       if (targetUserId) {
-        const { error, data } = await supabase
-          .from('users')
-          .update({ freesongsused: 0 })
-          .eq('id', targetUserId)
-          .select('id');
+        // Reset freesongsused counter for this user to 0
+        const { error } = await supabase
+          .from('user_creations')
+          .update({ 
+            freesongsused: 0,
+            creations: 0,
+            updated_at: new Date().toISOString()
+          })
+          .eq('user_id', targetUserId);
         results.push({ target: 'userId', updated: !error });
+        console.log('[STRIPE_FINALIZE] Reset quota for userId:', targetUserId, 'success:', !error);
       }
     } catch (e) {
       console.warn('[STRIPE_FINALIZE] Falha ao resetar por userId', e);
@@ -100,24 +105,38 @@ router.post('/finalize', paymentRateLimit, optionalAuthMiddleware, async (req: R
 
     try {
       if (targetDeviceId) {
+        // Reset freesongsused counter for this device_id
         const { error } = await supabase
-          .from('users')
-          .update({ freesongsused: 0 })
-          .eq('device_id', targetDeviceId);
+          .from('user_creations')
+          .update({ 
+            freesongsused: 0,
+            creations: 0,
+            updated_at: new Date().toISOString()
+          })
+          .eq('device_id', targetDeviceId)
+          .is('user_id', null);
         results.push({ target: 'deviceId', updated: !error });
+        console.log('[STRIPE_FINALIZE] Reset quota for deviceId:', targetDeviceId, 'success:', !error);
       }
     } catch (e) {
       console.warn('[STRIPE_FINALIZE] Falha ao resetar por deviceId', e);
     }
 
-    // Extra: também resetar por IP para evitar bloqueio pelo filtro OR (device_id OR last_used_ip)
+    // Extra: também resetar por IP para evitar bloqueio pelo filtro OR
     try {
       if (clientIp) {
+        // Reset freesongsused counter for this IP
         const { error } = await supabase
-          .from('users')
-          .update({ freesongsused: 0 })
-          .eq('last_used_ip', clientIp);
+          .from('user_creations')
+          .update({ 
+            freesongsused: 0,
+            creations: 0,
+            updated_at: new Date().toISOString()
+          })
+          .eq('last_used_ip', clientIp)
+          .is('user_id', null);
         results.push({ target: 'last_used_ip', updated: !error });
+        console.log('[STRIPE_FINALIZE] Reset quota for IP:', clientIp, 'success:', !error);
       }
     } catch (e) {
       console.warn('[STRIPE_FINALIZE] Falha ao resetar por last_used_ip', e);
@@ -445,9 +464,9 @@ async function handlePaymentSuccess(paymentIntent: Stripe.PaymentIntent): Promis
     const userId = paymentIntent.metadata?.userId;
     if (userId && userId !== 'guest') {
       const { error: resetError } = await supabase
-        .from('users')
+        .from('user_creations')
         .update({ freesongsused: 0 })
-        .eq('id', userId);
+        .eq('user_id', userId);
       
       if (resetError) {
         console.error('[STRIPE_WEBHOOK] Erro ao resetar contador de músicas:', resetError);
@@ -459,7 +478,7 @@ async function handlePaymentSuccess(paymentIntent: Stripe.PaymentIntent): Promis
       const deviceId = (paymentIntent.metadata?.deviceId || paymentIntent.metadata?.device_id) as string | undefined;
       if (deviceId) {
         const { error: resetGuestError } = await supabase
-          .from('users')
+          .from('user_creations')
           .update({ freesongsused: 0 })
           .eq('device_id', deviceId);
 
@@ -549,7 +568,7 @@ async function handlePaymentProcessing(paymentIntent: Stripe.PaymentIntent): Pro
       const userId = paymentIntent.metadata?.userId as string | undefined;
       if (userId && hostedVoucherUrl) {
         const { data: userRow } = await supabase
-          .from('users')
+          .from('user_creations')
           .select('email, name')
           .eq('id', userId)
           .maybeSingle();

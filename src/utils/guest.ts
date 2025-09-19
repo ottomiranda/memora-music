@@ -8,12 +8,25 @@ import { GuestIdentity, GUEST_ID_KEY } from '../types/guest';
 export function getOrCreateGuestId(): string {
   try {
     const existingId = localStorage.getItem(GUEST_ID_KEY);
+    const existingDeviceId = localStorage.getItem('deviceId');
     if (existingId) {
+      if (existingDeviceId && existingDeviceId !== existingId) {
+        console.debug('[Guest Identity] Alinhando guestId com deviceId existente');
+        localStorage.setItem(GUEST_ID_KEY, existingDeviceId);
+        return existingDeviceId;
+      }
       return existingId;
     }
-    
+
+    if (existingDeviceId) {
+      localStorage.setItem(GUEST_ID_KEY, existingDeviceId);
+      console.debug('[Guest Identity] Reutilizando deviceId como guestId:', existingDeviceId);
+      return existingDeviceId;
+    }
+
     const newGuestId = uuidv4();
     localStorage.setItem(GUEST_ID_KEY, newGuestId);
+    localStorage.setItem('deviceId', newGuestId);
     
     // Log para desenvolvimento
     console.debug('[Guest Identity] Novo guestId gerado:', newGuestId);

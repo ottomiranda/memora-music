@@ -92,6 +92,8 @@ export default async function handler(req, res) {
                     };
                     savedSong = await SongService.createSong(songData);
                     console.log(`✅ Música salva com sucesso! ID: ${savedSong.id}`);
+                    console.log(`📊 Contador freesongsused incrementado automaticamente pelo createSong`);
+                    // Nota: O incremento do contador é feito automaticamente dentro do createSong
                 }
                 else {
                     savedSong = existingSong;

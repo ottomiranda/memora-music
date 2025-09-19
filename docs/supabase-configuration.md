@@ -70,7 +70,7 @@ const client = getSupabaseServiceClient();
 
 // Uso com retry automático
 const result = await executeSupabaseQuery(async (client) => {
-  return await client.from('users').select('*');
+  return await client.from('user_creations').select('*');
 });
 ```
 

@@ -189,7 +189,7 @@ class SupabaseManager {
       
       const client = this.getServiceClient();
       const { error } = await client
-        .from('users')
+        .from('user_creations')
         .select('count')
         .limit(1);
       

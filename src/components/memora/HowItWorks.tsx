@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { PenTool, Sparkles, Share2 } from "lucide-react";
+import { SectionSubtitle } from '@/components/ui/SectionSubtitle';
+import { SectionTitle } from '@/components/ui/SectionTitle';
 
 const HowItWorks = () => {
   const [activeStep, setActiveStep] = useState(0);
@@ -51,16 +53,12 @@ const HowItWorks = () => {
   };
 
   return (
-    <section id="como-funciona" className="py-20 bg-background">
+    <section id="como-funciona" className="py-20">
       <div className="container mx-auto px-4">
         {/* Header */}
         <div className="text-center mb-16">
-          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-heading font-bold text-foreground mb-4">
-            Como funciona
-          </h2>
-          <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
-            Transforme suas memórias em música em apenas 3 passos simples
-          </p>
+          <SectionTitle>Como funciona</SectionTitle>
+          <SectionSubtitle>Transforme suas memórias em música em apenas 3 passos simples</SectionSubtitle>
         </div>
 
         {/* Interactive Timeline */}

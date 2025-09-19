@@ -78,42 +78,7 @@ All colors MUST be HSL.
     --sidebar-ring: 217.2 91.2% 59.8%;
   }
 
-  .dark {
-    /* Dark mode uses same brand colors but adapted */
-    --background: 0 0% 6.3%; /* Dark background */
-    --foreground: 0 0% 95.7%; /* Light text */
 
-    --card: 0 0% 10%;
-    --card-foreground: 0 0% 95.7%;
-
-    --popover: 0 0% 10%;
-    --popover-foreground: 0 0% 95.7%;
-
-    /* Keep brand colors consistent */
-    --primary: 263 78% 57%; /* Same vibrant purple */
-    --primary-foreground: 0 0% 100%;
-    --primary-glow: 263 78% 67%;
-
-    --secondary: 43 97% 63%; /* Same solar yellow */
-    --secondary-foreground: 0 0% 6.3%;
-
-    --accent-coral: 350 100% 67%; /* Same coral */
-    --accent-turquoise: 172 69% 58%; /* Same turquoise */
-    --accent-coral-foreground: 0 0% 100%;
-    --accent-turquoise-foreground: 0 0% 6.3%;
-
-    --muted: 0 0% 15%;
-    --muted-foreground: 0 0% 60%;
-    --neutral-dark: 0 0% 95.7%;
-    --neutral-gray: 0 0% 60%;
-
-    --destructive: 350 100% 67%;
-    --destructive-foreground: 0 0% 100%;
-
-    --border: 0 0% 15%;
-    --input: 0 0% 15%;
-    --ring: 263 78% 57%;
-  }
 }
 
 @layer base {
@@ -122,8 +87,8 @@ All colors MUST be HSL.
   }
 
   body {
-    @apply bg-background text-foreground font-sans;
-  }
+  @apply text-foreground font-sans;
+}
 }
 
 @layer components {
@@ -138,19 +103,14 @@ All colors MUST be HSL.
     border-radius: 9999px;
   }
 
-  /* Surface utilities for dark glass UI */
+  /* Surface utilities for glass UI */
   .surface-1 { @apply bg-white/80 border border-black/5 backdrop-blur-md; }
-  .dark .surface-1 { @apply bg-white/5 border-white/10; }
 
   .surface-2 { @apply bg-white/60 border border-black/5 backdrop-blur-lg; }
-  .dark .surface-2 { @apply bg-white/10 border-white/10; }
 
   /* Spotlight hover (lightweight, static center) */
   .spotlight {
     background-image: radial-gradient(600px 300px at 80% 90%, rgba(255,255,255,.15), transparent 60%);
-  }
-  .dark .spotlight {
-    background-image: radial-gradient(600px 300px at 80% 90%, rgba(255,255,255,.08), transparent 60%);
   }
 
   @media (prefers-reduced-motion: reduce) {

@@ -1,3 +1,4 @@
+import React from 'react';
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -13,9 +14,10 @@ import MinhasMusicas from "./pages/MinhasMusicas";
 import MusicaPublica from "./pages/MusicaPublica";
 import AuthCallback from "./pages/AuthCallback";
 import NotFound from "./pages/NotFound";
+import ProtectedRoute from "./components/auth/ProtectedRoute";
 import { useScrollToTop } from "./hooks/useScrollToTop";
 import { useUiStore } from "./store/uiStore";
-
+import { useAuthStore } from "./store/authStore";
 // Gerar e persistir deviceId único
 let deviceId = localStorage.getItem('deviceId');
 if (!deviceId) {
@@ -28,6 +30,31 @@ if (!deviceId) {
 
 const queryClient = new QueryClient();
 
+// Componente para forçar a hidratação do authStore
+const AuthInitializer = () => {
+  console.log('[AuthInitializer] *** COMPONENTE RENDERIZADO ***');
+  
+  const authStore = useAuthStore();
+  
+  console.log('[AuthInitializer] Store acessado:', {
+    isLoading: authStore.isLoading,
+    isLoggedIn: authStore.isLoggedIn,
+    hasUser: !!authStore.user
+  });
+  
+  // Forçar a rehydratação se ainda estiver carregando
+  React.useEffect(() => {
+    console.log('[AuthInitializer] useEffect executado');
+    if (authStore.isLoading) {
+      console.log('[AuthInitializer] Ainda carregando, forçando rehydratação...');
+      // Forçar a hidratação manualmente
+      useAuthStore.persist.rehydrate();
+    }
+  }, [authStore.isLoading]);
+  
+  return null;
+};
+
 // Componente interno que usa o hook de scroll
 const AppContent = () => {
   useScrollToTop(); // Hook que faz scroll para o topo em mudanças de rota
@@ -35,11 +62,19 @@ const AppContent = () => {
   
   return (
     <Layout>
+      <AuthInitializer />
       <Navbar />
       <Routes>
         <Route path="/" element={<Index />} />
         <Route path="/criar" element={<Criar />} />
-        <Route path="/minhas-musicas" element={<MinhasMusicas />} />
+        <Route 
+          path="/minhas-musicas" 
+          element={
+            <ProtectedRoute>
+              <MinhasMusicas />
+            </ProtectedRoute>
+          } 
+        />
         <Route path="/musica/:id" element={<MusicaPublica />} />
         <Route path="/auth/callback" element={<AuthCallback />} />
         {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}

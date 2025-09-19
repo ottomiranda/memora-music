@@ -13,6 +13,7 @@ export const SongSchema = z.object({
     audioUrlOption2: z.string().url().nullable(),
     sunoTaskId: z.string().nullable(),
     generationStatus: z.enum(['pending', 'processing', 'completed', 'failed']),
+    isPaid: z.boolean().default(false),
     createdAt: z.coerce.date(),
     updatedAt: z.coerce.date()
 });
@@ -67,10 +68,15 @@ export const DatabaseSongSchema = z.object({
     prompt: z.string().nullable(),
     genre: z.string().nullable(),
     mood: z.string().nullable(),
+    image_url: z.string().nullable().optional(),
     audio_url_option1: z.string().nullable(),
     audio_url_option2: z.string().nullable(),
-    task_id: z.string().nullable(),
-    status: z.string().default('COMPLETED'),
+    suno_task_id: z.string().nullable(),
+    task_id: z.string().nullable().optional(),
+    generation_status: z.string().default('completed'),
+    webhook_received_at: z.string().nullable().optional(),
+    webhook_payload: z.any().nullable().optional(),
+    generation_method: z.string().default('polling').optional(),
     created_at: z.string(),
     updated_at: z.string()
 });

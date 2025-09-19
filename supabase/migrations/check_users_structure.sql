@@ -1,10 +1,10 @@
--- Verificar estrutura atual da tabela users
+-- Verificar estrutura atual da tabela user_creations
 -- Verificar se existe campo status ou similar
 
--- 1. Verificar todos os campos da tabela users
+-- 1. Verificar todos os campos da tabela user_creations
 SELECT column_name, data_type, is_nullable, column_default
 FROM information_schema.columns 
-WHERE table_name = 'users' AND table_schema = 'public'
+WHERE table_name = 'user_creations' AND table_schema = 'public'
 ORDER BY ordinal_position;
 
 -- 2. Verificar alguns registros existentes
@@ -17,7 +17,7 @@ SELECT
     last_used_ip,
     created_at,
     updated_at
-FROM users 
+FROM user_creations 
 ORDER BY created_at DESC 
 LIMIT 10;
 
@@ -28,7 +28,7 @@ SELECT
     array_agg(id) as user_ids,
     array_agg(email) as emails,
     array_agg(freesongsused) as free_songs_counts
-FROM users 
+FROM user_creations 
 WHERE device_id IS NOT NULL
 GROUP BY device_id
 HAVING COUNT(*) > 1;
@@ -37,13 +37,13 @@ HAVING COUNT(*) > 1;
 SELECT 
     'Usuários Autenticados' as tipo,
     COUNT(*) as quantidade
-FROM users 
+FROM user_creations 
 WHERE email IS NOT NULL
 UNION ALL
 SELECT 
     'Usuários Anônimos' as tipo,
     COUNT(*) as quantidade
-FROM users 
+FROM user_creations 
 WHERE email IS NULL;
 
 -- 5. Verificar se há índices únicos
@@ -51,7 +51,7 @@ SELECT
     indexname,
     indexdef
 FROM pg_indexes 
-WHERE tablename = 'users' AND schemaname = 'public';
+WHERE tablename = 'user_creations' AND schemaname = 'public';
 
 -- 6. Verificar constraints
 SELECT 
@@ -59,4 +59,4 @@ SELECT
     contype as constraint_type,
     pg_get_constraintdef(oid) as constraint_definition
 FROM pg_constraint 
-WHERE conrelid = 'public.users'::regclass;
+WHERE conrelid = 'public.user_creations'::regclass;

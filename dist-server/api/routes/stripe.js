@@ -273,7 +273,7 @@ async function handlePaymentSuccess(paymentIntent) {
         const userId = paymentIntent.metadata?.userId;
         if (userId && userId !== 'guest') {
             const { error: resetError } = await supabase
-                .from('users')
+                .from('user_creations')
                 .update({ freesongsused: 0 })
                 .eq('id', userId);
             if (resetError) {

@@ -1,5 +1,5 @@
 /**
- * Script para verificar se a coluna device_id foi adicionada corretamente à tabela users
+ * Script para verificar se a coluna device_id foi adicionada corretamente à tabela user_creations
  * Pode usar tanto accessToken manual quanto SUPABASE_SERVICE_ROLE_KEY do .env
  */
 
@@ -59,7 +59,7 @@ function makeRequest(url, options) {
 }
 
 async function verifyDeviceIdColumn() {
-  console.log('🔍 Verificando se a coluna device_id foi adicionada à tabela users...');
+  console.log('🔍 Verificando se a coluna device_id foi adicionada à tabela user_creations...');
   
   // Carregar variáveis de ambiente
   const envVars = loadEnvVars();
@@ -90,10 +90,10 @@ async function verifyDeviceIdColumn() {
   console.log(`   Fonte do token: ${manualToken ? 'Manual (argumento)' : 'Arquivo .env'}`);
   
   try {
-    // Primeiro, vamos tentar acessar a tabela users diretamente para verificar se ela existe
-    console.log('\n🔍 Verificando se a tabela users existe e suas colunas...');
+    // Primeiro, vamos tentar acessar a tabela user_creations diretamente para verificar se ela existe
+    console.log('\n🔍 Verificando se a tabela user_creations existe e suas colunas...');
     
-    const url = `${supabaseUrl}/rest/v1/users?select=*&limit=0`;
+    const url = `${supabaseUrl}/rest/v1/user_creations?select=*&limit=0`;
     const options = {
       method: 'GET',
       headers: {
@@ -114,12 +114,12 @@ async function verifyDeviceIdColumn() {
         console.log(`\n📊 Status da resposta: ${res.statusCode}`);
         
         if (res.statusCode === 200) {
-          console.log('✅ Tabela users existe e é acessível!');
+          console.log('✅ Tabela user_creations existe e é acessível!');
           
           // Agora vamos tentar fazer uma consulta que inclua device_id para verificar se a coluna existe
           console.log('\n🔍 Testando se a coluna device_id existe...');
           
-          const testUrl = `${supabaseUrl}/rest/v1/users?select=id,device_id&limit=1`;
+          const testUrl = `${supabaseUrl}/rest/v1/user_creations?select=id,device_id&limit=1`;
           const testReq = https.request(testUrl, options, (testRes) => {
             let testData = '';
             
@@ -131,7 +131,7 @@ async function verifyDeviceIdColumn() {
               console.log(`📊 Status do teste device_id: ${testRes.statusCode}`);
               
               if (testRes.statusCode === 200) {
-                console.log('\n🎉 SUCESSO: A coluna device_id foi encontrada na tabela users!');
+                console.log('\n🎉 SUCESSO: A coluna device_id foi encontrada na tabela user_creations!');
                 console.log('✅ A migração foi aplicada corretamente.');
                 
                 try {
@@ -143,9 +143,9 @@ async function verifyDeviceIdColumn() {
                 }
                 
               } else {
-                console.log('\n❌ ERRO: A coluna device_id NÃO foi encontrada na tabela users.');
+                console.log('\n❌ ERRO: A coluna device_id NÃO foi encontrada na tabela user_creations.');
                 console.log('💡 Execute a migração manualmente no console do Supabase:');
-                console.log('   ALTER TABLE users ADD COLUMN device_id TEXT;');
+                console.log('   ALTER TABLE user_creations ADD COLUMN device_id TEXT;');
                 console.log('\n📋 Detalhes do erro:');
                 console.log(testData);
               }
@@ -159,13 +159,13 @@ async function verifyDeviceIdColumn() {
           testReq.end();
           
         } else {
-          console.log('❌ Erro ao acessar a tabela users:');
+          console.log('❌ Erro ao acessar a tabela user_creations:');
           console.log('Resposta:', data);
           
           if (res.statusCode === 401) {
             console.log('\n💡 Erro de autenticação. Verifique:');
             console.log('   - Se o token está correto');
-            console.log('   - Se o token tem permissões para acessar a tabela users');
+            console.log('   - Se o token tem permissões para acessar a tabela user_creations');
           }
         }
       });

@@ -86,10 +86,12 @@ export const DatabaseSongSchema = z.object({
   image_url: z.string().nullable().optional(),
   audio_url_option1: z.string().nullable(),
   audio_url_option2: z.string().nullable(),
-  task_id: z.string().nullable(),
-  status: z.string().optional(),
+  suno_task_id: z.string().nullable(),
+  task_id: z.string().nullable().optional(),
   generation_status: z.string().default('completed'),
-  ispaid: z.boolean().default(false),
+  webhook_received_at: z.string().nullable().optional(),
+  webhook_payload: z.any().nullable().optional(),
+  generation_method: z.string().default('polling').optional(),
   created_at: z.string(),
   updated_at: z.string()
 });

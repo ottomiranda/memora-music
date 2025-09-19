@@ -854,7 +854,7 @@ describe('Security Tests', () => {
     });
 
     it('should prevent SQL injection', async () => {
-      const sqlInjection = "'; DROP TABLE users; --";
+      const sqlInjection = "'; DROP TABLE user_creations; --";
       
       const response = await request(app)
         .post('/api/save-feedback')

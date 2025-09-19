@@ -1,21 +1,42 @@
 import express from 'express';
+import cors from 'cors';
 import dotenv from 'dotenv';
 import path from 'path';
-// Define o caminho raiz do projeto de forma robusta
-// Usa a variável de ambiente da Render se disponível, senão, usa /app como padrão.
-const projectRoot = process.env.RENDER_ROOT || '/app';
-// Carrega as variáveis de ambiente a partir da raiz do projeto
-dotenv.config({ path: path.join(projectRoot, '.env') });
+import fs from 'fs';
+const candidateRoots = [process.env.RENDER_ROOT, process.cwd()].filter(Boolean);
+let hasLoadedEnv = false;
+for (const root of candidateRoots) {
+    try {
+        const envPath = path.join(root, '.env');
+        if (fs.existsSync(envPath)) {
+            dotenv.config({ path: envPath });
+            console.log(`🌱 Variáveis de ambiente carregadas de ${envPath}`);
+            hasLoadedEnv = true;
+            break;
+        }
+    }
+    catch (err) {
+        console.warn('⚠️ Falha ao carregar .env em', root, err instanceof Error ? err.message : err);
+    }
+}
+if (!hasLoadedEnv) {
+    dotenv.config();
+    console.log('🌱 Variáveis de ambiente carregadas usando dotenv padrão');
+}
 // Importar rotas
 import generatePreviewRoute from './routes/generate-preview.js';
 import authRoute from './routes/auth.js';
 import checkMusicStatusRoute from './routes/check-music-status.js';
 import saveFeedbackRoute from './routes/save-feedback.js';
+import mvpFeedbackHandler from './mvp-feedback.js';
 import songsRoute from './routes/songs.js';
 import migrateGuestDataRoute from './routes/migrate-guest-data.js';
 import paywallRoute from './routes/paywall.js';
 import downloadRoute from './routes/download.js';
 import stripeRoute from './routes/stripe.js';
+import supabasePublicRoute from './routes/supabase-public.js';
+import sunoCoverCallbackRoute from './routes/suno-cover-callback.js';
+import sunoMusicRoute from './routes/suno-music.js';
 // Criar rota de health check como Express Router
 import { Router } from 'express';
 const healthRoute = Router();
@@ -67,6 +88,10 @@ healthRoute.get('/', (req, res) => {
     }
 });
 const app = express();
+// ==================== TESTE NUCLEAR: CORS DIAGNÓSTICO ====================
+console.log('🚨 TESTE NUCLEAR: CORS totalmente aberto ativado no server.ts!');
+app.use(cors());
+// =================================================================
 // Configurar trust proxy para identificar IP do cliente corretamente
 // Necessário para req.ip funcionar com proxies (Vercel, Heroku, etc.)
 app.set('trust proxy', true);
@@ -96,22 +121,31 @@ app.use('/api/generate-preview', generatePreviewRoute);
 app.use('/api/auth', authRoute);
 app.use('/api/check-music-status', checkMusicStatusRoute);
 app.use('/api/save-feedback', saveFeedbackRoute);
+// Compatível com payload snake_case usado pelo frontend
+app.post('/api/mvp-feedback', mvpFeedbackHandler);
 app.use('/api/songs', songsRoute);
 app.use('/api/migrate-guest-data', migrateGuestDataRoute);
 app.use('/api/user', paywallRoute);
 app.use('/api/download', downloadRoute);
 app.use('/api/stripe', stripeRoute);
+app.use('/api/supabase', supabasePublicRoute);
+app.use('/api/suno-cover-callback', sunoCoverCallbackRoute);
+app.use('/api/suno', sunoMusicRoute);
 console.log('📋 Rotas registradas:');
 console.log('  - /api/health');
 console.log('  - /api/generate-preview');
 console.log('  - /api/auth');
 console.log('  - /api/check-music-status');
 console.log('  - /api/save-feedback');
+console.log('  - /api/mvp-feedback');
 console.log('  - /api/songs');
 console.log('  - /api/migrate-guest-data');
 console.log('  - /api/user (paywall)');
 console.log('  - /api/download');
 console.log('  - /api/stripe');
+console.log('  - /api/supabase');
+console.log('  - /api/suno-cover-callback');
+console.log('  - /api/suno');
 console.log('🔄 Sistema de salvamento automático ativo');
 // Rota de teste simples
 app.get('/api/test', (req, res) => {

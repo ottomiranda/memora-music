@@ -11,7 +11,7 @@ SELECT
     is_nullable
 FROM information_schema.columns 
 WHERE table_schema = 'public' 
-    AND table_name = 'users' 
+    AND table_name = 'user_creations' 
     AND column_name = 'last_used_ip';
 
 -- Se a query acima retornar resultado, a coluna já existe.
@@ -21,8 +21,8 @@ WHERE table_schema = 'public'
 -- 2. ADICIONAR COLUNA last_used_ip (SE NÃO EXISTIR)
 -- =====================================================
 
--- Adicionar coluna last_used_ip à tabela users
-ALTER TABLE users 
+-- Adicionar coluna last_used_ip à tabela user_creations
+ALTER TABLE user_creations 
 ADD COLUMN IF NOT EXISTS last_used_ip TEXT;
 
 -- =====================================================
@@ -30,12 +30,12 @@ ADD COLUMN IF NOT EXISTS last_used_ip TEXT;
 -- =====================================================
 
 -- Índice para busca por IP
-CREATE INDEX IF NOT EXISTS idx_users_last_used_ip 
-ON users(last_used_ip);
+CREATE INDEX IF NOT EXISTS idx_user_creations_last_used_ip 
+ON user_creations(last_used_ip);
 
 -- Índice composto para segurança (device_id + IP)
-CREATE INDEX IF NOT EXISTS idx_users_device_ip_security 
-ON users(device_id, last_used_ip);
+CREATE INDEX IF NOT EXISTS idx_user_creations_device_ip_security 
+ON user_creations(device_id, last_used_ip);
 
 -- =====================================================
 -- 4. VERIFICAR APLICAÇÃO DA MIGRAÇÃO
@@ -49,7 +49,7 @@ SELECT
     column_default
 FROM information_schema.columns 
 WHERE table_schema = 'public' 
-    AND table_name = 'users' 
+    AND table_name = 'user_creations' 
     AND column_name = 'last_used_ip';
 
 -- Verificar se os índices foram criados
@@ -57,22 +57,22 @@ SELECT
     indexname,
     indexdef
 FROM pg_indexes 
-WHERE tablename = 'users' 
+WHERE tablename = 'user_creations' 
     AND (indexname LIKE '%last_used_ip%' OR indexname LIKE '%device_ip%');
 
 -- =====================================================
 -- 5. TESTE BÁSICO (OPCIONAL)
 -- =====================================================
 
--- Contar registros na tabela users
-SELECT COUNT(*) as total_users FROM users;
+-- Contar registros na tabela user_creations
+SELECT COUNT(*) as total_users FROM user_creations;
 
--- Verificar estrutura da tabela users
+-- Verificar estrutura da tabela user_creations
 SELECT 
     column_name,
     data_type,
     is_nullable
 FROM information_schema.columns 
 WHERE table_schema = 'public' 
-    AND table_name = 'users'
+    AND table_name = 'user_creations'
 ORDER BY ordinal_position;

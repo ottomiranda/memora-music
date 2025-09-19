@@ -18,7 +18,7 @@ async function testFinalValidation() {
     
     // Simular criação de usuário anônimo após primeira música
     const { data: guestUser, error: guestError } = await supabase
-      .from('users')
+      .from('user_creations')
       .insert({
         device_id: testDeviceId,
         status: 1, // anônimo
@@ -48,7 +48,7 @@ async function testFinalValidation() {
     
     // Criar usuário autenticado (simula login)
     const { data: authUser, error: authError } = await supabase
-      .from('users')
+      .from('user_creations')
       .insert({
         email: testEmail,
         status: 0, // autenticado
@@ -86,7 +86,7 @@ async function testFinalValidation() {
     
     // Verificar estado final do usuário
     const { data: finalUser, error: finalError } = await supabase
-      .from('users')
+      .from('user_creations')
       .select('*')
       .eq('id', authUser.id)
       .single();
@@ -145,7 +145,7 @@ async function testFinalValidation() {
     
     // Verificar se usuário anônimo foi removido
     const { data: remainingGuest, error: guestCheckError } = await supabase
-      .from('users')
+      .from('user_creations')
       .select('*')
       .eq('id', guestUser.id)
       .maybeSingle();
@@ -158,9 +158,9 @@ async function testFinalValidation() {
     
     // Limpar dados de teste
     console.log('\n🧹 Limpando dados de teste...');
-    await supabase.from('users').delete().eq('id', authUser.id);
+    await supabase.from('user_creations').delete().eq('id', authUser.id);
     if (remainingGuest) {
-      await supabase.from('users').delete().eq('id', guestUser.id);
+      await supabase.from('user_creations').delete().eq('id', guestUser.id);
     }
     
   } catch (error) {

@@ -19,7 +19,7 @@ async function applyLastUsedIpMigration() {
     
     // Testar conectividade
     const { data: testData, error: testError } = await supabase
-      .from('users')
+      .from('user_creations')
       .select('id')
       .limit(1);
     
@@ -33,12 +33,12 @@ async function applyLastUsedIpMigration() {
     // Verificar se a coluna já existe tentando fazer uma query
     console.log('🔍 Verificando se a coluna last_used_ip já existe...');
     const { data: columnTest, error: columnTestError } = await supabase
-      .from('users')
+      .from('user_creations')
       .select('last_used_ip')
       .limit(1);
     
     if (!columnTestError) {
-      console.log('✅ Coluna last_used_ip já existe na tabela users');
+      console.log('✅ Coluna last_used_ip já existe na tabela user_creations');
       console.log('🏁 Processo de migração finalizado');
       return;
     }
@@ -52,11 +52,11 @@ async function applyLastUsedIpMigration() {
       console.log('Por favor, execute o seguinte SQL no console do Supabase:');
       console.log('\n--- COPIE E COLE NO SQL EDITOR DO SUPABASE ---');
       console.log('-- Adicionar coluna last_used_ip');
-      console.log('ALTER TABLE users ADD COLUMN IF NOT EXISTS last_used_ip TEXT;');
+      console.log('ALTER TABLE user_creations ADD COLUMN IF NOT EXISTS last_used_ip TEXT;');
       console.log('');
       console.log('-- Criar índices para performance');
-      console.log('CREATE INDEX IF NOT EXISTS idx_users_last_used_ip ON users(last_used_ip);');
-      console.log('CREATE INDEX IF NOT EXISTS idx_users_device_ip_security ON users(device_id, last_used_ip);');
+      console.log('CREATE INDEX IF NOT EXISTS idx_user_creations_last_used_ip ON user_creations(last_used_ip);');
+      console.log('CREATE INDEX IF NOT EXISTS idx_user_creations_device_ip_security ON user_creations(device_id, last_used_ip);');
       console.log('--- FIM DO SQL ---\n');
       
       console.log('📍 Como executar:');
