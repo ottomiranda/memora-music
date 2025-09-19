@@ -25,8 +25,8 @@ const generatePreviewSchema = z.object({
     recipientName: z.string().min(1, "Nome do destinatário é obrigatório"),
     relationship: z.string().min(1, "Relação é obrigatória"),
     senderName: z.string().min(1, "Seu nome é obrigatório"),
-    hobbies: z.string().min(1, "Hobbies são obrigatórios"),
-    qualities: z.string().min(1, "Qualidades são obrigatórias"),
+    hobbies: z.string().optional(),
+    qualities: z.string().optional(),
     uniqueTraits: z.string().optional(),
     memories: z.string().optional(),
     // Campos que serão usados na Etapa 2 (agora opcionais)
