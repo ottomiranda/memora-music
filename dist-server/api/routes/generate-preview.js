@@ -2,6 +2,7 @@ import express from 'express';
 import { z } from 'zod';
 import OpenAI from 'openai';
 import fetch from 'node-fetch';
+import multer from 'multer';
 import { SongService } from '../../src/lib/services/songService.js';
 import { getSupabaseServiceClient } from '../../src/lib/supabase-client.js';
 // Função para obter cliente Supabase (compatibilidade)
@@ -9,6 +10,8 @@ function getSupabaseClient() {
     return getSupabaseServiceClient();
 }
 const router = express.Router();
+// Configuração do multer para processar multipart/form-data
+const upload = multer({ storage: multer.memoryStorage() });
 // Validação dos dados do formulário com Zod - Schema flexível para wizard em duas etapas
 const generatePreviewSchema = z.object({
     // Campos do briefing (obrigatórios para ambas as etapas)
@@ -340,15 +343,19 @@ async function pollCoverUntilReady(coverTaskId, originalTaskId, timeoutMs = 2 * 
             }, 2);
             if (res.ok) {
                 const bodyText = await res.text();
-                let json = {};
+                let parsed;
                 try {
-                    json = JSON.parse(bodyText);
+                    parsed = JSON.parse(bodyText);
                 }
                 catch {
-                    json = {};
+                    parsed = {};
                 }
-                const status = json?.data?.status || json?.status;
-                const imageUrl = json?.data?.imageUrl || json?.data?.image_url || json?.imageUrl || json?.image_url;
+                const coverPayload = parsed;
+                const status = coverPayload.data?.status ?? coverPayload.status;
+                const imageUrl = coverPayload.data?.imageUrl
+                    ?? coverPayload.data?.image_url
+                    ?? coverPayload.imageUrl
+                    ?? coverPayload.image_url;
                 console.log('[SUNO_COVER_POLL]', coverTaskId, 'status:', status, imageUrl ? 'img: yes' : 'img: no');
                 if ((status === 'SUCCESS' || status === 'COMPLETED') && imageUrl) {
                     const client = getSupabaseServiceClient();
@@ -502,7 +509,7 @@ function mapDurationToModel(duration) {
     }
 }
 // Endpoint principal
-router.post('/', async (req, res) => {
+router.post('/', upload.none(), async (req, res) => {
     try {
         // ---> PASSO DE DEBUG: Log do payload recebido <---
         console.log('\n=== DEBUG GENERATE PREVIEW ENDPOINT ===');
@@ -513,6 +520,9 @@ router.post('/', async (req, res) => {
         console.log('🔍 Body completo recebido:', JSON.stringify(req.body, null, 2));
         console.log('🔍 Tipo do body:', typeof req.body);
         console.log('🔍 Keys do body:', Object.keys(req.body || {}));
+        console.log('🔍 Files recebidos:', req.files);
+        console.log('🔍 Tipo dos files:', typeof req.files);
+        console.log('🔍 req.body após multer:', JSON.stringify(req.body, null, 2));
         // Verificar campos específicos importantes
         const importantFields = ['songTitle', 'recipientName', 'occasion', 'relationship', 'emotionalTone', 'genre', 'mood', 'tempo', 'duration', 'lyricsOnly'];
         console.log('🔍 Campos importantes:');
@@ -541,6 +551,7 @@ router.post('/', async (req, res) => {
         console.log('✅ Validação Zod passou com sucesso!');
         const formData = validationResult.data;
         const lyricsOnly = req.body.lyricsOnly === true;
+        const shouldEnforcePaywall = !lyricsOnly;
         // Extrair userId, guestId, deviceId e clientIp da requisição
         const authHeader = req.headers.authorization;
         const guestId = req.headers['x-guest-id'];
@@ -631,8 +642,8 @@ router.post('/', async (req, res) => {
         // Definir limite de músicas gratuitas
         const FREE_SONG_LIMIT = 1;
         let existingUser = null;
-        // Verificar se o usuário pode criar uma nova música (apenas para modo completo, não lyricsOnly)
-        if (!lyricsOnly) {
+        // Verificar se o usuário pode criar uma nova música
+        if (shouldEnforcePaywall) {
             console.log('[PAYWALL] Iniciando nova ordem de operações do paywall');
             console.log('[PAYWALL] UserId:', userId);
             console.log('[PAYWALL] DeviceId:', deviceId);
@@ -640,15 +651,15 @@ router.post('/', async (req, res) => {
                 const supabase = getSupabaseClient();
                 // ===== PASSO 1: CONSULTAR USUÁRIO (SEM MODIFICAR) =====
                 console.log('[PAYWALL_STEP1] Consultando usuário existente...');
+                const selectColumns = 'user_id, device_id, freesongsused, last_used_ip, creations';
                 if (userId) {
-                    // Usuário autenticado - buscar registro correspondente em user_creations
                     console.log('[PAYWALL_STEP1] Buscando registro em user_creations para usuário autenticado:', userId);
                     const { data: userRow, error: userError } = await supabase
                         .from('user_creations')
-                        .select('user_id, device_id, freesongsused, last_used_ip')
+                        .select(selectColumns)
                         .eq('user_id', userId)
                         .maybeSingle();
-                    if (userError && userError.code !== 'PGRST116') { // PGRST116 = not found
+                    if (userError && userError.code !== 'PGRST116') {
                         console.error('[PAYWALL_ERROR] Erro ao buscar usuário autenticado em user_creations:', userError);
                         return res.status(500).json({
                             success: false,
@@ -662,13 +673,14 @@ router.post('/', async (req, res) => {
                             user_id: userRow.user_id ?? userId,
                             device_id: userRow.device_id ?? deviceId ?? null,
                             freesongsused: userRow.freesongsused ?? 0,
-                            last_used_ip: userRow.last_used_ip ?? undefined
+                            last_used_ip: userRow.last_used_ip ?? null
                         };
                         console.log('[PAYWALL_STEP1] Registro encontrado para usuário autenticado:', existingUser);
+                        // Se o deviceId atual ainda possuir contadores maiores (ex: migração recente), fazer o merge
                         if (deviceId && deviceId !== existingUser.device_id) {
                             const { data: deviceMergeRow, error: deviceMergeError } = await supabase
                                 .from('user_creations')
-                                .select('user_id, device_id, freesongsused, last_used_ip')
+                                .select(selectColumns)
                                 .eq('device_id', deviceId)
                                 .maybeSingle();
                             if (deviceMergeError && deviceMergeError.code !== 'PGRST116') {
@@ -676,10 +688,10 @@ router.post('/', async (req, res) => {
                             }
                             else if (deviceMergeRow) {
                                 existingUser = {
-                                    user_id: (existingUser.user_id ?? deviceMergeRow.user_id) ?? null,
-                                    device_id: (existingUser.device_id ?? deviceMergeRow.device_id) ?? deviceId,
+                                    user_id: existingUser.user_id ?? deviceMergeRow.user_id ?? null,
+                                    device_id: existingUser.device_id ?? deviceMergeRow.device_id ?? deviceId,
                                     freesongsused: Math.max(existingUser.freesongsused ?? 0, deviceMergeRow.freesongsused ?? 0),
-                                    last_used_ip: deviceMergeRow.last_used_ip ?? existingUser.last_used_ip ?? undefined
+                                    last_used_ip: deviceMergeRow.last_used_ip ?? existingUser.last_used_ip ?? null
                                 };
                                 console.log('[PAYWALL_STEP1] Registro do usuário atualizado com dados do device atual:', existingUser);
                             }
@@ -689,49 +701,156 @@ router.post('/', async (req, res) => {
                         console.log('[PAYWALL_STEP1] Nenhum registro existente para usuário autenticado - será criado após geração');
                     }
                 }
-                else if (deviceId || clientIp) {
-                    // Usuário não autenticado - buscar por device_id ou IP
+                if (!existingUser) {
                     console.log('[PAYWALL_STEP1] Buscando registro em user_creations para convidado');
                     console.log('[PAYWALL_STEP1] DeviceId:', deviceId);
+                    console.log('[PAYWALL_STEP1] GuestId:', guestId);
                     console.log('[PAYWALL_STEP1] ClientIp:', clientIp);
-                    let query = supabase
-                        .from('user_creations')
-                        .select('user_id, device_id, freesongsused, last_used_ip, ip')
-                        .is('user_id', null);
-                    if (deviceId && clientIp) {
-                        query = query.or(`device_id.eq.${deviceId},last_used_ip.eq.${clientIp}`);
+                    let deviceRecord = null;
+                    if (deviceId) {
+                        const { data, error } = await supabase
+                            .from('user_creations')
+                            .select(selectColumns)
+                            .eq('device_id', deviceId)
+                            .maybeSingle();
+                        if (error && error.code !== 'PGRST116') {
+                            console.error('[PAYWALL_ERROR] Erro ao buscar usuário por deviceId em user_creations:', error);
+                            return res.status(500).json({
+                                success: false,
+                                error: 'Erro interno do servidor',
+                                message: 'Não foi possível verificar seu status de dispositivo.',
+                                debug: process.env.NODE_ENV === 'development' ? error : undefined
+                            });
+                        }
+                        if (data) {
+                            deviceRecord = data;
+                            console.log('[PAYWALL_STEP1] Registro encontrado via deviceId:', data);
+                        }
                     }
-                    else if (deviceId) {
-                        query = query.eq('device_id', deviceId);
+                    let guestRecord = null;
+                    if (guestId && (!deviceId || guestId !== deviceId)) {
+                        const { data, error } = await supabase
+                            .from('user_creations')
+                            .select(selectColumns)
+                            .eq('device_id', guestId)
+                            .maybeSingle();
+                        if (error && error.code !== 'PGRST116') {
+                            console.error('[PAYWALL_ERROR] Erro ao buscar usuário por guestId em user_creations:', error);
+                            return res.status(500).json({
+                                success: false,
+                                error: 'Erro interno do servidor',
+                                message: 'Não foi possível verificar seu status de convidado.',
+                                debug: process.env.NODE_ENV === 'development' ? error : undefined
+                            });
+                        }
+                        if (data) {
+                            guestRecord = data;
+                            console.log('[PAYWALL_STEP1] Registro encontrado via guestId:', data);
+                        }
                     }
-                    else if (clientIp) {
-                        query = query.eq('last_used_ip', clientIp);
+                    let mergedLastIp = null;
+                    if (deviceRecord && guestRecord && deviceRecord.device_id !== guestRecord.device_id) {
+                        console.log('[PAYWALL_STEP1] Detectada duplicação de registros (deviceId e guestId). Consolidando...');
+                        const canonicalDeviceId = guestId || deviceId || guestRecord.device_id;
+                        const combinedFreeSongs = Math.max(deviceRecord.freesongsused ?? 0, guestRecord.freesongsused ?? 0);
+                        const combinedCreations = Math.max(deviceRecord.creations ?? 0, guestRecord.creations ?? 0);
+                        const combinedLastIp = clientIp ?? guestRecord.last_used_ip ?? deviceRecord.last_used_ip ?? null;
+                        mergedLastIp = combinedLastIp;
+                        const { data: mergedGuest, error: mergeUpdateError } = await supabase
+                            .from('user_creations')
+                            .update({
+                            device_id: canonicalDeviceId,
+                            freesongsused: combinedFreeSongs,
+                            creations: combinedCreations,
+                            last_used_ip: combinedLastIp,
+                            updated_at: new Date().toISOString()
+                        })
+                            .eq('device_id', guestRecord.device_id)
+                            .select(selectColumns)
+                            .maybeSingle();
+                        if (mergeUpdateError) {
+                            console.error('[PAYWALL_ERROR] Falha ao consolidar registros duplicados:', mergeUpdateError);
+                        }
+                        else {
+                            guestRecord = mergedGuest ?? guestRecord;
+                            const { error: deleteError } = await supabase
+                                .from('user_creations')
+                                .delete()
+                                .eq('device_id', deviceRecord.device_id);
+                            if (deleteError) {
+                                console.error('[PAYWALL_ERROR] Falha ao remover registro duplicado:', deleteError);
+                            }
+                            else {
+                                console.log('[PAYWALL_STEP1] Registro duplicado removido com sucesso (deviceId).');
+                                deviceRecord = null;
+                            }
+                        }
                     }
-                    const { data: guestRow, error: searchError } = await query.maybeSingle();
-                    if (searchError && searchError.code !== 'PGRST116') {
-                        console.error('[PAYWALL_ERROR] Erro ao buscar usuário convidado em user_creations:', searchError);
-                        return res.status(500).json({
+                    if (guestRecord) {
+                        existingUser = {
+                            user_id: guestRecord.user_id ?? null,
+                            device_id: guestRecord.device_id ?? guestId ?? deviceId ?? null,
+                            freesongsused: guestRecord.freesongsused ?? 0,
+                            last_used_ip: mergedLastIp ?? guestRecord.last_used_ip ?? clientIp ?? null
+                        };
+                        console.log('[PAYWALL_STEP1] Registro consolidado para convidado:', existingUser);
+                    }
+                    else if (deviceRecord) {
+                        existingUser = {
+                            user_id: deviceRecord.user_id ?? null,
+                            device_id: deviceRecord.device_id ?? deviceId ?? null,
+                            freesongsused: deviceRecord.freesongsused ?? 0,
+                            last_used_ip: deviceRecord.last_used_ip ?? clientIp ?? null
+                        };
+                        console.log('[PAYWALL_STEP1] Registro encontrado para convidado via deviceId:', existingUser);
+                    }
+                    // FALLBACK POR IP DESABILITADO TEMPORARIAMENTE
+                    // O fallback por IP estava causando bloqueios incorretos para usuários com deviceId diferentes
+                    // mas mesmo IP (ex: usuários na mesma rede/empresa)
+                    if (!existingUser && clientIp && !deviceId && !guestId) {
+                        console.log('[PAYWALL_STEP1] Fallback por IP desabilitado - deviceId/guestId devem ser únicos');
+                        // Código do fallback por IP comentado para evitar bloqueios incorretos
+                        /*
+                        const ttlDays = Number(process.env.IP_FALLBACK_TTL_DAYS || '7');
+                        const cutoff = new Date(Date.now() - ttlDays * 24 * 60 * 60 * 1000).toISOString();
+            
+                        const { data: ipRow, error: ipError } = await supabase
+                          .from<UserCreationRow>('user_creations')
+                          .select(selectColumns)
+                          .is('user_id', null)
+                          .eq('last_used_ip', clientIp)
+                          .gte('created_at', cutoff)
+                          .order('created_at', { ascending: false })
+                          .limit(1)
+                          .maybeSingle();
+            
+                        if (ipError && ipError.code !== 'PGRST116') {
+                          console.error('[PAYWALL_ERROR] Erro ao buscar usuário convidado por IP em user_creations:', ipError);
+                          return res.status(500).json({
                             success: false,
                             error: 'Erro interno do servidor',
                             message: 'Não foi possível verificar seu status de dispositivo.',
-                            debug: process.env.NODE_ENV === 'development' ? searchError : undefined
-                        });
+                            debug: process.env.NODE_ENV === 'development' ? ipError : undefined
+                          });
+                        }
+            
+                        if (ipRow) {
+                          existingUser = {
+                            user_id: ipRow.user_id ?? null,
+                            device_id: ipRow.device_id ?? deviceId ?? guestId ?? null,
+                            freesongsused: ipRow.freesongsused ?? 0,
+                            last_used_ip: ipRow.last_used_ip ?? clientIp ?? null
+                          };
+                          console.log('[PAYWALL_STEP1] Registro encontrado via fallback de IP:', existingUser);
+                        }
+                        */
                     }
-                    if (guestRow) {
-                        existingUser = {
-                            user_id: guestRow.user_id ?? null,
-                            device_id: guestRow.device_id ?? deviceId ?? null,
-                            freesongsused: guestRow.freesongsused ?? 0,
-                            last_used_ip: guestRow.last_used_ip ?? guestRow.ip ?? clientIp ?? undefined
-                        };
-                        console.log('[PAYWALL_STEP1] Registro encontrado para convidado:', existingUser);
-                    }
-                    else {
+                    if (!existingUser) {
                         console.log('[PAYWALL_STEP1] Nenhum registro existente para convidado - será criado após geração');
                     }
                 }
-                else {
-                    console.log('[PAYWALL_ERROR] Nem userId nem deviceId fornecidos');
+                if (!userId && !deviceId && !guestId) {
+                    console.log('[PAYWALL_ERROR] Nem userId, deviceId ou guestId fornecidos');
                     return res.status(400).json({
                         success: false,
                         error: 'BAD_REQUEST',
@@ -741,20 +860,111 @@ router.post('/', async (req, res) => {
                 // ===== PASSO 2: VERIFICAR PERMISSÃO =====
                 console.log('[PAYWALL_STEP2] Verificando permissões...');
                 if (existingUser && existingUser.freesongsused >= FREE_SONG_LIMIT) {
-                    const identifier = userId ? `usuário ${userId}` : `dispositivo ${deviceId}`;
+                    const identifier = userId
+                        ? `usuário ${userId}`
+                        : `dispositivo ${deviceId || guestId || existingUser.device_id || 'desconhecido'}`;
                     console.log(`[PAYWALL_BLOCK] Limite atingido para ${identifier}. FreeSongsUsed: ${existingUser.freesongsused}`);
                     return res.status(402).json({
                         success: false,
                         error: 'PAYMENT_REQUIRED',
-                        message: 'Você já usou sua criação de música gratuita. Por favor, faça um upgrade para criar mais.',
+                        message: 'Você já usou suas criações de música gratuitas. Por favor, faça um upgrade para criar mais.',
                         freeSongsUsed: existingUser.freesongsused,
                         maxFreeSongs: FREE_SONG_LIMIT,
                         requiresPayment: true
                     });
                 }
-                const identifier = userId ? `usuário ${userId}` : `dispositivo ${deviceId}`;
+                const identifier = userId
+                    ? `usuário ${userId}`
+                    : `dispositivo ${deviceId || guestId || existingUser?.device_id || 'desconhecido'}`;
                 const currentCount = existingUser?.freesongsused || 0;
                 console.log(`[PAYWALL_ALLOW] Permissão concedida para ${identifier}. Músicas usadas: ${currentCount}/${FREE_SONG_LIMIT}`);
+                // === INCREMENTAR CONTADOR IMEDIATAMENTE APÓS VERIFICAÇÃO ===
+                console.log('🎵 Incrementando contador ANTES da geração para bloquear múltiplas tentativas...');
+                const supabaseClient = getSupabaseClient();
+                const canonicalIdentifier = (guestId && guestId.trim())
+                    || (deviceId && deviceId.trim())
+                    || existingUser?.device_id
+                    || userId
+                    || clientIp
+                    || `guest-${Date.now()}`;
+                try {
+                    if (!existingUser) {
+                        // Novo usuário: criar registro com freesongsused = 1
+                        console.log('🎵 Criando novo registro em user_creations com contador = 1');
+                        const insertData = {
+                            freesongsused: 1,
+                            last_used_ip: clientIp
+                        };
+                        if (userId) {
+                            insertData.user_id = userId;
+                            insertData.device_id = userId;
+                        }
+                        else {
+                            insertData.device_id = canonicalIdentifier;
+                        }
+                        const { error: insertError } = await supabaseClient
+                            .from('user_creations')
+                            .insert(insertData);
+                        if (insertError) {
+                            console.error('[PAYWALL_DB_ERROR] Erro ao criar registro:', insertError);
+                            return res.status(500).json({
+                                success: false,
+                                error: 'Erro interno do servidor',
+                                message: 'Não foi possível processar sua solicitação.'
+                            });
+                        }
+                        else {
+                            console.log('✅ Contador criado com sucesso: 1');
+                        }
+                    }
+                    else {
+                        // Usuário existente: incrementar contador
+                        console.log('🎵 Incrementando contador do usuário existente');
+                        const newCount = (existingUser.freesongsused ?? 0) + 1;
+                        const updateData = {
+                            freesongsused: newCount,
+                            last_used_ip: clientIp || existingUser.last_used_ip
+                        };
+                        if (userId) {
+                            updateData.user_id = userId;
+                        }
+                        if (!existingUser.user_id && canonicalIdentifier) {
+                            updateData.device_id = canonicalIdentifier;
+                        }
+                        let updateQuery = supabaseClient
+                            .from('user_creations')
+                            .update(updateData);
+                        if (existingUser.user_id) {
+                            updateQuery = updateQuery.eq('user_id', existingUser.user_id);
+                        }
+                        else if (existingUser.device_id) {
+                            updateQuery = updateQuery.eq('device_id', existingUser.device_id);
+                        }
+                        else if (canonicalIdentifier) {
+                            updateQuery = updateQuery.eq('device_id', canonicalIdentifier);
+                        }
+                        const { error: updateError } = await updateQuery;
+                        if (updateError) {
+                            console.error('[PAYWALL_DB_ERROR] Erro ao incrementar contador:', updateError);
+                            return res.status(500).json({
+                                success: false,
+                                error: 'Erro interno do servidor',
+                                message: 'Não foi possível processar sua solicitação.'
+                            });
+                        }
+                        else {
+                            console.log(`✅ Contador incrementado para ${newCount}`);
+                        }
+                    }
+                }
+                catch (error) {
+                    console.error('[PAYWALL_DB_ERROR] Erro ao incrementar contador antes da geração:', error);
+                    return res.status(500).json({
+                        success: false,
+                        error: 'Erro interno do servidor',
+                        message: 'Não foi possível processar sua solicitação.'
+                    });
+                }
             }
             catch (error) {
                 console.error('[PAYWALL_DB_ERROR] Erro na verificação do paywall:', error);
@@ -766,6 +976,9 @@ router.post('/', async (req, res) => {
                     debug: process.env.NODE_ENV === 'development' ? error : undefined
                 });
             }
+        }
+        else {
+            console.log('[PAYWALL] Fluxo lyricsOnly detectado - pulando verificação de cota.');
         }
         // ===== FIM DA NOVA ORDEM DE OPERAÇÕES DO PAYWALL =====
         if (lyricsOnly) {
@@ -1057,142 +1270,8 @@ router.post('/', async (req, res) => {
                 startTime: Date.now(),
                 lastUpdate: Date.now()
             });
-            // === PASSO 4: ATUALIZAR BANCO DE DADOS (APENAS APÓS SUCESSO) ===
-            console.log('🎵 Passo 4: Atualizando banco de dados após sucesso da geração...');
-            // Obter cliente Supabase para operações de banco de dados
-            const supabaseClient = getSupabaseClient();
-            try {
-                // Validar novamente headers críticos antes de atualizar banco
-                if (!userId && !deviceId) {
-                    console.error('[PAYWALL_DB_ERROR] Headers críticos ausentes na atualização do banco');
-                    throw new Error('Identificação de usuário ou dispositivo é necessária para atualizar contadores');
-                }
-                if (!existingUser) {
-                    // Novo usuário: criar registro com freesongsused = 1
-                    console.log('🎵 Criando novo registro em user_creations com contador = 1');
-                    const insertData = {
-                        freesongsused: 1,
-                        last_used_ip: clientIp ?? null
-                    };
-                    if (userId) {
-                        insertData.user_id = userId;
-                    }
-                    if (userId) {
-                        insertData.device_id = userId;
-                    }
-                    else if (deviceId) {
-                        insertData.device_id = deviceId;
-                    }
-                    else {
-                        insertData.device_id = clientIp ?? `guest-${Date.now()}`;
-                    }
-                    if (!insertData.device_id) {
-                        // Garantir que sempre exista um identificador primário
-                        insertData.device_id = userId ?? `user-${Date.now()}`;
-                    }
-                    const { data: createdUser, error: insertError } = await supabaseClient
-                        .from('user_creations')
-                        .insert(insertData)
-                        .select('user_id, device_id, freesongsused, last_used_ip')
-                        .maybeSingle();
-                    if (insertError) {
-                        console.error('[PAYWALL_DB_ERROR] Erro ao criar registro em user_creations:', insertError);
-                        console.error('[PAYWALL_DB_ERROR] Dados tentados:', JSON.stringify(insertData, null, 2));
-                        if (insertError.code === '23505' || insertError.message?.includes('constraint')) {
-                            throw new Error(`Falha crítica na criação do usuário: ${insertError.message}`);
-                        }
-                        console.warn('[PAYWALL_DB_ERROR] Erro não crítico na criação, continuando operação');
-                    }
-                    else {
-                        existingUser = createdUser ? {
-                            user_id: createdUser.user_id ?? (userId ?? null),
-                            device_id: createdUser.device_id ?? (deviceId ?? null),
-                            freesongsused: createdUser.freesongsused ?? 1,
-                            last_used_ip: createdUser.last_used_ip ?? (clientIp ?? null)
-                        } : {
-                            user_id: userId ?? null,
-                            device_id: (deviceId ?? userId ?? `user-${Date.now()}`),
-                            freesongsused: 1,
-                            last_used_ip: clientIp ?? null
-                        };
-                        console.log('✅ Registro criado com sucesso em user_creations');
-                    }
-                }
-                else {
-                    // Usuário existente: incrementar contador
-                    console.log('🎵 Incrementando contador do usuário existente');
-                    const newCount = (existingUser.freesongsused ?? 0) + 1;
-                    const updateData = {
-                        freesongsused: newCount,
-                        last_used_ip: clientIp ?? existingUser.last_used_ip ?? null
-                    };
-                    if (userId) {
-                        updateData.user_id = userId;
-                    }
-                    if (!existingUser.user_id && deviceId) {
-                        updateData.device_id = deviceId;
-                    }
-                    let updateQuery = supabaseClient
-                        .from('user_creations')
-                        .update(updateData);
-                    if (existingUser.user_id) {
-                        updateQuery = updateQuery.eq('user_id', existingUser.user_id);
-                    }
-                    else if (existingUser.device_id) {
-                        updateQuery = updateQuery.eq('device_id', existingUser.device_id);
-                    }
-                    else if (deviceId) {
-                        updateQuery = updateQuery.eq('device_id', deviceId);
-                    }
-                    else if (clientIp) {
-                        updateQuery = updateQuery.eq('ip', clientIp);
-                    }
-                    else {
-                        throw new Error('Identificador ausente para atualizar user_creations');
-                    }
-                    const { data: updatedUser, error: updateError } = await updateQuery
-                        .select('user_id, device_id, freesongsused, last_used_ip')
-                        .maybeSingle();
-                    if (updateError) {
-                        console.error('[PAYWALL_DB_ERROR] Erro ao incrementar contador em user_creations:', updateError);
-                        console.error('[PAYWALL_DB_ERROR] Dados tentados:', JSON.stringify(updateData, null, 2));
-                        if (updateError.code === '23505' || updateError.message?.includes('constraint')) {
-                            throw new Error(`Falha crítica na atualização do contador: ${updateError.message}`);
-                        }
-                        console.warn('[PAYWALL_DB_ERROR] Erro não crítico na atualização, continuando operação');
-                    }
-                    else {
-                        existingUser = updatedUser ? {
-                            user_id: updatedUser.user_id ?? existingUser.user_id ?? null,
-                            device_id: updatedUser.device_id ?? existingUser.device_id ?? null,
-                            freesongsused: updatedUser.freesongsused ?? newCount,
-                            last_used_ip: updatedUser.last_used_ip ?? existingUser.last_used_ip ?? null
-                        } : {
-                            ...existingUser,
-                            freesongsused: newCount
-                        };
-                        console.log(`✅ Contador incrementado para ${newCount}`);
-                    }
-                }
-            }
-            catch (dbError) {
-                console.error('[PAYWALL_DB_ERROR] Erro crítico na atualização do banco de dados:', dbError);
-                console.error('[PAYWALL_DB_ERROR] Stack trace:', dbError instanceof Error ? dbError.stack : 'N/A');
-                // Para erros críticos de banco, retornar erro antes de iniciar processamento
-                if (dbError instanceof Error &&
-                    (dbError.message.includes('constraint') ||
-                        dbError.message.includes('Falha crítica') ||
-                        dbError.message.includes('Identificação de usuário'))) {
-                    return res.status(500).json({
-                        success: false,
-                        error: 'Erro interno do servidor',
-                        message: 'Não foi possível atualizar seu status de usuário. Tente novamente.',
-                        debug: process.env.NODE_ENV === 'development' ? dbError.message : undefined
-                    });
-                }
-                // Para outros erros, log mas continua (música já foi iniciada)
-                console.warn('[PAYWALL_DB_ERROR] Erro não crítico, continuando com processamento da música');
-            }
+            // === CONTADOR SERÁ INCREMENTADO APÓS GERAÇÃO BEM-SUCEDIDA ===
+            console.log('🎵 Passo 4: Contador será incrementado apenas após geração bem-sucedida');
             // Iniciar processamento em background
             processTaskInBackground(backgroundTaskId);
             // Retornar taskId imediatamente
@@ -1355,24 +1434,28 @@ async function processTaskInBackground(taskId) {
                         throw new Error(`Erro na verificação de status: ${statusResponse.status} - ${errorText}`);
                     }
                 }
-                const statusData = await statusResponse.json();
-                console.log(`✅ [${taskId}] Status dos jobs (tentativa ${attempts}):`, JSON.stringify(statusData, null, 2));
+                const statusJson = await statusResponse.json();
+                console.log(`✅ [${taskId}] Status dos jobs (tentativa ${attempts}):`, JSON.stringify(statusJson, null, 2));
                 // Verificar a estrutura da resposta da Suno API
-                if (!statusData.data) {
+                const statusPayload = statusJson;
+                if (!statusPayload.data) {
                     console.log(`❌ [${taskId}] Resposta de status inválida: campo data ausente`);
                     throw new Error('Resposta de status inválida: campo data ausente');
                 }
-                const jobData = statusData.data;
+                const jobData = statusPayload.data;
                 console.log(`🎵 [${taskId}] Status do job:`, jobData.status);
                 // Verificar se o job está completo
                 if ((jobData.status === 'SUCCESS' || jobData.status === 'FIRST_SUCCESS') && jobData.response) {
                     // Job completo - extrair os dados dos clipes
-                    const jobsArray = Array.isArray(jobData.response) ? jobData.response : [jobData.response];
+                    const jobResponse = jobData.response;
+                    const jobsArray = jobResponse
+                        ? (Array.isArray(jobResponse) ? jobResponse : [jobResponse])
+                        : [];
                     console.log(`🎵 [${taskId}] Job completo! Dados extraídos:`, JSON.stringify(jobsArray, null, 2));
                     // Processar novos clipes
                     const newAudioClips = [];
                     jobsArray.forEach((job, jobIndex) => {
-                        if (job.sunoData && Array.isArray(job.sunoData)) {
+                        if (job?.sunoData && Array.isArray(job.sunoData)) {
                             job.sunoData.forEach((clip, clipIndex) => {
                                 if (clip.audioUrl || clip.sourceAudioUrl) {
                                     const clipId = clip.id || `clip_${jobIndex}_${clipIndex}`;
@@ -1405,11 +1488,15 @@ async function processTaskInBackground(taskId) {
                         task.metadata.totalClips = task.audioClips.length;
                         task.metadata.processingTime = `${attempts} tentativas`;
                         console.log(`🎉 [${taskId}] Todas as músicas foram processadas!`);
+                        // === CONTADOR JÁ FOI INCREMENTADO ANTES DA GERAÇÃO ===
+                        console.log('✅ Contador já foi incrementado antes da geração - não é necessário incrementar novamente');
                         // Salvar automaticamente no banco de dados
                         await autoSaveSongToDatabase(task, task.metadata.userId, task.metadata.guestId);
                         // Disparar geração de capa (cover) após salvar a música
                         try {
-                            const savedSongId = task.metadata?.savedSongId;
+                            const savedSongId = typeof task.metadata?.savedSongId === 'string'
+                                ? task.metadata.savedSongId
+                                : undefined;
                             await triggerSunoCoverGeneration(task.taskId, savedSongId);
                         }
                         catch (e) {

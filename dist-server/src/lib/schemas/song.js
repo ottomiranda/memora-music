@@ -71,7 +71,7 @@ export const DatabaseSongSchema = z.object({
     image_url: z.string().nullable().optional(),
     audio_url_option1: z.string().nullable(),
     audio_url_option2: z.string().nullable(),
-    suno_task_id: z.string().nullable(),
+    suno_task_id: z.string().nullable().optional(),
     task_id: z.string().nullable().optional(),
     generation_status: z.string().default('completed'),
     webhook_received_at: z.string().nullable().optional(),

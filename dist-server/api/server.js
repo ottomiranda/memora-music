@@ -3,7 +3,10 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import path from 'path';
 import fs from 'fs';
+// Define o caminho raiz do projeto de forma robusta
+// Usa a variável de ambiente da Render se disponível, senão tenta o diretório atual.
 const candidateRoots = [process.env.RENDER_ROOT, process.cwd()].filter(Boolean);
+let projectRoot = process.cwd(); // Valor padrão
 let hasLoadedEnv = false;
 for (const root of candidateRoots) {
     try {
@@ -11,6 +14,7 @@ for (const root of candidateRoots) {
         if (fs.existsSync(envPath)) {
             dotenv.config({ path: envPath });
             console.log(`🌱 Variáveis de ambiente carregadas de ${envPath}`);
+            projectRoot = root; // Define projectRoot como o diretório onde encontrou o .env
             hasLoadedEnv = true;
             break;
         }
@@ -20,6 +24,7 @@ for (const root of candidateRoots) {
     }
 }
 if (!hasLoadedEnv) {
+    // Fallback para o comportamento padrão do dotenv
     dotenv.config();
     console.log('🌱 Variáveis de ambiente carregadas usando dotenv padrão');
 }
@@ -103,7 +108,11 @@ if (!global.musicTasks) {
 }
 // Middleware específico para webhook do Stripe (deve vir ANTES do express.json)
 app.use('/api/stripe/webhook', express.raw({ type: 'application/json' }));
-// Middleware para parsing de JSON
+// Middleware para parsing de JSON (exceto para rotas que usam multer)
+app.use('/api/generate-preview', (req, res, next) => {
+    // Pular body parsing para esta rota - será tratado pelo multer
+    next();
+});
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 // Middleware de logging

@@ -2,12 +2,13 @@ import { Router } from 'express';
 import { SongService } from '../../src/lib/services/songService.js';
 import { ListSongsQuerySchema } from '../../src/lib/schemas/song.js';
 import { optionalAuthMiddleware } from '../middleware/optionalAuth.js';
+import { requireAuthMiddleware } from '../middleware/requireAuth.js';
 const router = Router();
 /**
  * GET /api/songs
- * Lista as músicas do usuário ou convidado
+ * Lista as músicas do usuário autenticado (requer login)
  */
-router.get('/', async (req, res) => {
+router.get('/', requireAuthMiddleware, async (req, res) => {
     try {
         console.log('📋 Requisição para listar músicas:', req.query);
         // Configurar CORS
@@ -31,25 +32,18 @@ router.get('/', async (req, res) => {
                 details: validation.error.errors
             });
         }
-        const { userId, guestId, limit, offset } = validation.data;
-        let songs;
-        let stats;
-        if (userId) {
-            console.log(`🔍 Buscando músicas do usuário: ${userId}`);
-            songs = await SongService.getSongsByUser(userId, limit, offset);
-            stats = await getSongStats(userId, null);
-        }
-        else if (guestId) {
-            console.log(`🔍 Buscando músicas do convidado: ${guestId}`);
-            songs = await SongService.getSongsByGuest(guestId, limit, offset);
-            stats = await getSongStats(null, guestId);
-        }
-        else {
-            return res.status(400).json({
+        // Usar o usuário autenticado do middleware
+        const authenticatedUserId = req.user?.id;
+        if (!authenticatedUserId) {
+            return res.status(401).json({
                 success: false,
-                error: 'userId ou guestId é obrigatório'
+                error: 'Usuário não autenticado'
             });
         }
+        const { limit, offset } = validation.data;
+        console.log(`🔍 Buscando músicas do usuário autenticado: ${authenticatedUserId}`);
+        const songs = await SongService.getSongsByUser(authenticatedUserId, limit, offset);
+        const stats = await getSongStats(authenticatedUserId, null);
         console.log(`✅ Encontradas ${songs.length} músicas`);
         return res.status(200).json({
             success: true,

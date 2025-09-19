@@ -68,62 +68,94 @@ router.get('/creation-status', optionalAuthMiddleware, async (req, res) => {
     try {
         console.log('[DEBUG] Rota /creation-status atingida');
         // Extrair userId de forma segura usando optional chaining
-        const userId = req.user?.id;
+        const requestWithUser = req;
+        const userId = requestWithUser.user?.id;
         const deviceId = req.headers['x-device-id'];
         const guestId = req.headers['x-guest-id'];
         const clientIp = req.ip;
         console.log('[DEBUG] Dados de identificação:', { userId, deviceId, clientIp });
         const supabase = getSupabaseClient();
+        let foundUser = null;
         let findError = null;
-        let maxFreeSongs = 0;
-        let foundAny = false;
-        const updateMax = (value) => {
-            if (value != null) {
-                maxFreeSongs = Math.max(maxFreeSongs, value);
-                foundAny = true;
-            }
-        };
-        const accumulate = async (selector) => {
-            const { data, error } = await selector();
-            if (data) {
-                updateMax(data.freesongsused || 0);
-            }
-            if (error && error.code !== 'PGRST116') {
-                findError = error;
-            }
-        };
+        // 1) Usuário autenticado
         if (userId) {
             console.log('[DEBUG] Verificando status para usuário autenticado (prioridade 1):', userId);
-            await accumulate(() => supabase
+            // Buscar contagem de criações do usuário na tabela user_creations
+            const { data, error } = await supabase
                 .from('user_creations')
                 .select('freesongsused, device_id')
                 .eq('user_id', userId)
-                .maybeSingle());
-            if (deviceId) {
-                await accumulate(() => supabase
-                    .from('user_creations')
-                    .select('freesongsused')
-                    .eq('device_id', deviceId)
-                    .maybeSingle());
+                .maybeSingle();
+            if (data) {
+                const currentFree = data.freesongsused || 0;
+                foundUser = { freesongsused: currentFree };
+                // Se existir um deviceId atual diferente, combinar contadores
+                const candidateDeviceId = deviceId || data.device_id || null;
+                if (candidateDeviceId && (!deviceId || candidateDeviceId !== deviceId)) {
+                    const { data: mergeRow, error: mergeError } = await supabase
+                        .from('user_creations')
+                        .select('freesongsused')
+                        .eq('device_id', candidateDeviceId)
+                        .maybeSingle();
+                    if (!mergeError && mergeRow) {
+                        foundUser.freesongsused = Math.max(foundUser.freesongsused, mergeRow.freesongsused || 0);
+                    }
+                }
+            }
+            else {
+                foundUser = null;
+            }
+            // Só considerar erro se não for "nenhum resultado encontrado"
+            if (error && error.code !== 'PGRST116') {
+                findError = error;
             }
         }
+        // 2) Se não autenticado ou não encontrado, tentar pelo deviceId
         if (deviceId) {
             console.log('[DEBUG] Usuário convidado - buscando por deviceId (prioridade 2):', deviceId);
-            await accumulate(() => supabase
+            const { data, error } = await supabase
                 .from('user_creations')
                 .select('freesongsused')
                 .eq('device_id', deviceId)
-                .maybeSingle());
+                .maybeSingle();
+            if (data) {
+                const freeCount = data.freesongsused || 0;
+                if (foundUser) {
+                    foundUser.freesongsused = Math.max(foundUser.freesongsused || 0, freeCount);
+                }
+                else {
+                    foundUser = { freesongsused: freeCount };
+                }
+            }
+            // Só considerar erro se não for "nenhum resultado encontrado"
+            if (error && error.code !== 'PGRST116') {
+                findError = error;
+            }
         }
+        // 2.5) Fallback dedicado para guests identificados apenas por guestId
         if (guestId) {
             console.log('[DEBUG] Usuário convidado - fallback por guestId (prioridade 2.5):', guestId);
-            await accumulate(() => supabase
+            const { data, error } = await supabase
                 .from('user_creations')
                 .select('freesongsused')
                 .eq('device_id', guestId)
-                .maybeSingle());
+                .maybeSingle();
+            if (data) {
+                const freeCount = data.freesongsused || 0;
+                if (foundUser) {
+                    foundUser.freesongsused = Math.max(foundUser.freesongsused || 0, freeCount);
+                }
+                else {
+                    foundUser = { freesongsused: freeCount };
+                }
+            }
+            // Só considerar erro se não for "nenhum resultado encontrado"
+            if (error && error.code !== 'PGRST116') {
+                findError = error;
+            }
         }
-        if (!foundAny && clientIp) {
+        // 3) Se ainda não encontrado, fallback por IP com TTL (configurável)
+        if (!foundUser && clientIp) {
             const ttlDays = Number(process.env.IP_FALLBACK_TTL_DAYS || '7');
             const cutoff = new Date(Date.now() - ttlDays * 24 * 60 * 60 * 1000).toISOString();
             console.log('[DEBUG] Fallback por IP (prioridade 3):', { clientIp, ttlDays, cutoff });
@@ -135,12 +167,15 @@ router.get('/creation-status', optionalAuthMiddleware, async (req, res) => {
                 .gte('created_at', cutoff)
                 .order('created_at', { ascending: false })
                 .maybeSingle();
+            // Registrar métrica (attempt e se houve hit)
             recordIpFallback(!!data, ttlDays);
             if (data) {
-                updateMax(data.freesongsused || 0);
+                foundUser = { freesongsused: data.freesongsused || 0 };
             }
-            if (error)
+            // Só considerar erro se não for "nenhum resultado encontrado"
+            if (error && error.code !== 'PGRST116') {
                 findError = error;
+            }
         }
         if (findError) {
             console.error('[ERROR] Erro ao buscar usuário no Supabase:', findError);
@@ -154,7 +189,7 @@ router.get('/creation-status', optionalAuthMiddleware, async (req, res) => {
             });
             return;
         }
-        if (!foundAny) {
+        if (!foundUser) {
             // Se NENHUM usuário foi encontrado com os critérios, é um novo convidado
             console.log('[DEBUG] Nenhum usuário encontrado - novo convidado');
             res.status(200).json({
@@ -167,15 +202,18 @@ router.get('/creation-status', optionalAuthMiddleware, async (req, res) => {
             return;
         }
         // Se um usuário foi encontrado, verifique sua cota
-        const freeSongsUsed = maxFreeSongs;
-        const isFree = freeSongsUsed < 1; // Usuário é bloqueado quando freeSongsUsed >= 1
+        const FREE_SONG_LIMIT = 1;
+        const freeSongsUsed = foundUser.freesongsused || 0;
+        const isFree = freeSongsUsed < FREE_SONG_LIMIT; // Usuário é bloqueado quando freeSongsUsed >= FREE_SONG_LIMIT
         console.log('[DEBUG] Status do usuário encontrado:', { freeSongsUsed, isFree, userType: userId ? 'authenticated' : (deviceId ? 'guest_device' : 'guest_ip') });
         res.status(200).json({
             success: true,
             isFree,
             freeSongsUsed,
             message: isFree ? 'Próxima música é gratuita' : 'Próxima música será paga',
-            userType: userId ? 'authenticated' : (deviceId ? 'guest_device' : 'guest_ip')
+            userType: userId
+                ? 'authenticated'
+                : (deviceId ? 'guest_device' : (guestId ? 'guest_id' : 'guest_ip'))
         });
     }
     catch (error) {

@@ -28,9 +28,9 @@ const migrateGuestData = async (guestId) => {
 };
 export const useAuthStore = create()(persist((set, get) => ({
     user: null,
-    token: localStorage.getItem('authToken') || null,
-    isLoggedIn: !!localStorage.getItem('authToken'),
-    isLoading: false,
+    token: null, // Não ler diretamente do localStorage aqui
+    isLoggedIn: false, // Sempre iniciar como false
+    isLoading: true, // Iniciar como loading até a hidratação estar completa
     error: null,
     login: async (credentials) => {
         set({ isLoading: true, error: null });
@@ -164,7 +164,6 @@ export const useAuthStore = create()(persist((set, get) => ({
         try {
             // Limpar completamente o localStorage
             localStorage.removeItem('authToken');
-            localStorage.removeItem('deviceId');
             localStorage.removeItem('guestId');
             // Fazer signOut no Supabase de forma síncrona
             const supabase = await getSupabaseBrowserClient();
@@ -182,7 +181,8 @@ export const useAuthStore = create()(persist((set, get) => ({
         catch (error) {
             console.error('[AuthStore] Erro durante logout:', error);
             // Mesmo com erro, limpar dados locais e redirecionar
-            localStorage.clear();
+            localStorage.removeItem('authToken');
+            localStorage.removeItem('guestId');
             set({ user: null, token: null, isLoggedIn: false, error: null });
             window.location.href = '/';
         }
@@ -284,13 +284,75 @@ export const useAuthStore = create()(persist((set, get) => ({
     }),
 }));
 // Lógica de hidratação inicial para garantir que isLoggedIn esteja correto no carregamento
-useAuthStore.persist.onFinishHydration((state) => {
-    // Define isLoggedIn baseado na presença de um token válido
-    const hasValidToken = !!state.token;
-    console.log('Hidratação do authStore:', { hasToken: hasValidToken, token: state.token });
-    useAuthStore.setState({
-        isLoggedIn: hasValidToken
-    });
+console.log('[AuthStore] Configurando hidratação...');
+useAuthStore.persist.onFinishHydration(async (state) => {
+    console.log('[AuthStore] *** HIDRATAÇÃO INICIADA ***', { persistedToken: state.token });
+    try {
+        // Verificar token no localStorage também
+        const localStorageToken = localStorage.getItem('authToken');
+        const tokenToUse = state.token || localStorageToken;
+        console.log('[AuthStore] Tokens encontrados:', { persisted: state.token, localStorage: localStorageToken });
+        if (tokenToUse) {
+            try {
+                // Verificar se a sessão ainda é válida no Supabase
+                const supabase = await getSupabaseBrowserClient();
+                if (supabase) {
+                    console.log('[AuthStore] Cliente Supabase inicializado, verificando sessão...');
+                    const { data: sessionData, error } = await supabase.auth.getSession();
+                    if (!error && sessionData.session) {
+                        // Sessão válida - manter usuário logado
+                        const userData = {
+                            id: sessionData.session.user.id,
+                            email: sessionData.session.user.email || '',
+                            name: sessionData.session.user.user_metadata?.name || sessionData.session.user.email || ''
+                        };
+                        localStorage.setItem('authToken', sessionData.session.access_token);
+                        useAuthStore.setState({
+                            user: userData,
+                            token: sessionData.session.access_token,
+                            isLoggedIn: true,
+                            isLoading: false,
+                            error: null
+                        });
+                        console.log('[AuthStore] Hidratação completa - usuário autenticado:', userData);
+                        return;
+                    }
+                    else {
+                        console.log('[AuthStore] Sessão inválida ou erro:', error);
+                    }
+                }
+                else {
+                    console.error('[AuthStore] Falha ao inicializar cliente Supabase durante hidratação');
+                }
+            }
+            catch (error) {
+                console.error('[AuthStore] Erro ao verificar sessão durante hidratação:', error);
+            }
+            // Se chegou aqui, o token é inválido - limpar tudo
+            localStorage.removeItem('authToken');
+            console.log('[AuthStore] Token inválido removido durante hidratação');
+        }
+        // Finalizar hidratação como não logado
+        useAuthStore.setState({
+            user: null,
+            token: null,
+            isLoggedIn: false,
+            isLoading: false,
+            error: null
+        });
+        console.log('[AuthStore] Hidratação completa - usuário não autenticado');
+    }
+    catch (error) {
+        console.error('[AuthStore] Erro crítico durante hidratação:', error);
+        // Garantir que isLoading seja sempre false, mesmo em caso de erro
+        useAuthStore.setState({
+            user: null,
+            token: null,
+            isLoggedIn: false,
+            isLoading: false,
+            error: 'Erro durante inicialização'
+        });
+    }
 });
 // Sincronizar sessão do Supabase → authStore (renovação de token, refresh etc.)
 getSupabaseBrowserClient().then((supabase) => {
