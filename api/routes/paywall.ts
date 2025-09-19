@@ -131,8 +131,17 @@ router.get('/creation-status', optionalAuthMiddleware, async (req: Request, res:
       } else {
         foundUser = null;
       }
+      // DEBUG: Log detalhado para diagnóstico em produção
+      console.log('[PAYWALL_DEBUG] Supabase config check:', {
+        hasUrl: !!process.env.SUPABASE_URL,
+        hasKey: !!process.env.SUPABASE_SERVICE_ROLE_KEY,
+        urlLength: process.env.SUPABASE_URL?.length || 0,
+        keyLength: process.env.SUPABASE_SERVICE_ROLE_KEY?.length || 0
+      });
+
       // Só considerar erro se não for "nenhum resultado encontrado"
       if (error && error.code !== 'PGRST116') {
+        console.error('[PAYWALL_ERROR] Erro ao buscar usuário por deviceId:', JSON.stringify(error, null, 2));
         findError = error;
       }
     }
@@ -179,6 +188,7 @@ router.get('/creation-status', optionalAuthMiddleware, async (req: Request, res:
       }
       // Só considerar erro se não for "nenhum resultado encontrado"
       if (error && error.code !== 'PGRST116') {
+        console.error('[PAYWALL_ERROR] Erro ao buscar usuário por guestId:', JSON.stringify(error, null, 2));
         findError = error;
       }
     }
@@ -204,6 +214,7 @@ router.get('/creation-status', optionalAuthMiddleware, async (req: Request, res:
       }
       // Só considerar erro se não for "nenhum resultado encontrado"
       if (error && error.code !== 'PGRST116') {
+        console.error('[PAYWALL_ERROR] Erro ao buscar usuário por IP:', JSON.stringify(error, null, 2));
         findError = error;
       }
     }

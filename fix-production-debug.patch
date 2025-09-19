@@ -1,0 +1,38 @@
+--- a/api/routes/paywall.ts
++++ b/api/routes/paywall.ts
+@@ -156,8 +156,15 @@ export async function POST(req: Request) {
+     .eq('device_id', deviceId)
+     .maybeSingle();
+ 
++  // DEBUG: Log detalhado para diagnóstico em produção
++  console.log('[PAYWALL_DEBUG] Supabase config check:', {
++    hasUrl: !!process.env.SUPABASE_URL,
++    hasKey: !!process.env.SUPABASE_SERVICE_ROLE_KEY,
++    urlLength: process.env.SUPABASE_URL?.length || 0,
++    keyLength: process.env.SUPABASE_SERVICE_ROLE_KEY?.length || 0
++  });
++
+   if (error && error.code !== 'PGRST116') {
+-    console.error('[PAYWALL_ERROR] Erro ao buscar usuário por deviceId...', error);
++    console.error('[PAYWALL_ERROR] Erro ao buscar usuário por deviceId:', JSON.stringify(error, null, 2));
+     return res.status(500).json({
+       success: false,
+       error: 'Erro interno do servidor',
+@@ -180,7 +187,7 @@ export async function POST(req: Request) {
+       .maybeSingle();
+ 
+     if (error && error.code !== 'PGRST116') {
+-      console.error('[PAYWALL_ERROR] Erro ao buscar usuário por guestId...', error);
++      console.error('[PAYWALL_ERROR] Erro ao buscar usuário por guestId:', JSON.stringify(error, null, 2));
+       return res.status(500).json({
+         success: false,
+         error: 'Erro interno do servidor',
+@@ -203,7 +210,7 @@ export async function POST(req: Request) {
+       .maybeSingle();
+ 
+     if (error && error.code !== 'PGRST116') {
+-      console.error('[PAYWALL_ERROR] Erro ao buscar usuário por IP...', error);
++      console.error('[PAYWALL_ERROR] Erro ao buscar usuário por IP:', JSON.stringify(error, null, 2));
+       return res.status(500).json({
+         success: false,
+         error: 'Erro interno do servidor',
