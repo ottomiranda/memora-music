@@ -2,6 +2,9 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Importar efeitos glass customizados */
+@import './styles/glass-effects.css';
+
 /* Memora.music Design System - All colors, gradients, fonts, etc should be defined here. 
 All colors MUST be HSL.
 */
@@ -176,19 +179,78 @@ All colors MUST be HSL.
     50% { transform: translateY(-10px); }
   }
 
-  /* Animação de pulsação suave para o coração */
-  .animate-pulse-heart {
-    animation: pulse-heart 5s cubic-bezier(0.4, 0.0, 0.6, 1.0) infinite;
+  /* Animação de pulsação otimizada para o coração */
+  .memora-heart-wrapper {
+    top: calc(20% + 200px);
+    transform: translate3d(0, calc(-50% + 40px), 0);
+    will-change: transform;
   }
-  
-  @keyframes pulse-heart {
+
+  .memora-heart-ambient {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;
+    isolation: isolate;
+    --pulse-duration: 4.8s;
+  }
+
+  .memora-heart-ambient::before,
+  .memora-heart-ambient::after {
+    content: "";
+    position: absolute;
+    inset: -22%;
+    border-radius: 50%;
+    background: radial-gradient(circle at center, rgba(139, 92, 246, 0.3) 0%, rgba(139, 92, 246, 0.08) 35%, rgba(10, 10, 22, 0) 70%);
+    opacity: 0.55;
+    transform: translateZ(0) scale3d(1, 1, 1);
+    animation: heart-ambient-glow var(--pulse-duration) cubic-bezier(0.4, 0.0, 0.6, 1.0) infinite;
+    will-change: transform, opacity;
+    mix-blend-mode: screen;
+  }
+
+  .memora-heart-ambient::after {
+    background: radial-gradient(circle at center, rgba(255, 215, 0, 0.16) 0%, rgba(139, 92, 246, 0.1) 40%, rgba(10, 10, 22, 0) 75%);
+    opacity: 0.32;
+    animation-delay: calc(var(--pulse-duration) / 2);
+  }
+
+  .memora-heart-svg {
+    transform-origin: center;
+    animation: heart-pulse-scale var(--pulse-duration) cubic-bezier(0.4, 0.0, 0.6, 1.0) infinite;
+    opacity: 0.18;
+    will-change: transform, opacity;
+    backface-visibility: hidden;
+  }
+
+  @keyframes heart-pulse-scale {
     0%, 100% {
-      transform: scale(1);
-      opacity: 0.08;
+      transform: scale3d(1, 1, 1);
+      opacity: 0.18;
     }
     50% {
-      transform: scale(1.02);
-      opacity: 0.11;
+      transform: scale3d(1.03, 1.03, 1);
+      opacity: 0.28;
+    }
+  }
+
+  @keyframes heart-ambient-glow {
+    0%, 100% {
+      transform: scale3d(1, 1, 1);
+      opacity: 0.45;
+    }
+    50% {
+      transform: scale3d(1.08, 1.08, 1);
+      opacity: 0.78;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .memora-heart-ambient::before,
+    .memora-heart-ambient::after,
+    .memora-heart-svg {
+      animation: none !important;
     }
   }
 
@@ -280,6 +342,21 @@ All colors MUST be HSL.
     z-index: 0;
   }
 
+  .liquid-glass-button--gold-solid {
+    background: linear-gradient(135deg, 
+      rgba(255, 215, 0, 0.6) 0%, 
+      rgba(255, 193, 7, 0.55) 25%, 
+      rgba(255, 235, 59, 0.5) 50%, 
+      rgba(255, 193, 7, 0.55) 75%, 
+      rgba(255, 215, 0, 0.6) 100%);
+    border: 1px solid rgba(255, 215, 0, 0.4);
+    color: #333;
+    box-shadow: 
+      0 4px 16px rgba(255, 215, 0, 0.15),
+      inset 0 1px 0 rgba(255, 255, 255, 0.2);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
   .liquid-glass-button--gold::before {
     content: "";
     position: absolute;
@@ -291,16 +368,58 @@ All colors MUST be HSL.
     z-index: -1;
   }
 
+  .liquid-glass-button--gold-solid::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(135deg, 
+      rgba(255, 255, 255, 0.1) 0%, 
+      rgba(255, 255, 255, 0.2) 50%, 
+      rgba(255, 255, 255, 0.1) 100%);
+    border-radius: inherit;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    pointer-events: none;
+  }
+
   .liquid-glass-button--gold:hover {
     transform: translateY(-1px);
     box-shadow: 0 28px 56px -26px rgba(255, 205, 72, 0.82), inset 0 1px 0 rgba(255, 255, 255, 0.9);
     filter: saturate(112%);
   }
 
+  .liquid-glass-button--gold-solid:hover {
+    transform: translateY(-1px);
+    box-shadow: 
+      0 6px 24px rgba(255, 215, 0, 0.2),
+      inset 0 1px 0 rgba(255, 255, 255, 0.25);
+    border-color: rgba(255, 193, 7, 0.5);
+    background: linear-gradient(135deg, 
+      rgba(255, 193, 7, 0.65) 0%, 
+      rgba(255, 179, 0, 0.6) 25%, 
+      rgba(255, 213, 79, 0.55) 50%, 
+      rgba(255, 179, 0, 0.6) 75%, 
+      rgba(255, 193, 7, 0.65) 100%);
+  }
+
+  .liquid-glass-button--gold-solid:hover::before {
+    opacity: 1;
+  }
+
   .liquid-glass-button--gold:active {
     transform: translateY(0);
     box-shadow: 0 16px 36px -20px rgba(255, 184, 44, 0.68), inset 0 1px 0 rgba(255, 255, 255, 0.78);
     filter: saturate(100%);
+  }
+
+  .liquid-glass-button--gold-solid:active {
+    transform: translateY(0);
+    box-shadow: 
+      0 2px 8px rgba(255, 215, 0, 0.15),
+      inset 0 1px 0 rgba(255, 255, 255, 0.15);
   }
 
   .liquid-glass-card {

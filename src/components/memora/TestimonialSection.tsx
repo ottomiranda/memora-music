@@ -67,33 +67,32 @@ const TestimonialSection = () => {
         <div className="absolute top-1/2 left-1/4 w-16 h-16 border border-white/20 rounded-full" />
       </div>
 
-      {/* Coração SVG de fundo com animação de pulsação */}
-      <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-0" style={{ top: 'calc(20% + 200px)', transform: 'translateY(-50%)' }}>
-        <svg
-          viewBox="0 0 24 24"
-          fill="none"
-          className="w-72 h-72 sm:w-96 sm:h-96 md:w-[600px] md:h-[600px] lg:w-[1000px] lg:h-[1000px] opacity-8 transition-all duration-1000 animate-pulse-heart"
-          style={{
-            filter: 'blur(6px) drop-shadow(0 0 200px rgba(139, 92, 246, 0.4)) drop-shadow(0 0 300px rgba(139, 92, 246, 0.3)) drop-shadow(0 0 400px rgba(139, 92, 246, 0.2))',
-            willChange: 'transform'
-          }}
-        >
-          <path
-            d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"
-            fill="currentColor"
-            className="text-memora-primary"
-          />
-        </svg>
+      {/* Coração SVG de fundo com animação de pulsação optimizada */}
+      <div className="memora-heart-wrapper absolute inset-x-0 flex items-center justify-center pointer-events-none z-0">
+        <div className="memora-heart-ambient">
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            className="memora-heart-svg w-72 h-72 sm:w-96 sm:h-96 md:w-[600px] md:h-[600px] lg:w-[1000px] lg:h-[1000px]"
+            aria-hidden="true"
+          >
+            <path
+              d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"
+              fill="currentColor"
+              className="text-memora-primary"
+            />
+          </svg>
+        </div>
       </div>
 
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 relative">
         {/* Section Header */}
         <div className="text-center mb-16">
           <SectionTitle>
-            O que nossos usuários dizem
+            Histórias que viraram <span className="bg-gradient-to-r from-yellow-400 via-purple-500 to-purple-600 bg-clip-text text-transparent">presente</span>
           </SectionTitle>
           <SectionSubtitle className="max-w-3xl mx-auto">
-            Histórias reais de pessoas que transformaram suas memórias em música
+            Veja como nossos usuários eternizaram momentos especiais em canções personalizadas.
           </SectionSubtitle>
         </div>
 
@@ -181,7 +180,7 @@ const TestimonialSection = () => {
                 size="sm"
                 className={`w-3 h-3 rounded-full transition-all duration-300 p-0 h-3 min-w-0 ${
                   index === currentTestimonial
-                    ? 'bg-memora-secondary scale-125'
+                    ? 'bg-white/60 scale-125'
                     : 'bg-black/20 hover:bg-black/30'
                 }`}
                 aria-label={`Ir para depoimento ${index + 1}`}

@@ -1,8 +1,8 @@
-import React from 'react';
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 
 import StepIndicator from "@/components/StepIndicator";
+import ParticlesAndWaves from "@/components/memora/ParticlesAndWaves";
 import NewMusicPlayer from "@/components/NewMusicPlayer";
 import ValidationPopup from "@/components/ValidationPopup";
 import HighlightedTextarea from "@/components/HighlightedTextarea";
@@ -14,6 +14,10 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { LiquidGlassCard } from '@/components/ui/LiquidGlassCard';
+import { HeroCard, GlassInput, GlassTextarea, GlassButton, GlassButtonGroup, GlassSection } from '@/components/HeroCard';
+import { SectionTitle } from '@/components/ui/SectionTitle'
+import { SectionSubtitle } from '@/components/ui/SectionSubtitle'
 import { Play, Download, RotateCcw, ArrowLeft, ArrowRight, Music, Sparkles, Edit, Volume2, Loader2, Wand2, RefreshCw, Pause, Check, Search, X, Clock } from "lucide-react";
 import CountdownTimer from '../components/CountdownTimer';
 import { useMusicStore } from '@/store/musicStore';
@@ -185,6 +189,11 @@ export default function Criar() {
 
 
 
+  // useEffect para posicionar scroll no topo da página
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
+
   // useEffect para processar parâmetros da URL
   useEffect(() => {
     const searchParams = new URLSearchParams(location.search);
@@ -218,15 +227,54 @@ export default function Criar() {
     }
   }, [currentStep, formData.lyrics]);
 
+  useEffect(() => {
+    return () => {
+      if (saveTimerRef.current) {
+        window.clearTimeout(saveTimerRef.current);
+        saveTimerRef.current = null;
+      }
+    };
+  }, []);
+
+  const clearPendingAutoSave = () => {
+    if (saveTimerRef.current) {
+      window.clearTimeout(saveTimerRef.current);
+      saveTimerRef.current = null;
+    }
+  };
+
   // Auto‑save com debounce de 600ms
   const scheduleAutoSave = (nextLyrics: string) => {
     setSaveHint("saving");
-    if (saveTimerRef.current) window.clearTimeout(saveTimerRef.current);
+    clearPendingAutoSave();
     saveTimerRef.current = window.setTimeout(() => {
       updateFormData({ lyrics: nextLyrics });
       setSaveHint("saved");
       window.setTimeout(() => setSaveHint("idle"), 1500);
     }, 600);
+  };
+
+  const toggleLyricsEditor = () => {
+    setIsEditingLyrics((prev) => {
+      const next = !prev;
+
+      if (next) {
+        clearPendingAutoSave();
+        setLyricsDraft(formData.lyrics || "");
+        setSaveHint("idle");
+      } else {
+        clearPendingAutoSave();
+        if (lyricsDraft !== formData.lyrics) {
+          updateFormData({ lyrics: lyricsDraft });
+          setSaveHint("saved");
+          window.setTimeout(() => setSaveHint("idle"), 1500);
+        } else {
+          setSaveHint("idle");
+        }
+      }
+
+      return next;
+    });
   };
 
   // Util: escapar HTML e realçar termos encontrados
@@ -260,32 +308,33 @@ export default function Criar() {
       return;
     }
 
-    console.log('=== DEBUG HANDLE NEXT STEP ===');
-    console.log('Current step:', currentStep);
-    console.log('FormData antes da validação:', JSON.stringify(formData, null, 2));
-    
     // Validar o passo atual antes de avançar
     const validationResult = validateStep(currentStep, formData);
-    console.log('Resultado da validação:', validationResult);
     
     if (!validationResult.success) {
-      console.log('❌ Validação falhou:', validationResult.error?.issues);
-      const errorMessages = validationResult.error.issues?.map(issue => issue.message).join('\n') || 'Erro de validação';
-      console.error('Mensagens de erro:', errorMessages);
-      
-      // Se o erro tem a estrutura do Zod, usar getValidationErrors
-      if (validationResult.error && 'errors' in validationResult.error) {
-        const errors = getValidationErrors(validationResult.error);
-        setValidationErrors(errors);
-      } else {
-        // Para erros customizados (como passo inválido), mostrar no console
-        console.error('Erro de validação:', errorMessages);
-      }
+      // Usar a função getValidationErrors para processar os erros do Zod
+      const errors = getValidationErrors(validationResult.error as any);
+      setValidationErrors(errors);
       return;
     }
     
     console.log('✅ Validação passou - Avançando para próximo passo');
     setValidationErrors({});
+    
+    // Se avançou do passo História (0) para Canção (1), gerar letra automaticamente
+    if (currentStep === 0) {
+      // Avançar para a etapa 1 primeiro
+      nextStep();
+      
+      // Scroll suave para o topo da página
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      
+      // Gerar letra de forma assíncrona sem bloquear a navegação
+      setTimeout(() => {
+        generateLyrics();
+      }, 100);
+      return;
+    }
     
     // Se estamos indo para a etapa 3 (prévia), gerar a música
     if (currentStep === 2) {
@@ -330,11 +379,8 @@ export default function Criar() {
     switch (step) {
       case 0:
         return (
-          <Card>
-            <CardHeader>
-              <CardTitle>Conte sua história</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-8">
+          <HeroCard title="Conte sua história">
+            <div className="space-y-8">
               {/* Mensagem de erro global */}
               {error && (
                 <div className="bg-accent-coral/10 border border-accent-coral/20 rounded-lg p-4">
@@ -343,31 +389,26 @@ export default function Criar() {
               )}
               
               {/* A Ocasião (por categorias) */}
-              <div className="space-y-4">
-                <h3 className="text-lg font-semibold font-heading">A Ocasião</h3>
+              <GlassSection title="A Ocasião">
                 <div className="space-y-3">
-                  <Label>Qual a ocasião especial? *</Label>
+                  <Label className="text-white/90 font-medium drop-shadow-sm">Qual a ocasião especial? *</Label>
                   {/* Categorias */}
-                  <div className="flex flex-wrap gap-2">
+                  <GlassButtonGroup>
                     {occasionCategories.map(({ category }) => {
                       const active = selectedOccasionCategory === category;
                       return (
-                        <button
+                        <GlassButton
                           type="button"
                           key={category}
+                          active={active}
                           onClick={() => setSelectedOccasionCategory(category)}
-                          className={`px-3 py-1.5 rounded-full text-sm border transition-colors ${
-                            active
-                              ? 'bg-memora-primary text-white border-memora-primary'
-                              : 'bg-white/50 border-black/10 hover:border-memora-primary/40 text-neutral-gray'
-                          }`}
                           aria-pressed={active}
                         >
                           {category}
-                        </button>
+                        </GlassButton>
                       );
                     })}
-                  </div>
+                  </GlassButtonGroup>
 
                   {/* Opções da categoria selecionada */}
                   <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2 mt-2">
@@ -376,69 +417,59 @@ export default function Criar() {
                       .items.map((item) => {
                         const active = formData.occasion === item;
                         return (
-                          <button
+                          <GlassButton
                             type="button"
                             key={item}
+                            active={active}
                             onClick={() => handleFieldUpdate('occasion', item)}
-                            className={`text-sm px-3 py-2 rounded-xl border transition-colors text-left ${
-                              active
-                                ? 'bg-memora-primary text-white border-memora-primary'
-                                : 'bg-white/60 border-black/10 hover:border-memora-primary/40 text-neutral-gray'
-                            }`}
+                            className="text-left"
                           >
                             {item}
-                          </button>
+                          </GlassButton>
                         );
                       })}
                   </div>
 
                   {validationErrors.occasion && (
-                    <p className="text-sm text-accent-coral mt-1">{validationErrors.occasion}</p>
+                    <p className="text-sm text-red-300/90 drop-shadow-sm">{validationErrors.occasion}</p>
                   )}
                 </div>
-              </div>
+              </GlassSection>
 
               {/* Sobre a(s) Pessoa(s) */}
-              <div className="space-y-4">
-                <h3 className="text-lg font-semibold font-heading">Sobre a(s) Pessoa(s)</h3>
+              <GlassSection title="Sobre a(s) Pessoa(s)">
                 <div className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="recipientName">Qual o nome da pessoa para quem está a criar esta música? *</Label>
-                    <Input
-                      id="recipientName"
-                      placeholder="Ex: Maria"
-                      value={formData.recipientName}
-                      onChange={(e) => handleFieldUpdate('recipientName', e.target.value)}
-                      className={validationErrors.recipientName ? 'border-accent-coral focus:ring-accent-coral' : ''}
-                    />
-                    {validationErrors.recipientName && (
-                      <p className="text-sm text-accent-coral mt-1">{validationErrors.recipientName}</p>
-                    )}
-                  </div>
+                  <GlassInput
+                    id="recipientName"
+                    label="Qual o nome da pessoa para quem está a criar esta música? *"
+                    placeholder="Ex: Maria"
+                    value={formData.recipientName}
+                    onChange={(e) => handleFieldUpdate('recipientName', e.target.value)}
+                    error={validationErrors.recipientName}
+                  />
+                  {validationErrors.recipientName && (
+                    <p className="text-sm text-red-300/90 drop-shadow-sm">{validationErrors.recipientName}</p>
+                  )}
                   
                   <div className="space-y-2">
-                    <Label>Qual a vossa relação? *</Label>
+                    <Label className="text-white/90 font-medium drop-shadow-sm">Qual a vossa relação? *</Label>
                     {/* Categorias de relação */}
-                    <div className="flex flex-wrap gap-2">
+                    <GlassButtonGroup>
                       {relationshipCategories.map(({ category }) => {
                         const active = selectedRelationshipCategory === category;
                         return (
-                          <button
+                          <GlassButton
                             type="button"
                             key={category}
+                            active={active}
                             onClick={() => setSelectedRelationshipCategory(category)}
-                            className={`px-3 py-1.5 rounded-full text-sm border transition-colors ${
-                              active
-                                ? 'bg-memora-primary text-white border-memora-primary'
-                                : 'bg-white/50 border-black/10 hover:border-memora-primary/40 text-neutral-gray'
-                            }`}
                             aria-pressed={active}
                           >
                             {category}
-                          </button>
+                          </GlassButton>
                         );
                       })}
-                    </div>
+                    </GlassButtonGroup>
 
                     {/* Opções da categoria selecionada */}
                     <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2 mt-2">
@@ -447,107 +478,97 @@ export default function Criar() {
                         .items.map((item) => {
                           const active = formData.relationship === item;
                           return (
-                            <button
+                            <GlassButton
                               type="button"
                               key={item}
+                              active={active}
                               onClick={() => handleFieldUpdate('relationship', item)}
-                              className={`text-sm px-3 py-2 rounded-xl border transition-colors text-left ${
-                                active
-                                  ? 'bg-memora-primary text-white border-memora-primary'
-                                  : 'bg-white/60 border-black/10 hover:border-memora-primary/40 text-neutral-gray'
-                              }`}
+                              className="text-left"
                             >
                               {item}
-                            </button>
+                            </GlassButton>
                           );
                         })}
                     </div>
 
                     {validationErrors.relationship && (
-                      <p className="text-sm text-accent-coral mt-1">{validationErrors.relationship}</p>
+                      <p className="text-sm text-red-300/90 drop-shadow-sm">{validationErrors.relationship}</p>
                     )}
                   </div>
                   
-                  <div className="space-y-2">
-                    <Label htmlFor="senderName">Qual o seu nome?</Label>
-                    <Input
-                      id="senderName"
-                      placeholder="Ex: João"
-                      value={formData.senderName}
-                      onChange={(e) => handleFieldUpdate('senderName', e.target.value)}
-                    />
-                  </div>
-                </div>
-              </div>
-
-              {/* Detalhes e Personalidade */}
-              <div className="space-y-4">
-                <h3 className="text-lg font-semibold font-heading">Detalhes e Personalidade</h3>
-                <div className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="hobbies">Fale-nos sobre os seus hobbies e interesses!</Label>
-                    <Textarea
-                      id="hobbies"
-                      placeholder="Ex: Adora cozinhar, fazer caminhadas na natureza, ler livros de ficção..."
-                      value={formData.hobbies}
-                      onChange={(e) => handleFieldUpdate('hobbies', e.target.value)}
-                      rows={3}
-                      className="resize-none"
-                    />
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <Label htmlFor="qualities">Quais as qualidades que você mais admira nessa pessoa?</Label>
-                    <Textarea
-                      id="qualities"
-                      placeholder="Ex: É muito generosa, sempre disposta a ajudar, tem um sorriso contagiante..."
-                      value={formData.qualities}
-                      onChange={(e) => handleFieldUpdate('qualities', e.target.value)}
-                      rows={3}
-                      className="resize-none"
-                    />
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <Label htmlFor="uniqueTraits">O que a torna única ou especial? Tem algum hábito engraçado ou interessante?</Label>
-                    <Textarea
-                      id="uniqueTraits"
-                      placeholder="Ex: Sempre canta no chuveiro, coleciona postais de viagens, faz as melhores panquecas..."
-                      value={formData.uniqueTraits}
-                      onChange={(e) => handleFieldUpdate('uniqueTraits', e.target.value)}
-                      rows={3}
-                      className="resize-none"
-                    />
-                  </div>
-                </div>
-              </div>
-
-              {/* Memórias e Histórias */}
-              <div className="space-y-4">
-                <h3 className="text-lg font-semibold font-heading">Memórias e Histórias</h3>
-                <div className="space-y-2">
-                  <Label htmlFor="memories">Partilhe as vossas histórias ou memórias favoritas que gostaria de incluir na música.</Label>
-                  <Textarea
-                    id="memories"
-                    placeholder="Uma é suficiente. Mais é melhor."
-                    value={formData.memories}
-                    onChange={(e) => handleFieldUpdate('memories', e.target.value)}
-                    rows={4}
-                    className="resize-none"
+                  <GlassInput
+                    id="senderName"
+                    label="Qual o seu nome?"
+                    placeholder="Ex: João"
+                    value={formData.senderName}
+                    onChange={(e) => handleFieldUpdate('senderName', e.target.value)}
                   />
                 </div>
-              </div>
-            </CardContent>
-          </Card>
+              </GlassSection>
+
+              {/* Detalhes e Personalidade */}
+              <GlassSection title="Detalhes e Personalidade">
+                <div className="space-y-4">
+                  <GlassTextarea
+                    id="hobbies"
+                    label="Fale-nos sobre os seus hobbies e interesses! *"
+                    placeholder="Ex: Adora cozinhar, fazer caminhadas na natureza, ler livros de ficção..."
+                    value={formData.hobbies}
+                    onChange={(e) => handleFieldUpdate('hobbies', e.target.value)}
+                    rows={3}
+                  />
+                  {validationErrors.hobbies && (
+                    <p className="text-sm text-red-300/90 drop-shadow-sm">{validationErrors.hobbies}</p>
+                  )}
+                  
+                  <GlassTextarea
+                    id="qualities"
+                    label="Quais as qualidades que você mais admira nessa pessoa? *"
+                    placeholder="Ex: É muito generosa, sempre disposta a ajudar, tem um sorriso contagiante..."
+                    value={formData.qualities}
+                    onChange={(e) => handleFieldUpdate('qualities', e.target.value)}
+                    rows={3}
+                  />
+                  {validationErrors.qualities && (
+                    <p className="text-sm text-red-300/90 drop-shadow-sm">{validationErrors.qualities}</p>
+                  )}
+                  
+                  <GlassTextarea
+                    id="uniqueTraits"
+                    label="O que a torna única ou especial? Tem algum hábito engraçado ou interessante? *"
+                    placeholder="Ex: Sempre canta no chuveiro, coleciona postais de viagens, faz as melhores panquecas..."
+                    value={formData.uniqueTraits}
+                    onChange={(e) => handleFieldUpdate('uniqueTraits', e.target.value)}
+                    rows={3}
+                  />
+                  {validationErrors.uniqueTraits && (
+                    <p className="text-sm text-red-300/90 drop-shadow-sm">{validationErrors.uniqueTraits}</p>
+                  )}
+                </div>
+              </GlassSection>
+
+              {/* Memórias e Histórias */}
+              <GlassSection title="Memórias e Histórias">
+                <GlassTextarea
+                  id="memories"
+                  label="Partilhe as vossas histórias ou memórias favoritas que gostaria de incluir na música. *"
+                  placeholder="Uma é suficiente. Mais é melhor."
+                  value={formData.memories}
+                  onChange={(e) => handleFieldUpdate('memories', e.target.value)}
+                  rows={4}
+                />
+                {validationErrors.memories && (
+                  <p className="text-sm text-red-300/90 drop-shadow-sm">{validationErrors.memories}</p>
+                )}
+              </GlassSection>
+            </div>
+          </HeroCard>
         );
       
       case 1:
         return (
-          <Card>
-            <CardHeader>
-              <CardTitle>Letra da sua música</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-6">
+          <HeroCard title="Letra da sua música">
+            <div className="space-y-6">
               {!formData.lyrics && !isLoading && (
                 <div className="text-center space-y-4">
                   <p className="text-muted-foreground">
@@ -590,7 +611,7 @@ export default function Criar() {
 
               {formData.lyrics && !isLoading && (
                 <div className="space-y-4">
-                  <div className="bg-muted p-4 sm:p-6 rounded-lg">
+                  <LiquidGlassCard variant="primary" className="p-4 sm:p-6">
                     <div className="flex items-start justify-between mb-3">
                       <h3 className="font-heading font-semibold flex items-center gap-2">
                         <Music className="w-5 h-5 text-primary" />
@@ -598,9 +619,10 @@ export default function Criar() {
                       </h3>
                       <button
                         type="button"
-                        onClick={() => setIsEditingLyrics((v) => !v)}
+                        onClick={toggleLyricsEditor}
                         className="inline-flex items-center gap-2 text-sm px-3 py-1.5 rounded-md bg-white/70 hover:bg-white shadow"
                         aria-label={isEditingLyrics ? 'Fechar edição' : 'Editar letra'}
+                        aria-pressed={isEditingLyrics}
                       >
                         {isEditingLyrics ? <X className="w-4 h-4" /> : <Edit className="w-4 h-4" />}
                         {isEditingLyrics ? 'Fechar' : 'Editar'}
@@ -661,10 +683,10 @@ export default function Criar() {
                           rows={14}
                           highlightQuery={findText}
                           className="w-full"
-                        />
+                        />  
                       </div>
                     )}
-                  </div>
+                  </LiquidGlassCard>
                   
                   <div className="flex flex-col sm:flex-row gap-3">
                     <Button 
@@ -702,8 +724,8 @@ export default function Criar() {
                   </p>
                 </div>
               )}
-            </CardContent>
-          </Card>
+            </div>
+          </HeroCard>
         );
       
       case 2:
@@ -1004,29 +1026,30 @@ export default function Criar() {
         <div className="container mx-auto px-4">
           <div className="max-w-2xl mx-auto">
             <div className="text-center mb-8">
-              <h1 className="text-3xl md:text-4xl font-bold font-heading mb-4">
-                Criar sua <span className="bg-gradient-music bg-clip-text text-transparent">música personalizada</span>
-              </h1>
-              <p className="text-muted-foreground">
-                Siga os passos abaixo para criar sua canção única
-              </p>
+              <SectionTitle>Dê <span className="bg-gradient-to-r from-yellow-400 to-purple-600 bg-clip-text text-transparent">vida</span> à sua <span className="bg-gradient-to-r from-yellow-400 to-purple-600 bg-clip-text text-transparent">canção</span></SectionTitle>
+              <SectionSubtitle>
+          Compartilhe sentimentos, escolha o estilo e receba sua música final em minutos.
+        </SectionSubtitle>
             </div>
             
             <StepIndicator steps={steps} currentStep={currentStep} />
+            
+            <ParticlesAndWaves className="h-32 -mt-4" maxParticles={60} reducedMotion={false} disableWaves={true} />
             
             <div className="space-y-6">
               {renderStepContent(currentStep, isLoading, musicStore.audioClips || [])}
               
               {/* Navigation Buttons */}
-              <div className="flex justify-between">
-                <Button
-                  variant="outline"
-                  onClick={handlePrevStep}
-                  disabled={currentStep === 0}
-                >
-                  <ArrowLeft className="w-4 h-4" />
-                  Anterior
-                </Button>
+              <div className={`flex ${currentStep === 0 ? 'justify-end' : 'justify-between'}`}>
+                {currentStep > 0 && (
+                  <Button
+                    variant="outline"
+                    onClick={handlePrevStep}
+                  >
+                    <ArrowLeft className="w-4 h-4" />
+                    Anterior
+                  </Button>
+                )}
                 
                 {currentStep < steps.length - 1 ? (
                   currentStep === 1 ? (

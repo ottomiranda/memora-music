@@ -4,7 +4,7 @@ import { cva, type VariantProps } from "class-variance-authority";
 
 const liquidGlassVariants = cva(
   // Base styles - Liquid Glass effect
-  "relative overflow-hidden backdrop-blur-xl border border-white/20 shadow-2xl transition-all duration-300 ease-out",
+  "relative overflow-hidden backdrop-blur-xl border border-white/20 shadow-2xl transition-all duration-300 ease-out before:pointer-events-none",
   {
     variants: {
       variant: {

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { PenTool, Sparkles, Share2 } from "lucide-react";
+import { Heart, Music, Gift, Sparkles } from "lucide-react";
 import { SectionSubtitle } from '@/components/ui/SectionSubtitle';
 import { SectionTitle } from '@/components/ui/SectionTitle';
 import { LiquidGlassCard } from "@/components/ui/LiquidGlassCard";
@@ -11,26 +11,26 @@ const HowItWorks = () => {
   const steps = [
     {
       number: "1",
-      icon: PenTool,
+      icon: Heart,
       title: "Conte sua história",
       description: "Escreva a ocasião e sentimentos que você quer transformar em música.",
-      details: "Nossa IA analisa suas palavras para capturar a essência emocional da sua história.",
+      details: "Compartilhe detalhes sobre a pessoa, momento ou ocasião especial que você quer eternizar em música.",
       color: "memora-primary"
     },
     {
       number: "2",
-      icon: Sparkles,
+      icon: Music,
       title: "A IA cria sua música",
       description: "Letra e melodia únicas, em menos de 5 minutos.",
-      details: "Algoritmos avançados compõem uma canção personalizada baseada na sua narrativa.",
+      details: "Nossa inteligência artificial analisa sua história e compõe uma música única com melodia e letra personalizadas.",
       color: "memora-secondary"
     },
     {
       number: "3",
-      icon: Share2,
+      icon: Gift,
       title: "Ouça e compartilhe",
-      description: "Receba uma prévia e baixe em MP3.",
-      details: "Sua música está pronta para emocionar e ser compartilhada com quem você ama.",
+      description: "Escute uma prévia e baixe em MP3.",
+      details: "Baixe sua música personalizada em alta qualidade e compartilhe esse presente único com quem você ama.",
       color: "memora-coral"
     }
   ];
@@ -58,8 +58,8 @@ const HowItWorks = () => {
       <div className="container mx-auto px-4">
         {/* Header */}
         <div className="text-center mb-16">
-          <SectionTitle>Como funciona</SectionTitle>
-          <SectionSubtitle>Transforme suas memórias em música em apenas 3 passos simples</SectionSubtitle>
+          <SectionTitle>Como a <span className="bg-gradient-to-r from-yellow-500 to-purple-600 bg-clip-text text-transparent">magia</span> acontece</SectionTitle>
+          <SectionSubtitle>Nosso processo transforma suas memórias em obras musicais personalizadas em apenas 3 passos simples</SectionSubtitle>
         </div>
 
         {/* Interactive Timeline */}
@@ -94,9 +94,9 @@ const HowItWorks = () => {
                         : 'bg-white/10 backdrop-blur-sm border-2 border-white/20 hover:border-memora-primary/50'
                     }`}
                   >
-                    <IconComponent className={`w-7 h-7 transition-colors duration-300 ${
-                      isActive || isPassed ? 'text-white' : 'text-memora-primary'
-                    }`} />
+                    <IconComponent className={`w-6 h-6 transition-colors duration-300 ${
+                        isActive || isPassed ? 'text-white' : 'text-yellow-500'
+                      }`} />
                     
                     {/* Step Number Badge */}
                     <div className={`absolute -top-2 -right-2 w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold transition-all duration-300 ${

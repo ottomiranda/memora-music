@@ -24,6 +24,7 @@ const buttonVariants = cva(
         turquoise: "bg-accent-turquoise text-accent-turquoise-foreground hover:bg-accent-turquoise/90 shadow-soft",
         glass: "liquid-glass-button bg-transparent text-white",
         glassGold: "liquid-glass-button--gold",
+        glassGoldSolid: "liquid-glass-button--gold-solid",
       },
       size: {
         default: "h-10 px-4 py-2",

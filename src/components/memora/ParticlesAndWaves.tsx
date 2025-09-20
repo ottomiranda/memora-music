@@ -7,6 +7,7 @@ interface ParticlesAndWavesProps {
   className?: string;
   reducedMotion?: boolean;
   maxParticles?: number;
+  disableWaves?: boolean;
 }
 
 // Noise functions adapted from the original script
@@ -178,10 +179,13 @@ class ParticlesAnimation {
   private frameCount: number = 0;
   private targetFPS: number = 60;
 
-  constructor(canvas: HTMLCanvasElement, maxParticles: number = 100, reducedMotion: boolean = false) {
+  private disableWaves: boolean;
+
+  constructor(canvas: HTMLCanvasElement, maxParticles: number = 100, reducedMotion: boolean = false, disableWaves: boolean = false) {
     this.canvas = canvas;
     this.maxParticles = maxParticles;
     this.reducedMotion = reducedMotion;
+    this.disableWaves = disableWaves;
     this.stage = new createjs.Stage(canvas);
     this.waveContainer = new createjs.Container();
     this.particleContainer = new createjs.Container();
@@ -214,6 +218,9 @@ class ParticlesAnimation {
   }
 
   private createWaves(): void {
+    // Skip wave creation if disabled
+    if (this.disableWaves) return;
+    
     // Create waves even with reduced motion, but with simpler animation
     // if (this.reducedMotion) return;
     
@@ -361,7 +368,7 @@ class ParticlesAnimation {
       this.time += 2; // Incremento dobrado para movimento mais rápido e visível
       this.frameCount++;
       
-      // Update waves every frame for smooth animation
+      // Update waves every frame for smooth animation (only if not disabled)
       this.createWaves();
       
       this.emitParticles();
@@ -407,7 +414,8 @@ class ParticlesAnimation {
 const ParticlesAndWaves: React.FC<ParticlesAndWavesProps> = ({ 
   className = '', 
   reducedMotion, 
-  maxParticles = 100 
+  maxParticles = 100,
+  disableWaves = false
 }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const animationRef = useRef<ParticlesAnimation | null>(null);
@@ -428,7 +436,8 @@ const ParticlesAndWaves: React.FC<ParticlesAndWavesProps> = ({
     animationRef.current = new ParticlesAnimation(
       canvasRef.current, 
       adjustedMaxParticles, 
-      prefersReducedMotion
+      prefersReducedMotion,
+      disableWaves
     );
     animationRef.current.start();
 
@@ -489,7 +498,7 @@ const ParticlesAndWaves: React.FC<ParticlesAndWavesProps> = ({
         animationRef.current.destroy();
       }
     };
-  }, [reducedMotion, maxParticles]);
+  }, [reducedMotion, maxParticles, disableWaves]);
 
   return (
     <div 

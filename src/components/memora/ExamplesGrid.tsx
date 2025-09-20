@@ -131,6 +131,7 @@ const ExamplesGrid = () => {
     {
       id: "aniversario",
       title: "Aniversário",
+      subtitle: "Transforme momentos especiais em melodias inesquecíveis",
       image: "https://trae-api-us.mchost.guru/api/ide/v1/text_to_image?prompt=birthday%20celebration%20brazilian%20diverse%20family%20colorful%20balloons%20cake%20warm%20lighting%20joyful%20atmosphere%20mixed%20ethnicity&image_size=square",
       icon: Gift,
       color: "memora-primary"
@@ -138,6 +139,7 @@ const ExamplesGrid = () => {
     {
       id: "casamento",
       title: "Casamento",
+      subtitle: "Celebre o amor com uma canção única",
       image: "https://trae-api-us.mchost.guru/api/ide/v1/text_to_image?prompt=elegant%20wedding%20ceremony%20brazilian%20couple%20diverse%20ethnicity%20flowers%20rings%20romantic%20atmosphere%20soft%20lighting%20cultural%20diversity&image_size=square",
       icon: Heart,
       color: "memora-coral"
@@ -145,6 +147,7 @@ const ExamplesGrid = () => {
     {
       id: "amor",
       title: "Canção de Amor",
+      subtitle: "Declare seu amor com uma melodia personalizada",
       image: "https://trae-api-us.mchost.guru/api/ide/v1/text_to_image?prompt=romantic%20brazilian%20couple%20mixed%20ethnicity%20holding%20hands%20walking%20together%20sunset%20golden%20hour%20love%20intimate%20moment%20cultural%20diversity&image_size=square",
       icon: Heart,
       color: "memora-coral"
@@ -152,6 +155,7 @@ const ExamplesGrid = () => {
     {
       id: "aniversario-casamento",
       title: "Aniversário de Casamento",
+      subtitle: "Renove os votos de amor com uma canção personalizada",
       image: "https://trae-api-us.mchost.guru/api/ide/v1/text_to_image?prompt=wedding%20anniversary%20celebration%20mature%20couple%20diverse%20ethnicity%20golden%20rings%20flowers%20elegant%20romantic%20dinner%20candlelight%20intimate%20setting&image_size=square",
       icon: Calendar,
       color: "memora-secondary"
@@ -159,6 +163,7 @@ const ExamplesGrid = () => {
     {
       id: "so-porque",
       title: "Só porque…",
+      subtitle: "Demonstre carinho sem motivo especial com música",
       image: "https://trae-api-us.mchost.guru/api/ide/v1/text_to_image?prompt=spontaneous%20gesture%20love%20couple%20diverse%20ethnicity%20surprise%20gift%20warm%20colors%20heartfelt%20moment%20romantic%20atmosphere&image_size=square",
       icon: Heart,
       color: "memora-turquoise"
@@ -166,6 +171,7 @@ const ExamplesGrid = () => {
     {
       id: "proposta",
       title: "Proposta",
+      subtitle: "Torne o pedido inesquecível com a canção perfeita",
       image: "https://trae-api-us.mchost.guru/api/ide/v1/text_to_image?prompt=romantic%20marriage%20proposal%20scene%20in%20cozy%20living%20room%20with%20warm%20lighting%20man%20kneeling%20with%20ring%20woman%20surprised%20elegant%20home%20decor%20soft%20romantic%20atmosphere%20beautiful%20couple%20intimate%20moment%20television%20showing%20memories%20photos%20on%20wall%20rose%20petals%20on%20floor&image_size=square",
       icon: Gift,
       color: "memora-accent"
@@ -173,6 +179,7 @@ const ExamplesGrid = () => {
     {
       id: "graduacao",
       title: "Graduação",
+      subtitle: "Marque sua conquista com uma música personalizada",
       image: "https://trae-api-us.mchost.guru/api/ide/v1/text_to_image?prompt=graduation%20ceremony%20happy%20student%20cap%20gown%20university%20celebration%20diploma%20academic%20achievement%20diverse%20ethnicity%20joyful%20moment%20campus%20background%20festive%20atmosphere&image_size=square",
       icon: Users,
       color: "memora-secondary"
@@ -180,6 +187,7 @@ const ExamplesGrid = () => {
     {
       id: "melhores-amigos",
       title: "Melhores Amigos",
+      subtitle: "Celebre a amizade verdadeira com uma canção especial",
       image: "https://trae-api-us.mchost.guru/api/ide/v1/text_to_image?prompt=group%20friends%20diverse%20ethnicities%20laughing%20together%20outdoor%20picnic%20friendship%20celebration%20joyful%20bonding%20sunset%20park%20casual%20clothes&image_size=square",
       icon: Users,
       color: "memora-turquoise"
@@ -187,6 +195,7 @@ const ExamplesGrid = () => {
     {
       id: "noivado",
       title: "Noivado",
+      subtitle: "Marque o início de uma nova jornada com música",
       image: "https://trae-api-us.mchost.guru/api/ide/v1/text_to_image?prompt=engagement%20celebration%20happy%20couple%20mixed%20ethnicity%20champagne%20rings%20joyful%20atmosphere%20romantic%20dinner&image_size=square",
       icon: Users,
       color: "memora-primary"
@@ -194,6 +203,7 @@ const ExamplesGrid = () => {
     {
       id: "dia-pais",
       title: "Dia dos Pais",
+      subtitle: "Expresse gratidão através de uma música única",
       image: "https://trae-api-us.mchost.guru/api/ide/v1/text_to_image?prompt=brazilian%20father%20diverse%20ethnicity%20playing%20with%20child%20outdoor%20park%20paternal%20bond%20family%20joy%20father%20day%20celebration%20cultural%20diversity&image_size=square",
       icon: Heart,
       color: "memora-primary"
@@ -201,6 +211,7 @@ const ExamplesGrid = () => {
     {
       id: "dia-maes",
       title: "Dia das Mães",
+      subtitle: "Homenageie quem mais ama com uma canção especial",
       image: "https://trae-api-us.mchost.guru/api/ide/v1/text_to_image?prompt=mother%20diverse%20ethnicity%20hugging%20child%20garden%20flowers%20maternal%20love%20mother%20day%20warm%20sunlight%20tender%20moment&image_size=square",
       icon: Heart,
       color: "memora-coral"
@@ -208,6 +219,7 @@ const ExamplesGrid = () => {
     {
       id: "natal",
       title: "Natal",
+      subtitle: "Espalhe a magia natalina através de uma melodia única",
       image: "https://trae-api-us.mchost.guru/api/ide/v1/text_to_image?prompt=christmas%20celebration%20family%20diverse%20ethnicities%20decorated%20tree%20lights%20gifts%20cozy%20living%20room%20festive%20warm%20atmosphere%20holiday%20gathering&image_size=square",
       icon: Gift,
       color: "memora-secondary"
@@ -232,7 +244,7 @@ const ExamplesGrid = () => {
         {/* Header */}
         <div className="text-center mb-16">
           <SectionTitle>
-            Momentos que viram canção
+            Momentos que <span className="bg-gradient-to-r from-yellow-500 to-purple-600 bg-clip-text text-transparent">merecem</span> uma <span className="bg-gradient-to-r from-yellow-500 to-purple-600 bg-clip-text text-transparent">música</span>
           </SectionTitle>
           <SectionSubtitle>Há algo especial no poder das músicas de unir as pessoas e tornar momentos ainda mais significativos.</SectionSubtitle>
         </div>
@@ -274,6 +286,7 @@ export default ExamplesGrid;
 type Example = {
   id: string;
   title: string;
+  subtitle: string;
   image: string;
   icon: any;
   color: string;
@@ -394,17 +407,20 @@ function ExamplesSwiper({
                   <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/20 to-transparent" />
 
                   {/* Text + CTA (vertically centered) */}
-                  <div className="absolute inset-0 flex flex-col justify-center pl-6 sm:pl-10 pr-6">
-                    <h3 className="font-heading text-white font-semibold drop-shadow-sm text-xl sm:text-2xl md:text-3xl lg:text-4xl max-w-[75%]">
+                  <div className="absolute inset-0 flex flex-col justify-center pl-8 sm:pl-12 pr-8 py-2">
+                    <h3 className="font-heading text-white font-semibold drop-shadow-sm text-xl sm:text-2xl md:text-3xl lg:text-4xl max-w-[75%] mb-2">
                       {example.title}
                     </h3>
-                  <div className="mt-4">
+                    <p className="text-white/80 text-sm sm:text-base mt-2 max-w-[85%] drop-shadow-sm">
+                      {example.subtitle}
+                    </p>
+                  <div className="mt-6">
                     <button
                       onClick={() => {
                         void handleCardPlay(example.id, song);
                       }}
                       disabled={isLoading}
-                      className={`inline-flex items-center gap-2 rounded-2xl px-5 py-2.5 text-sm sm:text-base font-semibold transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-white/60 shadow-[inset_0_1px_0_rgba(255,255,255,0.3)] ${
+                      className={`inline-flex items-center gap-2 rounded-lg px-5 py-2.5 text-sm sm:text-base font-semibold transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-white/60 shadow-[inset_0_1px_0_rgba(255,255,255,0.3)] ${
                         isCardPlaying || simulatedPlaying
                           ? "bg-white text-neutral-900"
                           : "bg-white/20 hover:bg-white/30 text-white border border-white/40 backdrop-blur"
@@ -413,7 +429,7 @@ function ExamplesSwiper({
                     >
                       <span className="tracking-wide">{isLoading ? 'Carregando...' : 'Ouça agora'}</span>
                       <span className={`ml-1 inline-flex h-5 w-5 items-center justify-center rounded-full ${
-                        (isCardPlaying || simulatedPlaying) ? "bg-neutral-900 text-white" : "bg-white/80 text-neutral-900"
+                        (isCardPlaying || simulatedPlaying) ? "bg-neutral-900 text-white" : "bg-yellow-400 text-neutral-900"
                       }`}>
                         {isLoading ? (
                           <div className="h-3.5 w-3.5 border-2 border-current/40 border-t-current rounded-full animate-spin" />

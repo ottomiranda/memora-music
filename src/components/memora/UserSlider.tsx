@@ -351,10 +351,10 @@ export default function UserSlider() {
         .user-slider .swiper-pagination-bullet-active {
           width: 22px;
           height: 8px;
-          background: #e23b3b;
+          background: rgba(255, 255, 255, 0.8);
           border-radius: 9999px;
           transform: none;
-          box-shadow: 0 0 8px rgba(226, 59, 59, 0.5);
+          box-shadow: 0 0 10px rgba(255, 255, 255, 0.4);
         }
 
         /* Responsividade */

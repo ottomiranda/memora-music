@@ -1,5 +1,7 @@
 import { Sparkles } from "lucide-react";
 import { LiquidGlassButton } from "@/components/ui/LiquidGlassButton";
+import { GlobalTextField } from "@/components/ui/GlobalTextField";
+import { HeroCard } from "@/components/ui/HeroCard";
 import { useNavigate } from "react-router-dom";
 import { useMusicStore } from "@/store/musicStore";
 import { useAuthStore } from "@/store/authStore";
@@ -48,7 +50,7 @@ const Hero = () => {
 
           {/* CTA Card */}
           <div className="relative mt-8 text-center">
-            <div className="inline-flex flex-col items-center gap-6 bg-gradient-to-br from-purple-900/30 via-indigo-900/25 to-pink-900/20 backdrop-blur-xl border border-white/20 rounded-3xl px-12 py-10 shadow-2xl shadow-purple-500/10 hover:shadow-purple-500/20 transition-all duration-300 max-w-2xl mx-auto">
+            <HeroCard>
               <div className="text-center space-y-3">
                 <h3 className="text-white text-xl sm:text-2xl font-bold font-heading leading-tight">
                   Vamos começar?
@@ -58,13 +60,11 @@ const Hero = () => {
               {/* Input and Primary CTA */}
               <div className="flex flex-col lg:flex-row gap-4 justify-center items-center lg:items-end w-full">
                 <div className="flex flex-col w-full lg:w-auto">
-                  <input
+                  <GlobalTextField
                     id="recipient-name"
-                    type="text"
                     value={recipientName}
                     onChange={(e) => setRecipientName(e.target.value)}
                     placeholder="Digite o nome aqui"
-                    className="bg-white/10 backdrop-blur-sm border border-white/20 rounded-2xl px-6 h-[54px] text-white placeholder-white/60 focus:outline-none focus:ring-2 focus:ring-[#FEC641] focus:border-transparent transition-all duration-300 text-lg w-full lg:w-[280px]"
                     aria-describedby="recipient-name-description"
                   />
                   <span id="recipient-name-description" className="sr-only">
@@ -86,7 +86,7 @@ const Hero = () => {
               <p className="text-white/70 text-sm font-medium text-center">
                 ✨ Grátis na primeira criação - Sem cartão necessário
               </p>
-            </div>
+            </HeroCard>
           </div>
 
 

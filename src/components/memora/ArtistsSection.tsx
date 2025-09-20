@@ -168,7 +168,7 @@ const ArtistsSection: React.FC = () => {
   ), [bgUrl]);
 
   return (
-    <section id="artistas" className="py-[120px] relative overflow-hidden">
+    <section id="artistas" className="py-24 lg:py-32 relative overflow-hidden">
       
       {/* Dynamic cover background */}
       <div
@@ -177,19 +177,19 @@ const ArtistsSection: React.FC = () => {
         aria-hidden="true"
       />
 
-      <div className="relative container mx-auto px-4">
+      <div className="relative container mx-auto px-6 lg:px-8">
         {/* Header */}
-        <div className="text-center mb-6">
-          <SectionTitle className="text-memora-brand-purple drop-shadow">
-            Artistas que dão voz às suas memórias
+        <div className="text-center mb-16 lg:mb-20 space-y-6">
+          <SectionTitle className="text-memora-brand-purple drop-shadow leading-tight">
+            Estilos <span className="bg-gradient-to-r from-yellow-400 via-purple-500 to-purple-600 bg-clip-text text-transparent">variados</span> que dão vida às suas <span className="bg-gradient-to-r from-yellow-400 via-purple-500 to-purple-600 bg-clip-text text-transparent">memórias</span>
           </SectionTitle>
-          <SectionSubtitle className="mt-3 text-white/90 max-w-3xl mx-auto">
-            Descubra vozes únicas e estilos variados para dar vida às suas memórias. Clique para ouvir e deixe a capa do álbum iluminar o momento.
+          <SectionSubtitle className="text-white/90 max-w-3xl mx-auto leading-relaxed">
+            Escute vozes marcantes de nossos cantores que transformam sentimentos em canções eternas.
           </SectionSubtitle>
         </div>
 
         {/* Grid 2 linhas x 6 colunas (12 itens) */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4 sm:gap-5 lg:gap-6">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-6 sm:gap-8 lg:gap-6 mb-20 lg:mb-24">
           {items.slice(0, 12).map((song, idx) => {
             const cover = song.imageUrl || '';
             const genre = extractChosenStyle(song.genre) || fallbackGenres[idx % fallbackGenres.length];
@@ -213,7 +213,7 @@ const ArtistsSection: React.FC = () => {
                 </div>
                 {/* Play button */}
                 <div className="absolute bottom-2 right-2">
-                  <div className="w-11 h-11 rounded-full bg-white/70 group-hover:bg-white/90 flex items-center justify-center shadow-md">
+                  <div className="w-11 h-11 rounded-full bg-yellow-400/90 group-hover:bg-yellow-400 flex items-center justify-center shadow-md">
                     {isLoading ? (
                       <div className="w-4 h-4 border-2 border-black/40 border-t-black rounded-full animate-spin" />
                     ) : active ? (
@@ -229,13 +229,13 @@ const ArtistsSection: React.FC = () => {
         </div>
 
         {/* CTA */}
-        <div className="relative mt-16 text-center">
-          <div className="inline-flex flex-col items-center gap-6 bg-gradient-to-br from-purple-900/30 via-indigo-900/25 to-pink-900/20 backdrop-blur-xl border border-white/20 rounded-3xl px-12 py-10 shadow-2xl shadow-purple-500/10 hover:shadow-purple-500/20 transition-all duration-300 max-w-2xl mx-auto">
-            <div className="text-center space-y-3">
-              <h3 className="text-white text-xl sm:text-2xl font-bold font-heading leading-tight">
+        <div className="relative text-center">
+          <div className="inline-flex flex-col items-center gap-8 bg-gradient-to-br from-purple-900/30 via-indigo-900/25 to-pink-900/20 backdrop-blur-xl border border-white/20 rounded-3xl px-12 py-12 lg:px-16 lg:py-14 shadow-2xl shadow-purple-500/10 hover:shadow-purple-500/20 transition-all duration-300 max-w-2xl mx-auto">
+            <div className="text-center space-y-4">
+              <h3 className="text-white text-xl sm:text-2xl lg:text-3xl font-bold font-heading leading-tight">
                 Gostou do que ouviu?
               </h3>
-              <p className="text-white/80 text-lg sm:text-xl font-medium">
+              <p className="text-white/80 text-lg sm:text-xl font-medium leading-relaxed">
                 Crie sua própria música personalizada agora mesmo.
               </p>
             </div>

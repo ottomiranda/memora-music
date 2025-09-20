@@ -17,13 +17,13 @@ export const briefingSchema = z.object({
   
   senderName: z.string().max(50, 'O nome deve ter no máximo 50 caracteres.').optional(),
   
-  hobbies: z.string().max(500, 'Os hobbies devem ter no máximo 500 caracteres.').optional(),
+  hobbies: z.string().min(1, "Hobbies são obrigatórios").max(500, "Hobbies devem ter no máximo 500 caracteres"),
   
-  qualities: z.string().max(500, 'As qualidades devem ter no máximo 500 caracteres.').optional(),
+  qualities: z.string().min(1, "Qualidades são obrigatórias").max(500, "Qualidades devem ter no máximo 500 caracteres"),
   
-  uniqueTraits: z.string().max(500, 'Os traços únicos devem ter no máximo 500 caracteres.').optional(),
+  uniqueTraits: z.string().min(1, "Características únicas são obrigatórias").max(500, "Características únicas devem ter no máximo 500 caracteres"),
   
-  memories: z.string().max(1000, 'As memórias devem ter no máximo 1000 caracteres.').optional(),
+  memories: z.string().min(1, "Memórias são obrigatórias").max(1000, "Memórias devem ter no máximo 1000 caracteres"),
 });
 
 // Schema para o Passo 2 - Letra
@@ -117,11 +117,15 @@ export function canAdvanceStep(step: number, formData: FormData): boolean {
 
 // Mensagens de erro personalizadas para campos específicos
 export const customErrorMessages = {
-  occasion: 'Selecione a ocasião especial para sua música.',
-  recipientName: 'Informe o nome da pessoa especial.',
-  relationship: 'Defina qual é a sua relação com essa pessoa.',
-  lyrics: 'A letra da música precisa ser gerada ou aprovada.',
-  genre: 'Escolha o estilo musical da sua preferência.',
+  occasion: 'Por favor, selecione uma ocasião',
+  recipientName: 'Por favor, informe o nome da pessoa',
+  relationship: 'Por favor, selecione o relacionamento',
+  hobbies: 'Por favor, descreva os hobbies e interesses (obrigatório)',
+  qualities: 'Por favor, descreva as qualidades da pessoa (obrigatório)',
+  uniqueTraits: 'Por favor, descreva características únicas (obrigatório)',
+  memories: 'Por favor, compartilhe algumas memórias especiais (obrigatório)',
+  lyrics: 'Por favor, escreva a letra da música',
+  genre: 'Por favor, selecione um estilo musical',
   emotion: 'Selecione a emoção que deseja transmitir.',
-  vocalPreference: 'Defina sua preferência de vocais.',
+  vocalPreference: 'Por favor, selecione uma preferência vocal'
 };
