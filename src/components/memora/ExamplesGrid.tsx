@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Play, Heart, Calendar, Users, Gift, Music } from "lucide-react";
+import { Play, Heart, Calendar, Users, Gift, Music, Sparkles } from "lucide-react";
 import { Swiper, SwiperSlide } from "swiper/react";
 import { EffectCoverflow, Autoplay } from "swiper/modules";
 import "swiper/css";
@@ -12,11 +12,17 @@ import SectionTitle from '../ui/SectionTitle';
 import { SectionSubtitle } from '@/components/ui/SectionSubtitle';
 import { toast } from 'sonner';
 import { getSunoAudioLinks } from '@/lib/sunoAudio';
+import { LiquidGlassButton } from "@/components/ui/LiquidGlassButton";
+import { useMusicStore } from "@/store/musicStore";
+import { useNavigate } from "react-router-dom";
+import { useAuthStore } from "@/store/authStore";
 
 
 const ExamplesGrid = () => {
   const [playingId, setPlayingId] = useState<string | null>(null);
   const [linked, setLinked] = useState<Record<string, Song | null>>({});
+  const { startNewCreationFlow } = useMusicStore();
+  const navigate = useNavigate();
   
   const THEME_KEYWORDS: Record<string, string[]> = {
     'aniversario': ['aniversário', 'birthday', 'bday'],
@@ -56,6 +62,11 @@ const ExamplesGrid = () => {
       .map((t) => normalize(t))
       .join(' | ');
     return words.some((w) => blob.includes(w.toLowerCase()));
+  };
+
+  const handleCreateMusic = async () => {
+    const { token } = useAuthStore.getState();
+    await startNewCreationFlow(navigate, token || null);
   };
 
   useEffect(() => {
@@ -216,7 +227,7 @@ const ExamplesGrid = () => {
   };
 
   return (
-    <section id="exemplos" className="py-20">
+    <section id="exemplos" className="py-[120px]">
       <div className="container mx-auto px-4">
         {/* Header */}
         <div className="text-center mb-16">
@@ -237,18 +248,20 @@ const ExamplesGrid = () => {
         {/* Bottom CTA */}
         <div className="text-center mt-16">
           <div className="inline-flex flex-col sm:flex-row items-center space-y-4 sm:space-y-0 sm:space-x-6">
-            <div className="flex items-center space-x-2 text-muted-foreground">
+            <div className="flex items-center space-x-2 text-white/50">
               <Music className="w-5 h-5" />
               <span className="font-medium">
                 Prévias de 45 segundos • Músicas completas de até 5 minutos
               </span>
             </div>
-            <button 
-              className="bg-memora-primary hover:bg-memora-primary/90 text-white font-heading font-bold py-3 px-6 rounded-2xl shadow-lg hover:shadow-xl transform hover:-translate-y-1 active:scale-95 transition-all duration-300"
+            <LiquidGlassButton
+              onClick={handleCreateMusic}
               data-attr="examples-cta-button"
+              className="w-full sm:w-auto font-heading font-bold"
             >
-              Criar minha música agora
-            </button>
+              <Sparkles className="mr-3 h-5 w-5" />
+              Crie sua música agora
+            </LiquidGlassButton>
           </div>
         </div>
       </div>

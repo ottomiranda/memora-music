@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { PenTool, Sparkles, Share2 } from "lucide-react";
 import { SectionSubtitle } from '@/components/ui/SectionSubtitle';
 import { SectionTitle } from '@/components/ui/SectionTitle';
+import { LiquidGlassCard } from "@/components/ui/LiquidGlassCard";
 
 const HowItWorks = () => {
   const [activeStep, setActiveStep] = useState(0);
@@ -53,7 +54,7 @@ const HowItWorks = () => {
   };
 
   return (
-    <section id="como-funciona" className="py-20">
+    <section id="como-funciona" className="py-[120px]">
       <div className="container mx-auto px-4">
         {/* Header */}
         <div className="text-center mb-16">
@@ -115,31 +116,27 @@ const HowItWorks = () => {
 
           {/* Active Step Content */}
           <div className="max-w-4xl mx-auto">
-            <div className="bg-gradient-to-br from-white/5 to-white/10 backdrop-blur-sm rounded-3xl p-8 md:p-12 border border-white/10 shadow-2xl">
-              <div className="text-center">
-
-                
-                <h3 className="text-3xl md:text-4xl font-heading font-bold text-foreground mb-4">
-                  {steps[activeStep].title}
-                </h3>
-                
-                <p className="text-xl text-muted-foreground mb-6 leading-relaxed">
-                  {steps[activeStep].description}
-                </p>
-                
-                <p className="text-lg text-muted-foreground/80 max-w-2xl mx-auto leading-relaxed">
-                  {steps[activeStep].details}
-                </p>
-              </div>
-            </div>
+            <LiquidGlassCard className="p-8 md:p-12 text-center space-y-4">
+              <h3 className="text-3xl md:text-4xl font-heading font-bold" style={{color: '#B69FE7'}}>
+                {steps[activeStep].title}
+              </h3>
+              
+              <p className="text-xl text-white/90 leading-relaxed">
+                {steps[activeStep].description}
+              </p>
+              
+              <p className="text-lg text-white/50 max-w-2xl mx-auto leading-relaxed">
+                {steps[activeStep].details}
+              </p>
+            </LiquidGlassCard>
           </div>
         </div>
 
         {/* Bottom CTA */}
         <div className="text-center mt-16">
           <div className="inline-flex items-center space-x-2 surface-1 px-6 py-3 rounded-full shadow-lg">
-            <Sparkles className="w-5 h-5 text-secondary" />
-            <span className="text-muted-foreground font-medium">
+            <Sparkles className="w-5 h-5" style={{color: '#08060D'}} />
+            <span className="font-medium" style={{color: '#08060D'}}>
               Processo 100% automatizado com IA avançada
             </span>
           </div>

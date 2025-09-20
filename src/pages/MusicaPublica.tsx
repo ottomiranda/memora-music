@@ -201,7 +201,7 @@ const MusicaPublica: React.FC = () => {
         {song.imageUrl && (
           <div className="absolute inset-0 opacity-20 bg-cover bg-center" style={{ backgroundImage: `url(${song.imageUrl})` }} />
         )}
-        <div className="relative container mx-auto px-4 pt-24 pb-12">
+        <div className="relative container mx-auto px-4 pt-25 pb-12">
           <button onClick={() => navigate(-1)} className="text-white/80 hover:text-white mb-6 inline-flex items-center gap-2">
             <ArrowLeft className="w-4 h-4" /> Voltar
           </button>

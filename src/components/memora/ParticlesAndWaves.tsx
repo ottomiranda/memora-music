@@ -316,7 +316,7 @@ class ParticlesAnimation {
       const particle = this.getParticleFromPool();
       if (particle) {
         particle.x = Math.random() * this.canvas.width;
-        particle.y = this.canvas.height / 5 * (Math.random() - 0.5) + this.canvas.height * 6 / 10;
+        particle.y = this.canvas.height * 0.9 + Math.random() * this.canvas.height * 0.1;
         // MODIFICAÇÃO: Velocidade inicial aumentada em 25% (de 1.0 para 1.25)
         particle.vx = (Math.random() - 0.5) * 1.25;
         particle.vy = (Math.random() - 0.5) * 1.25;

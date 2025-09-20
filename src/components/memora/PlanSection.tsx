@@ -2,9 +2,18 @@ import { Check, Clock, Music, Mic, Download, Sparkles } from "lucide-react";
 import { useCreationStatus } from "../../hooks/useCreationStatus";
 import SectionTitle from '../ui/SectionTitle';
 import SectionSubtitle from '../ui/SectionSubtitle';
+import { LiquidGlassButton } from "@/components/ui/LiquidGlassButton";
+import { LiquidGlassCard } from "@/components/ui/LiquidGlassCard";
+import { useMusicStore } from "@/store/musicStore";
+import { useAuthStore } from "@/store/authStore";
+import { useNavigate } from "react-router-dom";
 
-const PlanSection = () => {
+const PlanSection = ({ id }: { id?: string }) => {
   const { isFree: isFirstSong, isLoading, error } = useCreationStatus();
+  const { startNewCreationFlow } = useMusicStore();
+  const { token } = useAuthStore();
+  const navigate = useNavigate();
+
   const benefits = [
     {
       icon: Music,
@@ -25,10 +34,10 @@ const PlanSection = () => {
   ];
 
   return (
-    <section className="py-20">
+    <section id={id} className="py-[120px]">
       <div className="container mx-auto px-4">
         {/* Header */}
-        <div className="text-center mb-16">
+        <div className="text-center mb-8">
           <SectionTitle>
             Um presente que toca o coração
           </SectionTitle>
@@ -36,21 +45,21 @@ const PlanSection = () => {
         </div>
 
         {/* Plan Card */}
-        <div className="max-w-2xl mx-auto pt-6">
-          <div className="relative surface-1 rounded-2xl shadow-2xl">
+        <div className="max-w-2xl mx-auto pt-12 overflow-visible">
+          <LiquidGlassCard className="relative overflow-visible">
             {/* Badge */}
-            <div className="absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-[60]">
-              <div className="bg-memora-secondary px-6 py-2 rounded-full shadow-lg border-2 border-white/20">
-                <span className="text-white font-heading font-bold text-sm">
+            <div className="absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-[100]">
+              <div className="bg-memora-secondary px-7 py-2 rounded-full shadow-lg border border-white/40 text-center">
+                <span className="font-heading font-bold text-sm" style={{color: '#08060D'}}>
                   🎉 Primeira música é grátis!
                 </span>
               </div>
             </div>
 
-            <div className="pt-12 pb-8 px-8 sm:px-12">
+            <div className="pt-16 pb-8 px-8 sm:px-12">
               {/* Plan Name */}
               <div className="text-center mb-8">
-                <h3 className="text-2xl sm:text-3xl font-heading font-bold text-foreground mb-2">
+                <h3 className="text-2xl sm:text-3xl font-heading font-bold text-white mb-2">
                   AI Premium
                 </h3>
                 <div className="flex items-center justify-center space-x-2">
@@ -69,7 +78,7 @@ const PlanSection = () => {
                         R$ 149
                       </div>
                     )}
-                    <div className="text-sm text-muted-foreground">
+                    <div className="text-sm text-white">
                       por música
                     </div>
                   </div>
@@ -91,7 +100,7 @@ const PlanSection = () => {
                       <div className="flex-shrink-0 w-6 h-6 bg-primary/10 rounded-full flex items-center justify-center mt-0.5">
                         <IconComponent className="w-4 h-4 text-primary" />
                       </div>
-                      <span className="text-foreground font-medium">
+                      <span className="text-white/80 font-medium">
                         {benefit.text}
                       </span>
                     </div>
@@ -101,26 +110,32 @@ const PlanSection = () => {
 
               {/* CTA Button */}
               <div className="text-center mb-6">
-                <button 
-                  className="w-full bg-memora-primary hover:bg-memora-primary/90 text-white font-heading font-bold py-4 px-8 rounded-2xl shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all duration-300"
+                <LiquidGlassButton
                   data-attr="plan-cta-button"
+                  className="w-full font-heading font-bold"
+                  onClick={async () => {
+                    try {
+                      await startNewCreationFlow(navigate, token || null);
+                    } catch (error) {
+                      console.error('[PlanSection] erro ao iniciar fluxo de criação', error);
+                      navigate('/criar');
+                    }
+                  }}
                 >
-                  <div className="flex items-center justify-center space-x-2">
-                    <Sparkles className="w-5 h-5" />
-                    <span>Crie sua música agora</span>
-                  </div>
-                </button>
+                  <Sparkles className="mr-3 h-5 w-5" />
+                  Crie sua música agora
+                </LiquidGlassButton>
               </div>
 
               {/* Timer */}
-              <div className="flex items-center justify-center space-x-2 text-muted-foreground text-sm">
+              <div className="flex items-center justify-center space-x-2 text-white/50 text-sm">
                 <Clock className="w-4 h-4" />
                 <span>Oferta limitada ao período de lançamento</span>
               </div>
 
 
             </div>
-          </div>
+          </LiquidGlassCard>
         </div>
 
         {/* Bottom Features */}
@@ -129,10 +144,10 @@ const PlanSection = () => {
             <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-3">
               <Clock className="w-6 h-6 text-primary" />
             </div>
-            <h4 className="font-heading font-bold text-foreground mb-1">
+            <h4 className="font-heading font-bold text-white mb-1">
               Entrega Rápida
             </h4>
-            <p className="text-sm text-muted-foreground">
+            <p className="text-sm text-white/50">
               Sua música fica pronta em menos de 5 minutos
             </p>
           </div>
@@ -141,10 +156,10 @@ const PlanSection = () => {
             <div className="w-12 h-12 bg-secondary/10 rounded-full flex items-center justify-center mx-auto mb-3">
               <Check className="w-6 h-6 text-secondary" />
             </div>
-            <h4 className="font-heading font-bold text-foreground mb-1">
+            <h4 className="font-heading font-bold text-white mb-1">
               100% Única
             </h4>
-            <p className="text-sm text-muted-foreground">
+            <p className="text-sm text-white/50">
               Cada música é criada exclusivamente para você
             </p>
           </div>
@@ -153,10 +168,10 @@ const PlanSection = () => {
             <div className="w-12 h-12 bg-accent-coral/10 rounded-full flex items-center justify-center mx-auto mb-3">
               <Download className="w-6 h-6 text-accent-coral" />
             </div>
-            <h4 className="font-heading font-bold text-foreground mb-1">
+            <h4 className="font-heading font-bold text-white mb-1">
               Formato MP3
             </h4>
-            <p className="text-sm text-muted-foreground">
+            <p className="text-sm text-white/50">
               Compatível com todos os dispositivos
             </p>
           </div>

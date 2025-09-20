@@ -230,7 +230,7 @@ const MinhasMusicas: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900 flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-br from-[#4D2699] via-[#231733] to-[#160D27] flex items-center justify-center">
         <div className="text-center">
           <Loader2 className="h-12 w-12 animate-spin text-white mx-auto mb-4" />
           <p className="text-white text-lg">Carregando suas músicas...</p>
@@ -258,8 +258,8 @@ const MinhasMusicas: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900">
-      <div className="container mx-auto px-4 py-8">
+    <div className="min-h-screen">
+      <div className="container mx-auto px-4 pb-8 pt-0">
         <div className="text-center mb-8">
           <h1 className="text-4xl font-bold text-white mb-4 flex items-center justify-center gap-3">
             <Music className="h-10 w-10" />
@@ -278,8 +278,9 @@ const MinhasMusicas: React.FC = () => {
 
         {/* Barra de busca e ordenação */}
         {songs.length > 0 && (
-          <div className="mb-6 grid grid-cols-1 md:grid-cols-3 gap-3">
-            <div className="md:col-span-1">
+          <div className="mb-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            {/* Campo de busca à esquerda */}
+            <div className="w-full sm:w-auto sm:flex-1 sm:max-w-md">
               <div className="relative">
                 <Search className="w-4 h-4 text-blue-200 absolute left-3 top-1/2 -translate-y-1/2" />
                 <Input
@@ -290,9 +291,11 @@ const MinhasMusicas: React.FC = () => {
                 />
               </div>
             </div>
-            <div className="flex items-center gap-3">
+            
+            {/* Dropdowns à direita */}
+            <div className="flex items-center gap-3 w-full sm:w-auto">
               <Select value={sortBy} onValueChange={(v: any) => setSortBy(v)}>
-                <SelectTrigger className="bg-white/10 border-white/20 text-white">
+                <SelectTrigger className="bg-white/10 border-white/20 text-white w-full sm:w-[140px]">
                   <SelectValue placeholder="Ordenar" />
                 </SelectTrigger>
                 <SelectContent>
@@ -302,7 +305,7 @@ const MinhasMusicas: React.FC = () => {
                 </SelectContent>
               </Select>
               <Select value={statusFilter} onValueChange={(v: any) => setStatusFilter(v)}>
-                <SelectTrigger className="bg-white/10 border-white/20 text-white">
+                <SelectTrigger className="bg-white/10 border-white/20 text-white w-full sm:w-[120px]">
                   <SelectValue placeholder="Status" />
                 </SelectTrigger>
                 <SelectContent>
@@ -372,37 +375,25 @@ const MinhasMusicas: React.FC = () => {
                 />
                 <div className="flex items-center gap-2">
                   <button
-                    onClick={() => handleEdit(song)}
-                    className="px-3 py-2 bg-white/10 hover:bg-white/20 text-white rounded-md text-sm flex items-center gap-2"
-                  >
-                    <Edit3 className="w-4 h-4" /> Editar
-                  </button>
-                  <button
-                    onClick={() => handleDownload(song)}
-                    className="px-3 py-2 bg-white/10 hover:bg-white/20 text-white rounded-md text-sm flex items-center gap-2"
-                  >
-                    <Download className="w-4 h-4" /> Download
-                  </button>
-                  <button
                     onClick={() => {
                       const link = `${window.location.origin}/musica/${song.id}`;
                       navigator.clipboard.writeText(link).then(() => {
                         // optional toast if available
                       }).catch(() => {});
                     }}
-                    className="px-3 py-2 bg-white/10 hover:bg-white/20 text-white rounded-md text-sm flex items-center gap-2"
+                    className="flex-1 py-2 bg-white/10 hover:bg-white/20 text-white rounded-md text-sm flex items-center justify-center gap-2"
                   >
                     <LinkIcon className="w-4 h-4" /> Copiar Link
                   </button>
                   <button
                     onClick={() => handleShare(song)}
-                    className="px-3 py-2 bg-white/10 hover:bg-white/20 text-white rounded-md text-sm flex items-center gap-2"
+                    className="flex-1 py-2 bg-white/10 hover:bg-white/20 text-white rounded-md text-sm flex items-center justify-center gap-2"
                   >
                     <Share2 className="w-4 h-4" /> Compartilhar
                   </button>
                   <button
                     onClick={() => handleDelete(song)}
-                    className="px-3 py-2 bg-red-500/20 hover:bg-red-500/30 text-red-100 rounded-md text-sm flex items-center gap-2"
+                    className="flex-1 py-2 bg-red-500/20 hover:bg-red-500/30 text-red-100 rounded-md text-sm flex items-center justify-center gap-2"
                   >
                     <Trash2 className="w-4 h-4" /> Excluir
                   </button>

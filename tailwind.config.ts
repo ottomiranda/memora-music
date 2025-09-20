@@ -19,12 +19,13 @@ export default {
 		},
 		extend: {
 			colors: {
-				// Memora Music Brand Colors
-				memora: {
-					primary: '#7B3FE4',    // Roxo primário
+					// Memora Music Brand Colors
+					memora: {
+						primary: '#5A2DB0',    // Roxo primário
 					secondary: '#FEC641',  // Dourado secundário
 					coral: '#FF5A73',      // Coral de apoio
 					turquoise: '#3ECFBB',  // Turquesa de apoio
+					'brand-purple': '#B69FE7', // Roxo para títulos
 					black: '#101010',      // Preto neutro
 					gray: '#7A7A7A',       // Cinza médio
 					'gray-light': '#F4F4F4' // Cinza claro

@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import { Play, Pause } from "lucide-react";
+import { Play, Pause, Sparkles } from "lucide-react";
 import { songsApi } from "@/config/api";
 import type { Song } from "@/types/guest";
 import { useAudioPlayerStore } from "@/store/audioPlayerStore";
@@ -10,6 +10,7 @@ import SectionTitle from '../ui/SectionTitle';
 import SectionSubtitle from '../ui/SectionSubtitle';
 import { toast } from "sonner";
 import { getSunoAudioLinks } from "@/lib/sunoAudio";
+import { LiquidGlassButton } from "@/components/ui/LiquidGlassButton";
 
 const fallbackGenres = [
   "Pop", "R&B", "Soul", "Hip hop", "Latin Pop", "Ballad",
@@ -167,7 +168,7 @@ const ArtistsSection: React.FC = () => {
   ), [bgUrl]);
 
   return (
-    <section id="artistas" className="py-20 relative overflow-hidden">
+    <section id="artistas" className="py-[120px] relative overflow-hidden">
       
       {/* Dynamic cover background */}
       <div
@@ -179,7 +180,7 @@ const ArtistsSection: React.FC = () => {
       <div className="relative container mx-auto px-4">
         {/* Header */}
         <div className="text-center mb-6">
-          <SectionTitle className="text-white drop-shadow">
+          <SectionTitle className="text-memora-brand-purple drop-shadow">
             Artistas que dão voz às suas memórias
           </SectionTitle>
           <SectionSubtitle className="mt-3 text-white/90 max-w-3xl mx-auto">
@@ -228,11 +229,16 @@ const ArtistsSection: React.FC = () => {
         </div>
 
         {/* CTA */}
-        <div className="relative mt-10 text-center">
-          <div className="inline-flex flex-col items-center gap-3 bg-black/20 backdrop-blur-sm border border-white/10 rounded-2xl px-6 py-5">
-            <span className="text-white/90 text-sm sm:text-base">
-              Gostou do que ouviu? Crie sua própria música personalizada agora mesmo.
-            </span>
+        <div className="relative mt-16 text-center">
+          <div className="inline-flex flex-col items-center gap-6 bg-gradient-to-br from-purple-900/30 via-indigo-900/25 to-pink-900/20 backdrop-blur-xl border border-white/20 rounded-3xl px-12 py-10 shadow-2xl shadow-purple-500/10 hover:shadow-purple-500/20 transition-all duration-300 max-w-2xl mx-auto">
+            <div className="text-center space-y-3">
+              <h3 className="text-white text-xl sm:text-2xl font-bold font-heading leading-tight">
+                Gostou do que ouviu?
+              </h3>
+              <p className="text-white/80 text-lg sm:text-xl font-medium">
+                Crie sua própria música personalizada agora mesmo.
+              </p>
+            </div>
             <ArtistsCTAButton />
           </div>
         </div>
@@ -259,11 +265,12 @@ const ArtistsCTAButton: React.FC = () => {
   };
 
   return (
-    <button
+    <LiquidGlassButton
       onClick={onClick}
-      className="inline-flex items-center justify-center px-5 py-3 rounded-full bg-white text-black font-semibold shadow hover:shadow-md transition"
+      className="inline-flex items-center justify-center px-8"
     >
-      Crie sua música grátis
-    </button>
+      <Sparkles className="mr-3 h-5 w-5" />
+      Crie sua música agora
+    </LiquidGlassButton>
   );
 };

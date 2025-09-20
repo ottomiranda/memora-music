@@ -26,7 +26,7 @@ const Index = () => {
         <ExamplesGrid />
         <ArtistsSection />
         <TestimonialSection />
-        <PlanSection />
+        <PlanSection id="precos" />
         <FAQSection />
         <FinalCTA />
       </main>

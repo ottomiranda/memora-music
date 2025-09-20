@@ -17,6 +17,7 @@ import NotFound from "./pages/NotFound";
 import ProtectedRoute from "./components/auth/ProtectedRoute";
 import { useScrollToTop } from "./hooks/useScrollToTop";
 import { useUiStore } from "./store/uiStore";
+import { NAVBAR_TOTAL_OFFSET } from "./constants/layout";
 import { useAuthStore } from "./store/authStore";
 // Gerar e persistir deviceId único
 let deviceId = localStorage.getItem('deviceId');
@@ -64,22 +65,27 @@ const AppContent = () => {
     <Layout>
       <AuthInitializer />
       <Navbar />
-      <Routes>
-        <Route path="/" element={<Index />} />
-        <Route path="/criar" element={<Criar />} />
-        <Route 
-          path="/minhas-musicas" 
-          element={
-            <ProtectedRoute>
-              <MinhasMusicas />
-            </ProtectedRoute>
-          } 
-        />
-        <Route path="/musica/:id" element={<MusicaPublica />} />
-        <Route path="/auth/callback" element={<AuthCallback />} />
-        {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-        <Route path="*" element={<NotFound />} />
-      </Routes>
+      <div
+        className="flex-1 w-full"
+        style={{ paddingTop: `${NAVBAR_TOTAL_OFFSET}px` }}
+      >
+        <Routes>
+          <Route path="/" element={<Index />} />
+          <Route path="/criar" element={<Criar />} />
+          <Route 
+            path="/minhas-musicas" 
+            element={
+              <ProtectedRoute>
+                <MinhasMusicas />
+              </ProtectedRoute>
+            } 
+          />
+          <Route path="/musica/:id" element={<MusicaPublica />} />
+          <Route path="/auth/callback" element={<AuthCallback />} />
+          {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+          <Route path="*" element={<NotFound />} />
+        </Routes>
+      </div>
       <Footer />
       
       {/* Payment Modal */}

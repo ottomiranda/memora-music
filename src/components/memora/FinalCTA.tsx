@@ -1,15 +1,16 @@
-import { Music, Play } from "lucide-react";
+import { Music, Sparkles } from "lucide-react";
+import { LiquidGlassButton } from "@/components/ui/LiquidGlassButton";
+import { useMusicStore } from "@/store/musicStore";
+import { useAuthStore } from "@/store/authStore";
+import { useNavigate } from "react-router-dom";
 
 const FinalCTA = ({ onOpenAuth }: { onOpenAuth: () => void }) => {
-  const scrollToExamples = () => {
-    const element = document.getElementById('examples');
-    if (element) {
-      element.scrollIntoView({ behavior: 'smooth' });
-    }
-  };
+  const { startNewCreationFlow } = useMusicStore();
+  const { token } = useAuthStore();
+  const navigate = useNavigate();
 
   return (
-    <section className="py-20 lg:py-32 bg-gradient-to-br from-memora-primary via-memora-primary/95 to-memora-primary/90 relative overflow-hidden">
+    <section className="py-[120px] bg-gradient-to-br from-memora-primary via-memora-primary/95 to-memora-primary/90 relative overflow-hidden">
       {/* Background Pattern */}
       <div className="absolute inset-0 opacity-10">
         <div className="absolute top-10 left-10 w-32 h-32 border border-white/20 rounded-full" />
@@ -32,7 +33,7 @@ const FinalCTA = ({ onOpenAuth }: { onOpenAuth: () => void }) => {
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center relative z-10">
         {/* Main Content */}
         <div className="mb-12">
-          <h2 className="text-3xl sm:text-4xl lg:text-6xl font-heading font-bold text-white mb-6 leading-tight">
+          <h2 className="text-3xl sm:text-4xl lg:text-6xl font-heading font-bold text-memora-secondary mb-6 leading-tight">
             Surpreenda quem você ama com uma música feita só para ele ou ela
           </h2>
           <p className="text-xl lg:text-2xl text-white/90 max-w-3xl mx-auto leading-relaxed">
@@ -42,25 +43,21 @@ const FinalCTA = ({ onOpenAuth }: { onOpenAuth: () => void }) => {
 
         {/* CTA Buttons */}
         <div className="flex flex-col sm:flex-row gap-6 justify-center items-center">
-          {/* Primary CTA */}
-          <button
-            onClick={onOpenAuth}
-            className="group bg-memora-secondary hover:bg-memora-secondary/90 text-memora-black font-heading font-bold py-5 px-10 rounded-2xl transition-all duration-300 hover:scale-105 hover:shadow-2xl flex items-center space-x-3 text-lg"
+          <LiquidGlassButton
             data-attr="final-cta-create-music"
+            className="font-heading font-bold text-lg px-10"
+            onClick={async () => {
+              try {
+                await startNewCreationFlow(navigate, token || null);
+              } catch (error) {
+                console.error('[FinalCTA] erro ao iniciar fluxo de criação', error);
+                onOpenAuth();
+              }
+            }}
           >
-            <Music className="w-6 h-6 group-hover:rotate-12 transition-transform duration-300" />
-            <span>Criar minha música grátis agora</span>
-          </button>
-
-          {/* Secondary CTA */}
-          <button
-            onClick={scrollToExamples}
-            className="group border-2 border-white text-white hover:bg-white hover:text-memora-primary font-heading font-bold py-5 px-10 rounded-2xl transition-all duration-300 hover:scale-105 flex items-center space-x-3 text-lg"
-            data-attr="final-cta-listen-examples"
-          >
-            <Play className="w-6 h-6 group-hover:scale-110 transition-transform duration-300" />
-            <span>Ouvir exemplos de músicas</span>
-          </button>
+            <Sparkles className="mr-3 h-6 w-6" />
+            Crie sua música agora
+          </LiquidGlassButton>
         </div>
 
         {/* Additional Info */}
@@ -73,7 +70,7 @@ const FinalCTA = ({ onOpenAuth }: { onOpenAuth: () => void }) => {
               <h3 className="font-heading font-bold text-white text-lg">
                 100% Personalizada
               </h3>
-              <p className="text-white/80 text-sm">
+              <p className="text-white/50 text-sm">
                 Cada música é única e criada especialmente para você
               </p>
             </div>
@@ -87,7 +84,7 @@ const FinalCTA = ({ onOpenAuth }: { onOpenAuth: () => void }) => {
               <h3 className="font-heading font-bold text-white text-lg">
                 Tecnologia Avançada
               </h3>
-              <p className="text-white/80 text-sm">
+              <p className="text-white/50 text-sm">
                 Inteligência artificial de última geração para criar sua música
               </p>
             </div>
@@ -101,7 +98,7 @@ const FinalCTA = ({ onOpenAuth }: { onOpenAuth: () => void }) => {
               <h3 className="font-heading font-bold text-white text-lg">
                 Qualidade Profissional
               </h3>
-              <p className="text-white/80 text-sm">
+              <p className="text-white/50 text-sm">
                 Áudio em alta qualidade, pronto para compartilhar
               </p>
             </div>

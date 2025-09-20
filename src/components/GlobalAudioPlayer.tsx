@@ -26,7 +26,7 @@ const GlobalAudioPlayer: React.FC = () => {
           {isPlaying ? (
             <button
               onClick={pause}
-              className="w-10 h-10 rounded-full bg-blue-600 hover:bg-blue-700 text-white flex items-center justify-center active:scale-95 transition"
+              className="w-10 h-10 rounded-full bg-yellow-500 hover:bg-yellow-600 text-black flex items-center justify-center active:scale-95 transition"
               aria-label="Pausar"
             >
               <Pause className="w-5 h-5" />
@@ -34,7 +34,7 @@ const GlobalAudioPlayer: React.FC = () => {
           ) : (
             <button
               onClick={() => currentId && currentUrl && play(currentId, currentUrl, { title: currentTitle || undefined, versionLabel: currentVersionLabel || undefined })}
-              className="w-10 h-10 rounded-full bg-blue-600 hover:bg-blue-700 text-white flex items-center justify-center active:scale-95 transition"
+              className="w-10 h-10 rounded-full bg-yellow-500 hover:bg-yellow-600 text-black flex items-center justify-center active:scale-95 transition"
               aria-label="Reproduzir"
             >
               <Play className="w-5 h-5" />
@@ -56,7 +56,7 @@ const GlobalAudioPlayer: React.FC = () => {
                 step={0.5}
                 value={currentTime}
                 onChange={(e) => seek(Number(e.target.value))}
-                className="flex-1 accent-blue-600"
+                className="flex-1 accent-purple-600"
               />
               <span className="text-[11px] text-gray-500 w-10">{formatTime(duration)}</span>
             </div>
@@ -72,7 +72,7 @@ const GlobalAudioPlayer: React.FC = () => {
               step={0.05}
               value={volume}
               onChange={(e) => setVolume(Number(e.target.value))}
-              className="w-full accent-blue-600"
+              className="w-full accent-purple-600"
             />
           </div>
 

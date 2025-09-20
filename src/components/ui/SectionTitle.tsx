@@ -9,7 +9,7 @@ interface SectionTitleProps {
 const SectionTitle: React.FC<SectionTitleProps> = ({ children, className }) => {
   return (
     <h2 className={cn(
-      'text-3xl sm:text-4xl lg:text-5xl font-heading font-bold text-white mb-4',
+      'text-3xl sm:text-4xl lg:text-5xl font-heading font-bold text-memora-brand-purple mb-4',
       className
     )}>
       {children}
