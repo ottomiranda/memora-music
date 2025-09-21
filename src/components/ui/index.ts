@@ -1,6 +1,10 @@
 // UI Components exports
 export { LiquidGlassCard } from './LiquidGlassCard';
 export { LiquidGlassButton } from './LiquidGlassButton';
+export { LiquidGlassButtonSmall } from './LiquidGlassButtonSmall';
+export { LiquidGlassButtonWhite } from './LiquidGlassButtonWhite';
+export { LiquidGlassButtonWhiteSmall } from './LiquidGlassButtonWhiteSmall';
+export { HistoryFormButton } from './HistoryFormButton';
 export { HeroCard } from './HeroCard';
 export { SectionTitle } from './SectionTitle';
 export { SectionSubtitle } from './SectionSubtitle';

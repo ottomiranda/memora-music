@@ -25,6 +25,7 @@ const buttonVariants = cva(
         glass: "liquid-glass-button bg-transparent text-white",
         glassGold: "liquid-glass-button--gold",
         glassGoldSolid: "liquid-glass-button--gold-solid",
+        glassWhite: "liquid-glass-button--white",
       },
       size: {
         default: "h-10 px-4 py-2",

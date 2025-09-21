@@ -7,18 +7,24 @@ import NewMusicPlayer from "@/components/NewMusicPlayer";
 import ValidationPopup from "@/components/ValidationPopup";
 import HighlightedTextarea from "@/components/HighlightedTextarea";
 import GenreSelector from "@/components/GenreSelector";
+import ConfettiAnimation from "@/components/ConfettiAnimation";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { HistoryFormButton } from "@/components/ui/HistoryFormButton";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { LiquidGlassCard } from '@/components/ui/LiquidGlassCard';
+import { LiquidGlassButton } from "@/components/ui/LiquidGlassButton";
+import { LiquidGlassButtonWhite } from "@/components/ui/LiquidGlassButtonWhite";
+import { LiquidGlassButtonSmall } from "@/components/ui/LiquidGlassButtonSmall";
+import { LiquidGlassButtonWhiteSmall } from "@/components/ui/LiquidGlassButtonWhiteSmall";
+import { GlobalTextField } from '@/components/ui/GlobalTextField';
 import { HeroCard, GlassInput, GlassTextarea, GlassButton, GlassButtonGroup, GlassSection } from '@/components/HeroCard';
 import { SectionTitle } from '@/components/ui/SectionTitle'
 import { SectionSubtitle } from '@/components/ui/SectionSubtitle'
-import { Play, Download, RotateCcw, ArrowLeft, ArrowRight, Music, Sparkles, Edit, Volume2, Loader2, Wand2, RefreshCw, Pause, Check, Search, X, Clock } from "lucide-react";
+import { Play, Download, RotateCcw, ArrowLeft, ArrowRight, Music, Sparkles, Edit, Volume2, Loader2, Wand2, RefreshCw, Pause, Check, Search, X } from "lucide-react";
 import CountdownTimer from '../components/CountdownTimer';
 import { useMusicStore } from '@/store/musicStore';
 import { useAuthStore } from '@/store/authStore';
@@ -119,8 +125,7 @@ const emotions = [
 const vocalPreferences = [
   "Feminino",
   "Masculino",
-  "Ambos",
-  "Indiferente"
+  "Ambos"
 ];
 
 export default function Criar() {
@@ -170,6 +175,8 @@ export default function Criar() {
   const [lyricsDraft, setLyricsDraft] = useState("");
   const [saveHint, setSaveHint] = useState<"idle" | "saving" | "saved">("idle");
   const [findText, setFindText] = useState("");
+  // Animação de confetes
+  const [showConfetti, setShowConfetti] = useState(false);
   // Campo de busca para destaque
   const [replaceText, setReplaceText] = useState(""); // deprecated (mantido para compat, não exibido)
   const saveTimerRef = React.useRef<number | null>(null);
@@ -235,6 +242,13 @@ export default function Criar() {
       }
     };
   }, []);
+
+  // useEffect para disparar animação de confetes quando a letra é gerada
+  useEffect(() => {
+    if (formData.lyrics && !isLoading && currentStep === 1) {
+      setShowConfetti(true);
+    }
+  }, [formData.lyrics, isLoading, currentStep]);
 
   const clearPendingAutoSave = () => {
     if (saveTimerRef.current) {
@@ -574,35 +588,25 @@ export default function Criar() {
                   <p className="text-muted-foreground">
                     Vamos gerar a letra da sua música baseada na história que você contou.
                   </p>
-                  <Button 
+                  <HistoryFormButton 
                     onClick={generateLyrics} 
-                    variant="default" 
-                    size="lg"
+                    isLoading={isLoading}
+                    loadingText="Gerando letra..."
                     disabled={isLoading || !formData.occasion || !formData.recipientName || !formData.relationship}
                   >
-                    {isLoading ? (
-                      <>
-                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                        Gerando letra...
-                      </>
-                    ) : (
-                      <>
-                        <Sparkles className="w-5 h-5" />
-                        Gerar Letra da Música
-                      </>
-                    )}
-                  </Button>
+                    Gerar Letra da Música
+                  </HistoryFormButton>
                 </div>
               )}
 
               {isLoading && (
                 <div className="text-center space-y-4 py-8">
-                  <div className="pulse-music">
-                    <Music className="w-12 h-12 text-primary mx-auto" />
+                  <div className="flex justify-center">
+                  <Loader2 className="w-12 h-12 animate-spin text-purple-500 mx-auto" />
                   </div>
                   <div>
-                    <p className="font-medium">Criando sua letra personalizada...</p>
-                    <p className="text-sm text-muted-foreground">
+                    <p className="font-medium text-white">Criando sua letra personalizada...</p>
+                    <p className="text-sm text-white/50">
                       Nossa IA está analisando sua história e criando versos únicos
                     </p>
                   </div>
@@ -611,115 +615,143 @@ export default function Criar() {
 
               {formData.lyrics && !isLoading && (
                 <div className="space-y-4">
-                  <LiquidGlassCard variant="primary" className="p-4 sm:p-6">
-                    <div className="flex items-start justify-between mb-3">
-                      <h3 className="font-heading font-semibold flex items-center gap-2">
-                        <Music className="w-5 h-5 text-primary" />
-                        Sua Letra Personalizada
-                      </h3>
-                      <button
-                        type="button"
+                  {/* Animação de confetes */}
+                  <ConfettiAnimation show={showConfetti} onComplete={() => setShowConfetti(false)} />
+                  
+                  <LiquidGlassCard variant="primary" size="lg" className="p-6 sm:p-8">
+                    {/* Cabeçalho da seção */}
+                    <div className="flex items-center justify-between mb-6">
+                      <div className="flex items-center gap-3">
+                        <div className="p-2 rounded-lg bg-primary/20 backdrop-blur-sm">
+                          <Music className="w-5 h-5 text-primary" />
+                        </div>
+                        <div>
+                          <h3 className="font-heading font-semibold text-lg text-white">
+                            Sua Letra Personalizada
+                          </h3>
+                          <p className="text-sm text-white/60 mt-0.5">
+                            {isEditingLyrics ? 'Modo de edição ativo' : 'Clique em editar para personalizar'}
+                          </p>
+                        </div>
+                      </div>
+                      <LiquidGlassButtonWhite
                         onClick={toggleLyricsEditor}
-                        className="inline-flex items-center gap-2 text-sm px-3 py-1.5 rounded-md bg-white/70 hover:bg-white shadow"
+                        className="text-sm px-4 py-2.5 h-auto font-medium"
                         aria-label={isEditingLyrics ? 'Fechar edição' : 'Editar letra'}
                         aria-pressed={isEditingLyrics}
                       >
-                        {isEditingLyrics ? <X className="w-4 h-4" /> : <Edit className="w-4 h-4" />}
-                        {isEditingLyrics ? 'Fechar' : 'Editar'}
-                      </button>
+                        {isEditingLyrics ? <X className="w-4 h-4 mr-2" /> : <Edit className="w-4 h-4 mr-2" />}
+                        {isEditingLyrics ? 'Fechar Edição' : 'Editar Letra'}
+                      </LiquidGlassButtonWhite>
                     </div>
 
                     {!isEditingLyrics ? (
-                      <pre className="whitespace-pre-wrap text-sm leading-relaxed font-medium" dangerouslySetInnerHTML={{ __html: getHighlightHtml(formData.lyrics || '', findText) }} />
+                      <div className="relative">
+                        <pre className="whitespace-pre-wrap text-sm leading-relaxed font-medium text-white/90 p-4 rounded-lg bg-white/5 border border-white/10" 
+                             dangerouslySetInnerHTML={{ __html: getHighlightHtml(formData.lyrics || '', findText) }} />
+                        {findText && (
+                          <div className="absolute top-2 right-2">
+                            <span className="text-xs px-2 py-1 rounded-md bg-primary/20 text-primary font-medium">
+                              Buscando: "{findText}"
+                            </span>
+                          </div>
+                        )}
+                      </div>
                     ) : (
-                      <div className="space-y-3">
-                        {/* Toolbar básica */}
-                        <div className="flex flex-col sm:flex-row sm:items-end gap-3 bg-white/60 rounded-md p-3">
-                          <div className="flex-1 grid grid-cols-1 sm:grid-cols-3 gap-2">
-                            <div className="sm:col-span-3">
-                              <label className="text-xs font-medium text-muted-foreground flex items-center gap-1"><Search className="w-3 h-3" /> Localizar</label>
+                      <div className="space-y-4">
+                        {/* Toolbar de edição reorganizado */}
+                        <LiquidGlassCard variant="secondary" size="md" className="p-4">
+                          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 items-end">
+                            {/* Seção de busca - ocupa 2 colunas em telas grandes */}
+                            <div className="lg:col-span-2 space-y-2">
                               <div className="relative">
-                                <input
+                                <GlobalTextField
+                                  label="Digite o texto que deseja encontrar"
                                   value={findText}
                                   onChange={(e) => setFindText(e.target.value)}
-                                  placeholder="Texto a localizar"
-                                  className="w-full pr-9 pl-3 py-2 rounded border"
+                                  placeholder="Buscar texto na letra..."
+                                  className="pl-10 pr-10"
                                 />
+                                <div className="absolute left-3 top-[42px] pointer-events-none">
+                                  <Search className="w-4 h-4 text-white/50" />
+                                </div>
                                 {findText && (
                                   <button
                                     type="button"
                                     aria-label="Limpar busca"
                                     onClick={() => setFindText("")}
-                                    className="absolute right-2 top-1/2 -translate-y-1/2 p-1 rounded hover:bg-black/5"
+                                    className="absolute right-3 top-[42px] p-1.5 rounded-md hover:bg-white/20 text-white/70 hover:text-white transition-all duration-200 hover:scale-110"
                                   >
                                     <X className="w-3.5 h-3.5" />
                                   </button>
                                 )}
                               </div>
                             </div>
-                          </div>
-                          <div className="text-xs text-muted-foreground flex items-center gap-3">
-                            <button
-                              type="button"
-                              className="px-2.5 py-1 rounded-md bg-white hover:bg-white/90 border text-xs font-medium"
-                              onClick={() => {
-                                const base = generatedLyrics || formData.lyrics || '';
-                                setLyricsDraft(base);
-                                scheduleAutoSave(base);
-                              }}
-                            >
-                              <RotateCcw className="w-3 h-3 inline mr-1" />
-                              Restaurar original
-                            </button>
-                            {saveHint === 'saving' && <Loader2 className="w-3 h-3 animate-spin" />}
-                            {saveHint === 'saved' && <Check className="w-3 h-3 text-green-600" />}
-                            {saveHint === 'saving' ? 'Salvando…' : saveHint === 'saved' ? 'Alterações salvas' : 'Auto‑salvamento ativado'}
-                          </div>
-                        </div>
 
-                        <HighlightedTextarea
-                          value={lyricsDraft}
-                          onChange={(val) => { setLyricsDraft(val); scheduleAutoSave(val); }}
-                          rows={14}
-                          highlightQuery={findText}
-                          className="w-full"
-                        />  
+                            {/* Seção de controles - 1 coluna em telas grandes */}
+                            <div className="flex flex-col gap-3">
+                              <button
+                                type="button"
+                                className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-white/10 hover:bg-white/20 border border-white/20 text-sm font-medium text-white transition-all duration-200 hover:scale-[1.02] hover:shadow-lg"
+                                onClick={() => {
+                                  const base = generatedLyrics || formData.lyrics || '';
+                                  setLyricsDraft(base);
+                                  scheduleAutoSave(base);
+                                }}
+                              >
+                                <RotateCcw className="w-4 h-4" />
+                                Restaurar
+                              </button>
+                              
+                              <div className="flex items-center justify-center gap-2 text-xs text-white/70 bg-white/5 rounded-lg px-3 py-2">
+                                <div className="flex items-center gap-1.5">
+                                  {saveHint === 'saving' && <Loader2 className="w-3.5 h-3.5 animate-spin text-primary" />}
+                                  {saveHint === 'saved' && <Check className="w-3.5 h-3.5 text-green-400" />}
+                                  {saveHint === 'idle' && <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />}
+                                  <span className="font-medium">
+                                    {saveHint === 'saving' ? 'Salvando...' : saveHint === 'saved' ? 'Salvo' : 'Auto-save'}
+                                  </span>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </LiquidGlassCard>
+
+                        {/* Área de edição com melhor espaçamento */}
+                        <div className="relative">
+                          <HighlightedTextarea
+                            value={lyricsDraft}
+                            onChange={(val) => { setLyricsDraft(val); scheduleAutoSave(val); }}
+                            rows={16}
+                            highlightQuery={findText}
+                            className="w-full rounded-lg border-2 border-white/20 focus:border-primary/50 transition-colors duration-200"
+                          />
+                          {findText && (
+                            <div className="absolute top-3 right-3">
+                              <span className="text-xs px-2 py-1 rounded-md bg-primary/20 text-primary font-medium backdrop-blur-sm">
+                                Destacando: "{findText}"
+                              </span>
+                            </div>
+                          )}
+                        </div>
                       </div>
                     )}
                   </LiquidGlassCard>
                   
                   <div className="flex flex-col sm:flex-row gap-3">
-                    <Button 
-                      variant="outline" 
+                    <HistoryFormButton 
                       onClick={regenerateLyrics} 
                       className="flex-1"
-                      disabled={isLoading}
+                      isLoading={isLoading}
+                      loadingText="Gerando nova letra..."
                     >
-                      {isLoading ? (
-                        <Loader2 className="w-4 h-4 animate-spin" />
-                      ) : (
-                        <RotateCcw className="w-4 h-4" />
-                      )}
+                      <RotateCcw className="w-4 h-4 mr-2" />
                       Gerar Nova Letra
-                    </Button>
-                    <Button
-                      variant="default"
-                      onClick={() => {
-                        // Garante flush do rascunho antes de avançar
-                        if (lyricsDraft && lyricsDraft !== formData.lyrics) {
-                          updateFormData({ lyrics: lyricsDraft });
-                        }
-                        nextStep();
-                      }}
-                      className="flex-1"
-                      disabled={isEditingLyrics}
-                    >
-                      <ArrowRight className="w-4 h-4" />
-                      Aprovar e Continuar
-                    </Button>
+                    </HistoryFormButton>
+
                   </div>
                   
-                  <p className="text-xs text-muted-foreground text-center">
+                  <p className="text-xs text-white/60 text-center">
                     💡 Dica: Você pode gerar quantas versões quiser até ficar satisfeito
                   </p>
                 </div>
@@ -730,288 +762,284 @@ export default function Criar() {
       
       case 2:
         return (
-          <div className="space-y-6">
-            <div className="text-center">
-              <h2 className="text-2xl font-bold font-heading mb-2">Escolha o estilo musical</h2>
-              <p className="text-muted-foreground">
-                Selecione o gênero musical e as preferências para sua música
-              </p>
-            </div>
-
+          <HeroCard title="Escolha o estilo musical">
             <div className="space-y-6">
-              <div className="space-y-4">
-                <Label className="text-base font-semibold">Estilo Musical *</Label>
-                <GenreSelector
-                  onGenreSelect={(genreId, subGenreId) => {
-                    // Buscar o gênero pelo ID para obter o nome
-                    const genre = musicGenres.find(g => g.id === genreId);
-                    if (genre) {
-                      if (subGenreId) {
-                        const subGenre = genre.subGenres.find(sg => sg.id === subGenreId);
-                        if (subGenre) {
-                          handleFieldUpdate('genre', `${genre.name} - ${subGenre.name}`);
+              <div className="grid gap-6">
+                <div className="space-y-4">
+                  <GenreSelector
+                    onGenreSelect={(genreId, subGenreId) => {
+                      // Buscar o gênero pelo ID para obter o nome
+                      const genre = musicGenres.find(g => g.id === genreId);
+                      if (genre) {
+                        if (subGenreId) {
+                          const subGenre = genre.subGenres.find(sg => sg.id === subGenreId);
+                          if (subGenre) {
+                            handleFieldUpdate('genre', `${genre.name} - ${subGenre.name}`);
+                          }
+                        } else {
+                          handleFieldUpdate('genre', genre.name);
                         }
-                      } else {
-                        handleFieldUpdate('genre', genre.name);
                       }
-                    }
-                  }}
-                  className="w-full"
-                />
-                {validationErrors.genre && (
-                  <p className="text-sm text-accent-coral mt-1">{validationErrors.genre}</p>
-                )}
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="emotion" className="text-base font-semibold">Que emoção você quer transmitir? *</Label>
-                <Select value={formData.emotion} onValueChange={(value) => handleFieldUpdate('emotion', value)}>
-                  <SelectTrigger className="h-12">
-                    <SelectValue placeholder="Selecione a emoção" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {emotions.map((emotion) => (
-                      <SelectItem key={emotion} value={emotion}>
-                        {emotion}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                {validationErrors.emotion && (
-                  <p className="text-sm text-accent-coral mt-1">{validationErrors.emotion}</p>
-                )}
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="vocalPreference" className="text-base font-semibold">Prefere vocais masculinos ou femininos? *</Label>
-                <Select value={formData.vocalPreference} onValueChange={(value) => handleFieldUpdate('vocalPreference', value)}>
-                  <SelectTrigger className="h-12">
-                    <SelectValue placeholder="Selecione a preferência vocal" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {vocalPreferences.map((preference) => (
-                      <SelectItem key={preference} value={preference}>
-                        {preference}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                {validationErrors.vocalPreference && (
-                  <p className="text-sm text-accent-coral mt-1">{validationErrors.vocalPreference}</p>
-                )}
-              </div>
-            </div>
-          </div>
-        );
-      
-      case 3:
-        return (
-          <div className="space-y-6">
-            <div className="text-center">
-              <h2 className="text-2xl font-bold font-heading mb-2">Ouça a sua criação</h2>
-              <p className="text-muted-foreground">
-                Sua música está pronta! Ouça uma prévia e escolha o que fazer a seguir
-              </p>
-            </div>
-
-            {(isPreviewLoading || isPolling) && (!musicStore.audioClips || musicStore.audioClips.length === 0) ? (
-              <div className="text-center space-y-6 py-12">
-                {/* Mostrar loading inicial ou cronômetro baseado no estado */}
-                {!currentTaskId ? (
-                  <div className="flex flex-col items-center space-y-4">
-                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-                    <p className="text-sm text-muted-foreground">Conectando com a Suno API...</p>
-                  </div>
-                ) : (
-                  <CountdownTimer className="mb-6" />
-                )}
-                
-                <div>
-                  <h3 className="text-xl font-bold font-heading mb-2">
-                    {!currentTaskId ? 'Iniciando geração...' : 
-                     musicGenerationStatus === 'processing' ? 'Criando sua música...' : 'Processando...'}
-                  </h3>
-                  <p className="text-muted-foreground">
-                    {!currentTaskId ? 
-                      'Conectando com a API da Suno e iniciando o processo de geração...' :
-                      totalExpected > 0 
-                        ? `Gerando ${totalExpected} versões da sua música personalizada.`
-                        : 'Estamos finalizando os últimos detalhes da sua música personalizada.'
-                    }
-                  </p>
-                  {/* Indicador de progresso */}
-                  {totalExpected > 0 && (
-                    <div className="mt-4">
-                      <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
-                        <span>Progresso: {completedClips}/{totalExpected} músicas prontas</span>
-                      </div>
-                      <div className="w-full bg-muted rounded-full h-2 mt-2">
-                        <div 
-                          className="bg-accent-turquoise h-2 rounded-full transition-all duration-500"
-                          style={{ width: `${totalExpected > 0 ? (completedClips / totalExpected) * 100 : 0}%` }}
-                        ></div>
-                      </div>
-                    </div>
+                    }}
+                    className="w-full"
+                  />
+                  {validationErrors.genre && (
+                    <p className="text-sm text-accent-coral mt-1">{validationErrors.genre}</p>
                   )}
                 </div>
-                <div className="bg-muted/50 rounded-lg p-6 space-y-4">
-                  <h4 className="font-semibold font-heading text-lg">Resumo da sua música:</h4>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-                    <div>
-                      <span className="font-medium">Ocasião:</span> {formData.occasion}
-                    </div>
-                    <div>
-                      <span className="font-medium">Para:</span> {formData.recipientName}
-                    </div>
-                    <div>
-                      <span className="font-medium">Relação:</span> {formData.relationship}
-                    </div>
-                    <div>
-                      <span className="font-medium">Gênero:</span> {formData.genre}
-                    </div>
-                    <div>
-                      <span className="font-medium">Emoção:</span> {formData.emotion}
-                    </div>
-                    <div>
-                      <span className="font-medium">Vocal:</span> {formData.vocalPreference}
-                    </div>
+                
+                <div className="grid md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="emotion" className="text-base font-semibold text-white">Que emoção você quer transmitir? *</Label>
+                    <Select value={formData.emotion} onValueChange={(value) => handleFieldUpdate('emotion', value)}>
+                       <SelectTrigger className="h-12 bg-white/10 backdrop-blur-md border-white/20 text-white placeholder:text-white/60 hover:bg-white/15 focus:bg-white/20 focus:border-white/40">
+                         <SelectValue placeholder="Selecione a emoção" />
+                       </SelectTrigger>
+                      <SelectContent>
+                        {emotions.map((emotion) => (
+                          <SelectItem key={emotion} value={emotion}>
+                            {emotion}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    {validationErrors.emotion && (
+                      <p className="text-sm text-accent-coral mt-1">{validationErrors.emotion}</p>
+                    )}
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="vocalPreference" className="text-base font-semibold text-white">Escolha o tipo de voz *</Label>
+                    <Select value={formData.vocalPreference} onValueChange={(value) => handleFieldUpdate('vocalPreference', value)}>
+                       <SelectTrigger className="h-12 bg-white/10 backdrop-blur-md border-white/20 text-white placeholder:text-white/60 hover:bg-white/15 focus:bg-white/20 focus:border-white/40">
+                         <SelectValue placeholder="Selecione a preferência vocal" />
+                       </SelectTrigger>
+                      <SelectContent>
+                        {vocalPreferences.map((preference) => (
+                          <SelectItem key={preference} value={preference}>
+                            {preference}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    {validationErrors.vocalPreference && (
+                      <p className="text-sm text-accent-coral mt-1">{validationErrors.vocalPreference}</p>
+                    )}
                   </div>
                 </div>
               </div>
+            </div>
+          </HeroCard>
+        );
+      
+      case 3: {
+        const summaryItems = [
+          { label: 'Ocasião', value: formData.occasion },
+          { label: 'Para', value: formData.recipientName },
+          { label: 'Relação', value: formData.relationship },
+          { label: 'Gênero', value: formData.genre },
+          { label: 'Emoção', value: formData.emotion },
+          { label: 'Vocal', value: formData.vocalPreference },
+        ].filter((item) => Boolean(item.value));
+
+        const summaryCard = summaryItems.length > 0 ? (
+          <LiquidGlassCard size="lg" className="p-8 space-y-6 text-left">
+            <div className="flex justify-end">
+              <span className="h-2 w-2 rounded-full bg-accent-turquoise shadow-[0_0_12px_rgba(45,212,191,0.6)]" aria-hidden />
+            </div>
+            <div>
+              <h3 className="text-2xl font-semibold font-heading text-white">Resumo da sua música</h3>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {summaryItems.map(({ label, value }) => (
+                <div key={label} className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 backdrop-blur-xl">
+                  <span className="text-[11px] uppercase tracking-[0.22em] text-white/60">{label}</span>
+                  <p className="mt-1 text-sm font-medium text-white">{value}</p>
+                </div>
+              ))}
+            </div>
+          </LiquidGlassCard>
+        ) : null;
+
+        const showInitialState = (isPreviewLoading || isPolling) && (!musicStore.audioClips || musicStore.audioClips.length === 0);
+
+        const renderProgressCard = (
+          <LiquidGlassCard size="lg" className="p-8 flex flex-col items-center gap-6 text-center">
+            {!currentTaskId ? (
+              <div className="flex flex-col items-center gap-4">
+                <div className="h-14 w-14 rounded-full border-2 border-accent-turquoise/60 border-t-transparent animate-spin" />
+                <p className="text-sm text-white/70">Conectando com a Suno API...</p>
+              </div>
             ) : (
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Music className="w-5 h-5" />
-                    Música para {formData.recipientName || 'Pessoa Especial'}
-                  </CardTitle>
-                  <div className="space-y-2">
-                    <p className="text-sm text-muted-foreground">
-                      Estilo: {formData.genre ? formData.genre.charAt(0).toUpperCase() + formData.genre.slice(1) : 'Pop'} • 
-                      Emoção: {formData.emotion || 'Feliz e animado'} • 
-                      Vocal: {formData.vocalPreference || 'Feminino'}
-                    </p>
-                    {/* Barra de progresso quando está gerando */}
+              <CountdownTimer className="w-full" />
+            )}
+            <div className="space-y-2">
+              <h3 className="text-xl font-semibold font-heading text-white">
+                {!currentTaskId ? 'Iniciando geração...' : musicGenerationStatus === 'processing' ? 'Criando sua música...' : 'Processando...'}
+              </h3>
+              <p className="text-sm text-white/70 max-w-md mx-auto">
+                {!currentTaskId
+                  ? 'Estamos preparando a ligação com a Suno para começar a gerar sua música personalizada.'
+                  : totalExpected > 0
+                    ? `Gerando ${totalExpected} versões exclusivas para você.`
+                    : 'Estamos finalizando os últimos detalhes antes de liberar sua música.'}
+              </p>
+            </div>
+            {totalExpected > 0 && (
+              <div className="w-full max-w-sm space-y-3">
+                <div className="text-[11px] uppercase tracking-[0.28em] text-white/60">Progresso</div>
+                <div className="flex items-center justify-between text-sm text-white/80">
+                  <span>{completedClips || 0}/{totalExpected} músicas prontas</span>
+                  <span className="text-white/60">{Math.round(((completedClips || 0) / totalExpected) * 100)}%</span>
+                </div>
+                <div className="h-2 w-full overflow-hidden rounded-full bg-white/10">
+                  <div
+                    className="h-full rounded-full bg-gradient-to-r from-accent-turquoise via-primary/70 to-purple-500/70 transition-all duration-500"
+                    style={{ width: `${totalExpected > 0 ? ((completedClips || 0) / totalExpected) * 100 : 0}%` }}
+                  />
+                </div>
+              </div>
+            )}
+          </LiquidGlassCard>
+        );
+
+        return (
+          <div className="space-y-8">
+            <div className="text-center space-y-3">
+              <div className="mx-auto h-3 w-36 rounded-full bg-gradient-to-r from-accent-turquoise via-white/70 to-fuchsia-500 blur-xl opacity-80" aria-hidden />
+              <h2 className="text-3xl font-extrabold font-heading bg-gradient-to-r from-white via-accent-turquoise to-primary bg-clip-text text-transparent drop-shadow-sm">
+                Sua música está sendo gerada...
+              </h2>
+            </div>
+
+            {showInitialState ? (
+              <div className="grid gap-6">
+                {renderProgressCard}
+                {summaryCard}
+              </div>
+            ) : (
+              <div className="space-y-6">
+                <LiquidGlassCard size="lg" className="p-8 space-y-8">
+                  <header className="space-y-4">
+                    <div className="space-y-2">
+                      <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+                        <h3 className="text-2xl font-semibold font-heading text-white">
+                          Música para {formData.recipientName || 'Pessoa Especial'}
+                        </h3>
+                        {audioClips?.length ? (
+                          <span className="inline-flex items-center gap-2 rounded-full bg-accent-turquoise/20 px-4 py-2 text-xs font-medium text-accent-turquoise backdrop-blur">
+                            ✓ {audioClips.filter((clip) => clip.audio_url).length} versão{audioClips.filter((clip) => clip.audio_url).length !== 1 ? 's' : ''} pronta{audioClips.filter((clip) => clip.audio_url).length !== 1 ? 's' : ''}
+                          </span>
+                        ) : null}
+                      </div>
+                      <p className="text-sm text-white/70">
+                        Estilo: {formData.genre ? formData.genre.charAt(0).toUpperCase() + formData.genre.slice(1) : 'Pop'} · Emoção: {formData.emotion || 'Feliz e animado'} · Vocal: {formData.vocalPreference || 'Feminino'}
+                      </p>
+                    </div>
+
                     {(isPolling || isPreviewLoading) && totalExpected > 0 && (
-                      <div className="space-y-1">
-                        <div className="flex items-center justify-between text-xs text-muted-foreground">
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between text-xs text-white/70">
                           <span>Progresso da geração</span>
                           <span>{completedClips || 0}/{totalExpected}</span>
                         </div>
-                        <div className="w-full bg-muted rounded-full h-2">
-                          <div 
-                            className="bg-primary h-2 rounded-full transition-all duration-500 ease-out"
+                        <div className="h-2 w-full overflow-hidden rounded-full bg-white/10">
+                          <div
+                            className="h-full rounded-full bg-gradient-to-r from-accent-turquoise via-primary/70 to-purple-500/70 transition-all duration-500 ease-out"
                             style={{ width: `${totalExpected > 0 ? ((completedClips || 0) / totalExpected) * 100 : 0}%` }}
                           />
                         </div>
                       </div>
                     )}
-                  </div>
-                </CardHeader>
-                <CardContent className="space-y-6">
-                  {/* Sistema Progressivo - Mostra músicas prontas + placeholders para as que estão sendo geradas */}
+                  </header>
+
                   <div className="space-y-4">
-                    {/* Renderizar o novo player unificado quando há músicas prontas */}
                     {audioClips && audioClips.length > 0 && (
-                      <div className="bg-gradient-to-r from-primary/10 to-secondary/10 p-6 rounded-lg border">
-                        <div className="mb-4">
-                          <h3 className="font-semibold font-heading text-lg flex items-center gap-2 mb-2">
-                            Suas Músicas Personalizadas
-                            <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                              ✓ {audioClips.filter(clip => clip.audio_url).length} Pronta{audioClips.filter(clip => clip.audio_url).length !== 1 ? 's' : ''}
-                            </span>
-                          </h3>
-                          <p className="text-sm text-muted-foreground">Use os controles abaixo para ouvir e baixar suas opções</p>
+                      <div className="rounded-2xl border border-white/10 bg-white/5 p-6 backdrop-blur">
+                        <div className="mb-4 space-y-2">
+                          <h4 className="flex items-center gap-2 text-lg font-semibold font-heading text-white">
+                            <Music className="h-5 w-5 text-accent-turquoise" />
+                            Suas músicas personalizadas
+                          </h4>
+                          <p className="text-sm text-white/70">Explore, compare e escolha a melhor versão para compartilhar.</p>
                         </div>
-                        
-                        {/* Usar o novo componente NewMusicPlayer que unifica todos os players */}
                         <NewMusicPlayer clips={audioClips} />
                       </div>
                     )}
-                    
-                    {/* Renderizar placeholders para músicas ainda sendo geradas */}
+
                     {isPolling && totalExpected > 0 && Array.from({ length: Math.max(0, totalExpected - (audioClips?.length || 0)) }).map((_, index) => {
                       const placeholderIndex = (audioClips?.length || 0) + index + 1;
                       return (
-                        <div key={`placeholder-${placeholderIndex}`} className="bg-gradient-to-r from-muted/50 to-muted/30 p-6 rounded-lg border border-dashed">
-                          <div className="flex items-center justify-between mb-4">
-                            <div>
-                              <h3 className="font-semibold font-heading text-lg flex items-center gap-2">
+                        <div
+                          key={`placeholder-${placeholderIndex}`}
+                          className="rounded-2xl border border-dashed border-white/15 bg-white/5 p-6 backdrop-blur"
+                        >
+                          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                            <div className="space-y-1">
+                              <h4 className="flex items-center gap-2 text-lg font-semibold font-heading text-white">
                                 Opção {placeholderIndex}
-                                <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
-                                  <Loader2 className="w-3 h-3 mr-1 animate-spin" />
+                                <span className="inline-flex items-center gap-1 rounded-full bg-yellow-400/20 px-3 py-1 text-xs font-medium text-yellow-300">
+                                  <Loader2 className="h-4 w-4 animate-spin" />
                                   Gerando...
                                 </span>
-                              </h3>
-                              <p className="text-sm text-muted-foreground">Aguarde, sua música está sendo criada</p>
+                              </h4>
+                              <p className="text-sm text-white/70">Aguarde, estamos preparando esta versão com carinho.</p>
                             </div>
-                            <div className="text-right">
-                              <p className="text-sm text-muted-foreground">Duração</p>
-                              <p className="font-mono text-lg text-muted-foreground">--:--</p>
-                            </div>
-                          </div>
-                          
-                          <div className="flex items-center gap-4 mb-4">
-                            {/* Placeholder para capa */}
-                            <div className="w-20 h-20 rounded-lg bg-muted flex items-center justify-center flex-shrink-0">
-                              <Music className="w-8 h-8 text-muted-foreground" />
-                            </div>
-                            {/* Placeholder para player */}
-                            <div className="flex-1 h-12 bg-muted rounded-md flex items-center justify-center">
-                              <span className="text-sm text-muted-foreground">Player será exibido quando a música estiver pronta</span>
+                            <div className="text-sm text-white/60">
+                              Duração prevista
+                              <p className="font-mono text-lg text-white/80">--:--</p>
                             </div>
                           </div>
 
-                          {/* Placeholder para botão de download */}
-                          <div className="flex justify-center">
+                          <div className="mt-4 flex flex-col gap-4 md:flex-row md:items-center">
+                            <div className="flex h-20 w-full items-center justify-center rounded-xl bg-white/5 text-white/60 md:w-24">
+                              <Music className="h-6 w-6" />
+                            </div>
+                            <div className="flex-1 rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white/70">
+                              O player aparecerá aqui assim que a versão estiver pronta.
+                            </div>
+                          </div>
+
+                          <div className="mt-4">
                             <Button size="sm" variant="outline" className="w-full" disabled>
-                              <Download className="w-4 h-4 mr-2" />
+                              <Download className="mr-2 h-4 w-4" />
                               Aguardando geração...
                             </Button>
                           </div>
                         </div>
                       );
                     })}
-                    
-                    {/* Fallback quando não há músicas nem polling ativo */}
+
                     {(!audioClips || audioClips.length === 0) && !isPolling && (
-                      <div className="bg-gradient-to-r from-primary/10 to-secondary/10 p-6 rounded-lg border">
-                        <div className="text-center">
-                          <h3 className="font-heading font-semibold text-lg mb-2">Nenhuma prévia disponível</h3>
-                          <p className="text-sm text-muted-foreground">Tente gerar a música novamente.</p>
-                        </div>
+                      <div className="rounded-2xl border border-white/10 bg-white/5 p-6 text-center text-white/70 backdrop-blur">
+                        <h4 className="mb-2 text-lg font-semibold font-heading text-white">Nenhuma prévia disponível</h4>
+                        <p className="text-sm">Tente gerar a música novamente.</p>
                       </div>
                     )}
                   </div>
 
-                  {/* Botões de Ação */}
-                  <div className="space-y-3">
-                    <div className="grid md:grid-cols-2 gap-3">
-                      <Button 
-                        variant="outline" 
-                        size="lg"
-                        onClick={() => setCurrentStep(2)}
-                        className="w-full"
+                  {currentStep === steps.length - 1 && (
+                    <div className="flex justify-center">
+                      <LiquidGlassButton
+                        onClick={() => {
+                          const musicStoreState = useMusicStore.getState();
+                          const { token } = useAuthStore.getState();
+                          musicStoreState.startNewCreationFlow(navigate, token);
+                        }}
+                        className="px-8"
                       >
-                        <ArrowLeft className="w-4 h-4 mr-2" />
-                        Alterar Estilo
-                      </Button>
-                      <Button 
-                        variant="link" 
-                        size="lg"
-                        onClick={() => setCurrentStep(0)}
-                        className="w-full"
-                      >
-                        <Edit className="w-4 h-4 mr-2" />
-                        Editar Briefing
-                      </Button>
+                        Criar Nova Música
+                      </LiquidGlassButton>
                     </div>
-                  </div>
-                </CardContent>
-              </Card>
+                  )}
+                </LiquidGlassCard>
+
+                {summaryCard}
+              </div>
             )}
           </div>
         );
+      }
       
       default:
         return null;
@@ -1041,38 +1069,38 @@ export default function Criar() {
               
               {/* Navigation Buttons */}
               <div className={`flex ${currentStep === 0 ? 'justify-end' : 'justify-between'}`}>
-                {currentStep > 0 && (
-                  <Button
-                    variant="outline"
+                {currentStep > 0 && currentStep !== steps.length - 1 && (
+                  <LiquidGlassButtonWhiteSmall
                     onClick={handlePrevStep}
                   >
                     <ArrowLeft className="w-4 h-4" />
                     Anterior
-                  </Button>
+                  </LiquidGlassButtonWhiteSmall>
                 )}
                 
                 {currentStep < steps.length - 1 ? (
                   currentStep === 1 ? (
-                    // Na etapa de letra, só mostra próximo se tiver letra aprovada
-                    formData.lyrics && !isLoading ? null : (
-                      <div></div> // Espaço vazio para manter o layout
-                    )
+                    // Na etapa de letra, mostra o botão Aprovar e Continuar
+                    <LiquidGlassButtonSmall
+                      onClick={() => {
+                        // Garante flush do rascunho antes de avançar
+                        if (lyricsDraft && lyricsDraft !== formData.lyrics) {
+                          updateFormData({ lyrics: lyricsDraft });
+                        }
+                        nextStep();
+                      }}
+                      disabled={isEditingLyrics || !formData.lyrics || isLoading}
+                    >
+                      <ArrowRight className="w-4 h-4" />
+                      Aprovar e Continuar
+                    </LiquidGlassButtonSmall>
                   ) : (
-                    <Button onClick={handleNextStep}>
+                    <LiquidGlassButtonSmall onClick={handleNextStep}>
                       Próximo
                       <ArrowRight className="w-4 h-4" />
-                    </Button>
+                    </LiquidGlassButtonSmall>
                   )
-                ) : (
-                  <Button variant="secondary" onClick={() => {
-                    const musicStore = useMusicStore.getState();
-                    const { token } = useAuthStore.getState(); // Pega o token mais atualizado
-                    
-                    musicStore.startNewCreationFlow(navigate, token);
-                  }}>
-                    Criar Nova Música
-                  </Button>
-                )}
+                ) : null}
               </div>
             </div>
           </div>

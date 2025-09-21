@@ -1,9 +1,9 @@
+/* Importar efeitos glass customizados */
+@import './styles/glass-effects.css';
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
-
-/* Importar efeitos glass customizados */
-@import './styles/glass-effects.css';
 
 /* Memora.music Design System - All colors, gradients, fonts, etc should be defined here. 
 All colors MUST be HSL.
@@ -420,6 +420,50 @@ All colors MUST be HSL.
     box-shadow: 
       0 2px 8px rgba(255, 215, 0, 0.15),
       inset 0 1px 0 rgba(255, 255, 255, 0.15);
+  }
+
+  .liquid-glass-button--white {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.55rem;
+    padding: 0.62rem 1.85rem;
+    border-radius: 9999px;
+    border: 1px solid rgba(255, 255, 255, 0.42);
+    background: linear-gradient(155deg, rgba(255, 255, 255, 0.95), rgba(248, 250, 252, 0.88), rgba(241, 245, 249, 0.85));
+    color: #08060D;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    text-shadow: 0 1px 2px rgba(255, 255, 255, 0.7);
+    backdrop-filter: blur(26px) saturate(160%) contrast(115%);
+    -webkit-backdrop-filter: blur(26px) saturate(160%) contrast(115%);
+    box-shadow: 0 22px 52px -24px rgba(148, 163, 184, 0.75), inset 0 1px 0 rgba(255, 255, 255, 0.85);
+    transition: transform 0.22s ease, box-shadow 0.22s ease, filter 0.22s ease;
+    z-index: 0;
+  }
+
+  .liquid-glass-button--white::before {
+    content: "";
+    position: absolute;
+    inset: 1px;
+    border-radius: inherit;
+    background: linear-gradient(150deg, rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0.25));
+    pointer-events: none;
+    opacity: 0.9;
+    z-index: -1;
+  }
+
+  .liquid-glass-button--white:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 28px 56px -26px rgba(148, 163, 184, 0.82), inset 0 1px 0 rgba(255, 255, 255, 0.9);
+    filter: saturate(112%);
+  }
+
+  .liquid-glass-button--white:active {
+    transform: translateY(0);
+    box-shadow: 0 16px 36px -20px rgba(148, 163, 184, 0.68), inset 0 1px 0 rgba(255, 255, 255, 0.78);
+    filter: saturate(100%);
   }
 
   .liquid-glass-card {

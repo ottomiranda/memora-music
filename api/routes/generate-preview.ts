@@ -388,7 +388,7 @@ function getCallbackBaseUrl(): string {
 
 // Global map para correlacionar tasks de cover -> música original
 declare global {
-  // eslint-disable-next-line no-var
+   
   var sunoCoverTasks: Map<string, { originalTaskId: string; songId?: string }>; // coverTaskId -> mapping
 }
 

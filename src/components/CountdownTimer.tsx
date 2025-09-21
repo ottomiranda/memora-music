@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Clock } from 'lucide-react';
+
+import { LiquidGlassCard } from '@/components/ui/LiquidGlassCard';
+import { cn } from '@/lib/utils';
 
 interface CountdownTimerProps {
   onComplete?: () => void;
@@ -41,19 +43,27 @@ export const CountdownTimer: React.FC<CountdownTimerProps> = ({
   };
 
   return (
-    <div className={`flex items-center justify-center ${className}`}>
-      <div className="w-16 h-16 bg-accent-turquoise/20 rounded-full flex items-center justify-center mx-auto">
-        <Clock className="w-8 h-8 text-accent-turquoise" />
-      </div>
-      <div className="ml-4">
-        <div className="text-2xl font-mono font-bold text-accent-turquoise">
+    <LiquidGlassCard
+      size="md"
+      className={cn(
+        'mx-auto max-w-xs flex flex-col items-center gap-3 text-center py-6 px-8 backdrop-blur-2xl',
+        'before:bg-gradient-to-b before:from-white/0 before:via-white/10 before:to-white/0',
+        className,
+      )}
+    >
+      <span className="text-[10px] uppercase tracking-[0.32em] text-white/60">
+        Tempo estimado restante
+      </span>
+      <div className="relative">
+        <div className="absolute inset-0 blur-3xl bg-accent-turquoise/20" aria-hidden />
+        <div className="relative text-3xl md:text-4xl font-mono font-bold text-accent-turquoise drop-shadow-[0_0_18px_rgba(45,212,191,0.45)]">
           {formatTime(timeLeft)}
         </div>
-        <div className="text-sm text-muted-foreground">
-          Tempo estimado restante
-        </div>
       </div>
-    </div>
+      <p className="text-xs text-white/70 max-w-[14rem]">
+        Segure firme – estamos finalizando os detalhes da sua canção exclusiva.
+      </p>
+    </LiquidGlassCard>
   );
 };
 
