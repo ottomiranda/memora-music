@@ -34,7 +34,7 @@ const FinalCTA = ({ onOpenAuth }: { onOpenAuth: () => void }) => {
         {/* Main Content */}
         <div className="mb-12">
           <h2 className="text-3xl sm:text-4xl lg:text-6xl font-heading font-bold text-memora-secondary mb-6 leading-tight">
-            Surpreenda quem você ama com uma música feita só para ele ou ela
+            Surpreenda <span className="bg-gradient-to-r from-yellow-400 via-purple-500 to-purple-600 bg-clip-text text-transparent">quem você ama</span> com <span className="bg-gradient-to-r from-yellow-400 via-purple-500 to-purple-600 bg-clip-text text-transparent">uma música</span> feita só para <span className="bg-gradient-to-r from-yellow-400 via-purple-500 to-purple-600 bg-clip-text text-transparent">ele ou ela</span>
           </h2>
           <p className="text-xl lg:text-2xl text-white/90 max-w-3xl mx-auto leading-relaxed">
             É grátis no lançamento. Crie agora e descubra o poder de transformar sentimentos em melodia.

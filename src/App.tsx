@@ -14,6 +14,8 @@ import MinhasMusicas from "./pages/MinhasMusicas";
 import MusicaPublica from "./pages/MusicaPublica";
 import AuthCallback from "./pages/AuthCallback";
 import NotFound from "./pages/NotFound";
+import TermosDeUso from "./pages/TermosDeUso";
+import PoliticaDePrivacidade from "./pages/PoliticaDePrivacidade";
 import ProtectedRoute from "./components/auth/ProtectedRoute";
 import { useScrollToTop } from "./hooks/useScrollToTop";
 import { useUiStore } from "./store/uiStore";
@@ -82,6 +84,8 @@ const AppContent = () => {
           />
           <Route path="/musica/:id" element={<MusicaPublica />} />
           <Route path="/auth/callback" element={<AuthCallback />} />
+          <Route path="/termos-de-uso" element={<TermosDeUso />} />
+          <Route path="/politica-de-privacidade" element={<PoliticaDePrivacidade />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>

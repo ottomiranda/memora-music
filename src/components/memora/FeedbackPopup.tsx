@@ -3,6 +3,7 @@ import { X, Send, CheckCircle } from "lucide-react";
 import { toast } from "sonner";
 import { API_BASE_URL } from "../../config/api";
 import { Button } from '@/components/ui/button';
+import { LiquidGlassCard } from '@/components/ui/LiquidGlassCard';
 
 interface FeedbackPopupProps {
   isOpen: boolean;
@@ -90,44 +91,49 @@ const FeedbackPopup = ({ isOpen, onClose }: FeedbackPopupProps) => {
       />
       
       {/* Modal */}
-      <div className="relative bg-white rounded-3xl p-6 lg:p-8 max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-2xl">
+      <LiquidGlassCard
+        variant="primary"
+        className="relative max-w-2xl w-full max-h-[88vh] overflow-y-auto p-5 lg:p-6 border-white/30"
+      >
         {/* Close Button */}
         <Button
           onClick={handleClose}
           disabled={isSubmitting}
           variant="ghost"
           size="sm"
-          className="absolute top-4 right-4 p-2 rounded-full hover:bg-gray-100 transition-colors duration-200 disabled:opacity-50 h-auto"
+          className="absolute top-4 right-4 p-2 rounded-full hover:bg-white/10 text-white transition-colors duration-200 disabled:opacity-50 h-auto"
           aria-label="Fechar popup"
         >
-          <X className="w-6 h-6 text-memora-gray" />
+          <X className="w-6 h-6" />
         </Button>
 
         {/* Content */}
-        <div className="pr-12">
-          <div className="text-center mb-8">
-            <h3 className="text-2xl lg:text-3xl font-heading font-bold text-memora-black mb-4">
-              Ajude-nos a melhorar a Memora Music
-            </h3>
-            <p className="text-memora-gray max-w-xl mx-auto">
-              Sua opinião é fundamental para criarmos a melhor experiência possível. Responda algumas perguntas rápidas:
-            </p>
-          </div>
+        <div className="pr-10 text-white">
+          {!isSubmitted && (
+            <div className="text-center mb-6">
+              <h3 className="text-xl lg:text-2xl font-heading font-bold mb-3">
+                Ajude-nos a melhorar a Memora Music
+              </h3>
+              <p className="text-white/70 max-w-lg mx-auto text-sm">
+                Sua opinião é fundamental para criarmos a melhor experiência possível. Responda algumas perguntas rápidas:
+              </p>
+            </div>
+          )}
 
           {isSubmitted ? (
             <div className="text-center py-12">
-              <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
-                <CheckCircle className="w-10 h-10 text-green-600" />
+              <div className="w-20 h-20 bg-green-400/15 rounded-full flex items-center justify-center mx-auto mb-6">
+                <CheckCircle className="w-10 h-10 text-green-300" />
               </div>
-              <h4 className="text-2xl font-heading font-bold text-memora-black mb-4">
+              <h4 className="text-2xl font-heading font-bold mb-4">
                 Obrigado pelo seu feedback!
               </h4>
-              <p className="text-memora-gray mb-6">
+              <p className="text-white/70 mb-6">
                 Suas respostas nos ajudarão a criar uma experiência ainda melhor.
               </p>
               <Button
                 onClick={handleClose}
-                className="bg-memora-primary hover:bg-memora-primary/90 text-white font-heading font-bold py-3 px-6 rounded-xl transition-all duration-300"
+                className="bg-white/15 hover:bg-white/25 text-white font-heading font-bold py-3 px-6 rounded-xl transition-all duration-300"
                 size="lg"
               >
                 Fechar
@@ -137,7 +143,7 @@ const FeedbackPopup = ({ isOpen, onClose }: FeedbackPopupProps) => {
             <form onSubmit={handleSubmit} className="space-y-8">
               {/* Question 1: Difficulty */}
               <div>
-                <label className="block text-lg font-heading font-bold text-memora-black mb-4">
+                <label className="block text-base lg:text-lg font-heading font-bold mb-3">
                   De 1 a 10, qual foi o nível de dificuldade para gerar sua música?
                 </label>
                 <div className="grid grid-cols-5 sm:grid-cols-10 gap-2">
@@ -153,10 +159,10 @@ const FeedbackPopup = ({ isOpen, onClose }: FeedbackPopupProps) => {
                           onChange={(e) => setFormData({ ...formData, difficulty: e.target.value })}
                           className="sr-only"
                         />
-                        <div className={`w-12 h-12 rounded-xl border-2 flex items-center justify-center cursor-pointer transition-all duration-200 ${
+                        <div className={`w-11 h-11 rounded-xl border flex items-center justify-center cursor-pointer transition-all duration-200 backdrop-blur ${
                           formData.difficulty === value
-                            ? 'border-memora-primary bg-memora-primary text-white'
-                            : 'border-memora-gray/30 hover:border-memora-primary/50 text-memora-gray'
+                            ? 'border-white/60 bg-white/20 text-white shadow-[0_0_18px_rgba(255,255,255,0.35)]'
+                            : 'border-white/20 bg-white/5 text-white/70 hover:border-white/40'
                         }`}>
                           {i + 1}
                         </div>
@@ -164,7 +170,7 @@ const FeedbackPopup = ({ isOpen, onClose }: FeedbackPopupProps) => {
                     );
                   })}
                 </div>
-                <div className="flex justify-between text-sm text-memora-gray mt-2">
+                <div className="flex justify-between text-xs text-white/50 mt-1.5">
                   <span>Muito fácil</span>
                   <span>Muito difícil</span>
                 </div>
@@ -172,10 +178,10 @@ const FeedbackPopup = ({ isOpen, onClose }: FeedbackPopupProps) => {
 
               {/* Question 2: Recommendation */}
               <div>
-                <label className="block text-lg font-heading font-bold text-memora-black mb-4">
+                <label className="block text-base lg:text-lg font-heading font-bold mb-3">
                   Você indicaria a Memora para um amigo ou parente?
                 </label>
-                <div className="grid sm:grid-cols-3 gap-4">
+                <div className="grid sm:grid-cols-3 gap-3">
                   {[
                     { value: 'sim', label: 'Sim', color: 'green' },
                     { value: 'nao', label: 'Não', color: 'red' },
@@ -190,10 +196,10 @@ const FeedbackPopup = ({ isOpen, onClose }: FeedbackPopupProps) => {
                         onChange={(e) => setFormData({ ...formData, would_recommend: e.target.value })}
                         className="sr-only"
                       />
-                      <div className={`p-4 rounded-2xl border-2 text-center cursor-pointer transition-all duration-200 ${
+                      <div className={`p-3.5 rounded-2xl border text-center cursor-pointer transition-all duration-200 backdrop-blur ${
                         formData.would_recommend === option.value
-                          ? 'border-memora-primary bg-memora-primary text-white'
-                          : 'border-memora-gray/30 hover:border-memora-primary/50 text-memora-gray'
+                          ? 'border-white/60 bg-white/15 text-white shadow-[0_0_20px_rgba(255,255,255,0.25)]'
+                          : 'border-white/20 bg-white/5 text-white/70 hover:border-white/40'
                       }`}>
                         <span className="font-heading font-bold">{option.label}</span>
                       </div>
@@ -204,10 +210,10 @@ const FeedbackPopup = ({ isOpen, onClose }: FeedbackPopupProps) => {
 
               {/* Question 3: Price Willingness */}
               <div>
-                <label className="block text-lg font-heading font-bold text-memora-black mb-4">
+                <label className="block text-base lg:text-lg font-heading font-bold mb-3">
                   Quanto você estaria disposto a pagar por uma música completa e personalizada?
                 </label>
-                <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-3">
                   {priceOptions.map((option) => (
                     <label key={option.value} className="relative">
                       <input
@@ -218,10 +224,10 @@ const FeedbackPopup = ({ isOpen, onClose }: FeedbackPopupProps) => {
                         onChange={(e) => setFormData({ ...formData, price_willingness: e.target.value })}
                         className="sr-only"
                       />
-                      <div className={`p-4 rounded-2xl border-2 text-center cursor-pointer transition-all duration-200 ${
+                      <div className={`p-3.5 rounded-2xl border text-center cursor-pointer transition-all duration-200 backdrop-blur ${
                         formData.price_willingness === option.value
-                          ? 'border-memora-primary bg-memora-primary text-white'
-                          : 'border-memora-gray/30 hover:border-memora-primary/50 text-memora-gray'
+                          ? 'border-white/60 bg-white/15 text-white shadow-[0_0_20px_rgba(255,255,255,0.25)]'
+                          : 'border-white/20 bg-white/5 text-white/70 hover:border-white/40'
                       }`}>
                         <span className="font-heading font-bold">{option.label}</span>
                       </div>
@@ -231,11 +237,11 @@ const FeedbackPopup = ({ isOpen, onClose }: FeedbackPopupProps) => {
               </div>
 
               {/* Submit Button */}
-              <div className="text-center pt-4">
+              <div className="text-center pt-2 pb-2">
                 <Button
                   type="submit"
                   disabled={isSubmitting}
-                  className="bg-memora-primary hover:bg-memora-primary/90 disabled:bg-memora-gray/50 text-white font-heading font-bold py-4 px-8 rounded-xl transition-all duration-300 disabled:hover:scale-100 flex items-center space-x-2 mx-auto"
+                  className="bg-white/15 hover:bg-white/25 disabled:bg-white/10 text-white font-heading font-bold py-4 px-8 rounded-xl transition-all duration-300 disabled:hover:scale-100 flex items-center space-x-2 mx-auto"
                   data-attr="mvp-feedback-submit"
                   size="lg"
                 >
@@ -255,7 +261,7 @@ const FeedbackPopup = ({ isOpen, onClose }: FeedbackPopupProps) => {
             </form>
           )}
         </div>
-      </div>
+      </LiquidGlassCard>
     </div>
   );
 };

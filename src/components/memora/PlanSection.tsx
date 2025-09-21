@@ -39,7 +39,7 @@ const PlanSection = ({ id }: { id?: string }) => {
         {/* Header */}
         <div className="text-center mb-8">
           <SectionTitle>
-            Um presente que toca o coração
+            Um presente que <span className="bg-gradient-to-r from-yellow-400 via-purple-500 to-purple-600 bg-clip-text text-transparent">toca</span> o <span className="bg-gradient-to-r from-yellow-400 via-purple-500 to-purple-600 bg-clip-text text-transparent">coração</span>
           </SectionTitle>
           <SectionSubtitle>Crie memórias musicais únicas que ficarão para sempre</SectionSubtitle>
         </div>

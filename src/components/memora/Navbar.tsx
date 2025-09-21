@@ -1,5 +1,5 @@
-import { useState, useEffect } from "react";
-import { Menu, X, Sparkles } from "lucide-react";
+import { useState, useEffect, useCallback } from "react";
+import { Menu, X, Sparkles, LogOut } from "lucide-react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Button } from "../ui/button";
 import { useAuthStore } from "../../store/authStore";
@@ -49,23 +49,15 @@ const Navbar = () => {
     setIsScrolled(window.scrollY > 50);
   }, [location.pathname]);
 
-  const scrollToSection = (sectionId: string) => {
-    // Primeiro tenta encontrar o título específico da seção
-    let targetElement = null;
-    
-    // Busca por um título específico dentro da seção
+  const performScrollToSection = useCallback((sectionId: string) => {
+    let targetElement: Element | null = null;
+
     const sectionElement = document.getElementById(sectionId);
     if (sectionElement) {
-      // Procura por SectionTitle (h2) dentro da seção - prioridade máxima
       const titleElement = sectionElement.querySelector('h2, h1, h3');
-      if (titleElement) {
-        targetElement = titleElement;
-      } else {
-        // Fallback para a seção original
-        targetElement = sectionElement;
-      }
+      targetElement = titleElement || sectionElement;
     }
-    
+
     if (targetElement) {
       const elementPosition = targetElement.getBoundingClientRect().top;
       const offsetPosition = elementPosition + window.pageYOffset - NAVBAR_TOTAL_OFFSET;
@@ -75,8 +67,32 @@ const Navbar = () => {
         behavior: 'smooth'
       });
     }
+  }, []);
+
+  const scrollToSection = (sectionId: string) => {
     setIsMobileMenuOpen(false);
+
+    if (location.pathname !== '/') {
+      navigate('/', { state: { scrollTo: sectionId } });
+      return;
+    }
+
+    performScrollToSection(sectionId);
   };
+
+  useEffect(() => {
+    const state = location.state as ({ scrollTo?: string } & Record<string, unknown>) | null;
+    if (location.pathname === '/' && state?.scrollTo) {
+      const timer = window.setTimeout(() => {
+        performScrollToSection(state.scrollTo!);
+        const { scrollTo, ...rest } = state;
+        const hasAdditionalState = Object.keys(rest).length > 0;
+        navigate(location.pathname, { replace: true, state: hasAdditionalState ? rest : undefined });
+      }, 80);
+
+      return () => window.clearTimeout(timer);
+    }
+  }, [location, navigate, performScrollToSection]);
 
   const getFirstName = (fullName?: string) => {
     if (!fullName) return '';
@@ -139,6 +155,13 @@ const Navbar = () => {
               Preços
             </Button>
             <Button
+              onClick={() => scrollToSection("faq")}
+              variant="ghost"
+              className={desktopNavItemClasses}
+            >
+              FAQ
+            </Button>
+            <Button
               onClick={() => goToDashboard()}
               variant="ghost"
               className={desktopNavItemClasses}
@@ -148,32 +171,29 @@ const Navbar = () => {
 
             {/* Auth Section */}
             <div className="flex items-center gap-4">
-              {isLoggedIn ? (
-                // --- Estado Logado ---
-                <div className="flex items-center gap-4">
+              <Button 
+                variant="glass"
+                onClick={() => handleCreateMusicClick()}
+                className="flex items-center gap-2"
+              >
+                <Sparkles className="w-4 h-4" />
+                Crie sua Música
+              </Button>
+
+              {isLoggedIn && (
+                <>
                   <span 
                     className={`${isAtTop ? 'text-white' : 'text-[#08060D]'} font-medium transition-colors duration-300`}
                   >
                     Olá, {getFirstName(user?.name) || 'usuário'}!
                   </span>
                   <Button 
-                    variant="outline" 
+                    variant="ghost"
                     onClick={() => logout().catch(console.error)}
-                    className={`${isAtTop ? 'border-white text-white hover:bg-white hover:text-memora-primary' : 'border-memora-primary text-memora-primary hover:bg-memora-primary hover:text-white'} transition-all duration-300`}
+                    className={`${desktopNavItemClasses} flex items-center gap-2`}
                   >
+                    <LogOut className="w-4 h-4" />
                     Sair
-                  </Button>
-                </div>
-              ) : (
-                // --- Estado Deslogado ---
-                <>
-                  <Button 
-                    variant="glass"
-                    onClick={() => handleCreateMusicClick()}
-                    className="flex items-center gap-2"
-                  >
-                    <Sparkles className="w-4 h-4" />
-                    Crie sua Música
                   </Button>
                 </>
               )}
@@ -231,6 +251,13 @@ const Navbar = () => {
                 Preços
               </Button>
               <Button
+                onClick={() => scrollToSection("faq")}
+                variant="ghost"
+                className="block w-full text-left px-3 py-2 text-[#08060D] hover:text-memora-secondary hover:bg-gray-100/10 transition-colors duration-300 font-medium h-auto justify-start"
+              >
+                FAQ
+              </Button>
+              <Button
                 onClick={() => goToDashboard()}
                 variant="ghost"
                 className="block w-full text-left px-3 py-2 text-[#08060D] hover:text-memora-secondary hover:bg-gray-100/10 transition-colors duration-300 font-medium h-auto justify-start"
@@ -245,13 +272,25 @@ const Navbar = () => {
                     Olá, {getFirstName(user?.name) || 'usuário'}!
                   </div>
                   <Button
+                    variant="glass"
+                    onClick={() => {
+                      handleCreateMusicClick();
+                      setIsMobileMenuOpen(false);
+                    }}
+                    className="w-full flex items-center justify-center gap-2"
+                  >
+                    <Sparkles className="w-4 h-4" />
+                    Crie sua Música
+                  </Button>
+                  <Button
                     onClick={() => {
                       logout().catch(console.error);
                       setIsMobileMenuOpen(false);
                     }}
-                    variant="outline"
-                    className="block w-full text-left px-3 py-2 border-memora-primary text-memora-primary hover:bg-memora-primary hover:text-white transition-all duration-300 font-medium"
+                    variant="ghost"
+                    className="block w-full text-left px-3 py-2 text-[#08060D] hover:text-memora-secondary hover:bg-gray-100/10 transition-colors duration-300 font-medium h-auto justify-start flex items-center gap-2"
                   >
+                    <LogOut className="w-4 h-4" />
                     Sair
                   </Button>
                 </div>
