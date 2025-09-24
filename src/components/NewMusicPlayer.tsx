@@ -1,5 +1,7 @@
 import React, { useRef, useEffect, useState } from 'react';
 import { Download, Play, Pause, SkipBack, SkipForward, Volume2 } from 'lucide-react';
+import { LiquidGlassCard } from '@/components/ui/LiquidGlassCard';
+import { PurpleFormButton } from '@/components/ui/PurpleFormButton';
 import { useMusicStore } from '@/store/musicStore';
 import { useAuthStore } from '@/store/authStore';
 import { useUiStore } from '@/store/uiStore';
@@ -29,6 +31,8 @@ const NewMusicPlayer: React.FC<NewMusicPlayerProps> = ({ clips }) => {
   const { showAuthPopup } = useUiStore();
 
   const currentClip = clips[currentTrackIndex];
+  const progressPercent = duration ? (currentTime / duration) * 100 : 0;
+  const volumePercent = volume * 100;
 
   // Função para lidar com o gating de 45s para usuários não logados
   const handleTimeUpdate = () => {
@@ -184,20 +188,18 @@ const NewMusicPlayer: React.FC<NewMusicPlayerProps> = ({ clips }) => {
   
   if (validClips.length === 0) {
     return (
-      <div className="bg-gradient-to-br from-slate-900 to-slate-800 rounded-xl p-8 text-center">
-        <div className="text-slate-400">
-          <div className="flex items-center justify-center gap-2 mb-2">
-            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-400"></div>
-            Aguardando músicas...
-          </div>
-          <p className="text-sm">Suas músicas aparecerão aqui quando estiverem prontas</p>
+      <LiquidGlassCard className="p-8 text-center space-y-2">
+        <div className="flex items-center justify-center gap-3 text-memora-primary">
+          <div className="h-5 w-5 rounded-full border-2 border-memora-primary/40 border-t-transparent animate-spin"></div>
+          <span className="text-sm font-medium">Aguardando músicas...</span>
         </div>
-      </div>
+        <p className="text-sm text-white/70">Suas músicas aparecerão aqui quando estiverem prontas</p>
+      </LiquidGlassCard>
     );
   }
 
   return (
-    <div className="bg-gradient-to-br from-slate-900 to-slate-800 rounded-xl overflow-hidden shadow-2xl">
+    <LiquidGlassCard className="p-0 overflow-hidden">
       {/* Audio element */}
       <audio
         ref={audioRef}
@@ -214,20 +216,20 @@ const NewMusicPlayer: React.FC<NewMusicPlayerProps> = ({ clips }) => {
       />
 
       {/* Player Interface */}
-      <div className="p-6">
+      <div className="p-6 space-y-6">
         {/* Track Info */}
-        <div className="text-center mb-6">
-          <h3 className="text-xl font-bold text-white mb-1">
+        <div className="text-center space-y-1">
+          <h3 className="text-xl font-semibold text-white">
             {currentClip?.title || `Opção ${currentTrackIndex + 1}`}
           </h3>
-          <p className="text-slate-400 text-sm">
+          <p className="text-white/60 text-sm">
             Faixa {currentTrackIndex + 1} de {validClips.length}
           </p>
         </div>
 
         {/* Progress Bar */}
-        <div className="mb-6">
-          <div className="flex items-center justify-between text-xs text-slate-400 mb-2">
+        <div className="space-y-2">
+          <div className="flex items-center justify-between text-xs text-white/60">
             <span>{formatTime(currentTime)}</span>
             <span>{formatTime(duration)}</span>
           </div>
@@ -236,18 +238,21 @@ const NewMusicPlayer: React.FC<NewMusicPlayerProps> = ({ clips }) => {
             type="range"
             min="0"
             max="100"
-            value={duration ? (currentTime / duration) * 100 : 0}
+            value={progressPercent}
             onChange={handleProgressChange}
-            className="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer slider"
+            className="slider w-full h-2 rounded-full backdrop-blur-sm appearance-none cursor-pointer"
+            style={{
+              background: `linear-gradient(to right, rgba(90, 45, 176, 0.9) ${progressPercent}%, rgba(255,255,255,0.12) ${progressPercent}%)`
+            }}
           />
         </div>
 
         {/* Controls */}
-        <div className="flex items-center justify-center gap-4 mb-6">
+        <div className="flex items-center justify-center gap-4">
           <button
             onClick={prevTrack}
             disabled={validClips.length <= 1}
-            className="p-2 rounded-full bg-slate-700 hover:bg-slate-600 text-white disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            className="p-2 rounded-full bg-white/10 text-white/80 hover:bg-white/15 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
           >
             <SkipBack className="w-5 h-5" />
           </button>
@@ -255,10 +260,10 @@ const NewMusicPlayer: React.FC<NewMusicPlayerProps> = ({ clips }) => {
           <button
             onClick={togglePlayPause}
             disabled={!currentClip?.audio_url || isBuffering}
-            className="p-4 rounded-full bg-blue-600 hover:bg-blue-700 text-white disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            className="p-4 rounded-full bg-memora-secondary text-memora-black hover:brightness-110 disabled:opacity-40 disabled:cursor-not-allowed transition-transform duration-200"
           >
             {isBuffering ? (
-              <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-white"></div>
+              <div className="h-6 w-6 rounded-full border-2 border-memora-primary/40 border-t-transparent animate-spin"></div>
             ) : isPlaying ? (
               <Pause className="w-6 h-6" />
             ) : (
@@ -269,45 +274,49 @@ const NewMusicPlayer: React.FC<NewMusicPlayerProps> = ({ clips }) => {
           <button
             onClick={nextTrack}
             disabled={validClips.length <= 1}
-            className="p-2 rounded-full bg-slate-700 hover:bg-slate-600 text-white disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            className="p-2 rounded-full bg-white/10 text-white/80 hover:bg-white/15 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
           >
             <SkipForward className="w-5 h-5" />
           </button>
         </div>
 
         {/* Volume Control */}
-        <div className="flex items-center gap-3 mb-6">
-          <Volume2 className="w-4 h-4 text-slate-400" />
+        <div className="flex items-center gap-3">
+          <Volume2 className="w-4 h-4 text-white/60" />
           <input
             ref={volumeRef}
             type="range"
             min="0"
             max="100"
-            value={volume * 100}
+            value={volumePercent}
             onChange={handleVolumeChange}
-            className="flex-1 h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer slider"
+            className="slider flex-1 h-2 rounded-full backdrop-blur-sm appearance-none cursor-pointer"
+            style={{
+              background: `linear-gradient(to right, rgba(90, 45, 176, 0.9) ${volumePercent}%, rgba(255,255,255,0.12) ${volumePercent}%)`
+            }}
           />
         </div>
 
         {/* Track Selection */}
         {validClips.length > 1 && (
-          <div className="mb-6">
-            <h4 className="text-sm font-medium text-slate-300 mb-3">Escolha uma opção:</h4>
+          <div className="space-y-3">
+            <h4 className="text-sm font-medium text-white/70">Escolha uma opção:</h4>
             <div className="grid grid-cols-2 gap-2">
               {validClips.map((clip, index) => (
                 <button
                   key={clip.id || index}
                   onClick={() => selectTrack(index)}
-                  className={`p-3 rounded-lg text-left transition-colors ${
+                  className={`group relative overflow-hidden p-3 rounded-xl border text-left transition-all backdrop-blur-xl ${
                     index === currentTrackIndex
-                      ? 'bg-blue-600 text-white'
-                      : 'bg-slate-700 hover:bg-slate-600 text-slate-300'
+                      ? 'border-memora-primary/60 bg-gradient-to-br from-memora-primary/30 via-memora-primary/15 to-transparent text-white shadow-[0_10px_30px_rgba(90,45,176,0.45)]'
+                      : 'border-memora-primary/30 bg-memora-primary/8 text-white/80 hover:bg-memora-primary/12'
                   }`}
                 >
-                  <div className="font-medium text-sm">
+                  <span className="pointer-events-none absolute inset-0 bg-gradient-to-r from-white/12 via-transparent to-white/12 opacity-0 transition-opacity duration-500 group-hover:opacity-60" />
+                  <div className="relative z-10 font-medium text-sm">
                     Opção {index + 1}
                   </div>
-                  <div className="text-xs opacity-75">
+                  <div className="relative z-10 text-xs opacity-75">
                     {clip.title || 'Música personalizada'}
                   </div>
                 </button>
@@ -318,18 +327,18 @@ const NewMusicPlayer: React.FC<NewMusicPlayerProps> = ({ clips }) => {
 
         {/* Download Button */}
         {(isMvpFlowComplete || isLoggedIn) && currentClip && (
-          <button
+          <PurpleFormButton
             onClick={() => handleDownloadClick(currentClip)}
-            className="w-full bg-green-600 hover:bg-green-700 text-white py-3 px-4 rounded-lg font-medium transition-colors flex items-center justify-center gap-2"
+            className="w-full flex items-center justify-center gap-2 h-12"
           >
             <Download className="w-4 h-4" />
             Baixar Opção {currentTrackIndex + 1}
-          </button>
+          </PurpleFormButton>
         )}
 
         {/* MVP Flow Message */}
         {!isMvpFlowComplete && !isLoggedIn && (
-          <div className="text-center text-slate-400 text-sm italic mt-4">
+          <div className="text-center text-white/60 text-sm italic">
             Ouça a prévia completa para desbloquear o download
           </div>
         )}
@@ -341,21 +350,33 @@ const NewMusicPlayer: React.FC<NewMusicPlayerProps> = ({ clips }) => {
           width: 16px;
           height: 16px;
           border-radius: 50%;
-          background: #3b82f6;
+          background: #5A2DB0;
           cursor: pointer;
-          border: 2px solid #1e293b;
+          border: 2px solid rgba(255, 255, 255, 0.25);
+          margin-top: -4px;
+        }
+        .slider::-webkit-slider-runnable-track {
+          height: 8px;
+          border-radius: 9999px;
+          background: transparent;
         }
         
         .slider::-moz-range-thumb {
           width: 16px;
           height: 16px;
           border-radius: 50%;
-          background: #3b82f6;
+          background: #5A2DB0;
           cursor: pointer;
-          border: 2px solid #1e293b;
+          border: 2px solid rgba(255, 255, 255, 0.25);
+          transform: translateY(-4px);
+        }
+        .slider::-moz-range-track {
+          height: 8px;
+          border-radius: 9999px;
+          background: transparent;
         }
       `}</style>
-    </div>
+    </LiquidGlassCard>
   );
 };
 

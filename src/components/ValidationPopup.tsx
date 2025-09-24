@@ -1,14 +1,13 @@
 import React, { useState } from 'react';
 import { useMusicStore } from '@/store/musicStore';
-import { X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { LiquidGlassCard } from '@/components/ui/LiquidGlassCard';
 import { apiRequest } from '../config/api';
 
 interface ValidationFormData {
   difficulty: number;
   recommendation: 'sim' | 'nao' | 'talvez' | '';
-  price: '99' | '149' | '219' | 'outro' | '';
-  customPrice: string;
+  price: '99' | '149' | '219' | '';
 }
 
 const ValidationPopup: React.FC = () => {
@@ -17,8 +16,7 @@ const ValidationPopup: React.FC = () => {
   const [formData, setFormData] = useState<ValidationFormData>({
     difficulty: 5,
     recommendation: '',
-    price: '',
-    customPrice: ''
+    price: ''
   });
 
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -31,23 +29,17 @@ const ValidationPopup: React.FC = () => {
     setFormData(prev => ({ ...prev, recommendation: value }));
   };
 
-  const handlePriceChange = (value: '99' | '149' | '219' | 'outro') => {
+  const handlePriceChange = (value: '99' | '149' | '219') => {
     setFormData(prev => ({ 
       ...prev, 
-      price: value,
-      customPrice: value !== 'outro' ? '' : prev.customPrice
+      price: value
     }));
-  };
-
-  const handleCustomPriceChange = (value: string) => {
-    setFormData(prev => ({ ...prev, customPrice: value }));
   };
 
   const isFormValid = () => {
     return (
       formData.recommendation !== '' &&
-      formData.price !== '' &&
-      (formData.price !== 'outro' || formData.customPrice.trim() !== '')
+      formData.price !== ''
     );
   };
 
@@ -62,18 +54,7 @@ const ValidationPopup: React.FC = () => {
 
     try {
       // Preparar dados para envio ao backend
-      let priceWillingness = '';
-      if (formData.price === 'outro') {
-        priceWillingness = formData.customPrice;
-      } else {
-        // Mapear valores do formulário para formato esperado pela API
-        const priceMap: { [key: string]: string } = {
-          '99': '99',
-          '149': '149', 
-          '219': '219'
-        };
-        priceWillingness = priceMap[formData.price] || formData.price;
-      }
+      const priceWillingness = formData.price;
       
       const feedbackData = {
         difficulty: formData.difficulty,
@@ -106,130 +87,139 @@ const ValidationPopup: React.FC = () => {
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-lg shadow-xl max-w-md w-full max-h-[90vh] overflow-y-auto">
-        <div className="p-6">
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-xl font-heading font-bold text-gray-800">
-              Ajude-nos a melhorar!
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      <div className="absolute inset-0 bg-black/60 backdrop-blur-md" />
+      <LiquidGlassCard
+        variant="primary"
+        className="relative w-full max-w-2xl max-h-[90vh] overflow-y-auto p-6 lg:p-8 border-white/30"
+      >
+        <div className="text-white space-y-8 pr-1 lg:pr-4">
+          <header className="text-center space-y-3">
+            <h2 className="text-2xl lg:text-3xl font-heading font-bold">
+              Ajude-nos a evoluir a Memora Music
             </h2>
-            {/* Removido botão de fechar para tornar o modal obrigatório */}
-          </div>
+            <p className="text-white/70 text-sm max-w-xl mx-auto">
+              Para liberar a música completa, responda a estas perguntas rápidas. Suas respostas nos ajudam a construir uma experiência melhor para você e toda a comunidade.
+            </p>
+          </header>
 
-          <form onSubmit={handleSubmit} className="space-y-6">
+          <form onSubmit={handleSubmit} className="space-y-10">
             {/* Pergunta A: Dificuldade */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-3">
-                Como você avalia a dificuldade de usar nossa plataforma?
+            <section className="space-y-4">
+              <label className="block text-base lg:text-lg font-heading font-semibold">
+                De 1 a 5, qual foi o nível de dificuldade para gerar sua música?
               </label>
-              <div className="space-y-2">
-                <input
-                  type="range"
-                  min="1"
-                  max="5"
-                  value={formData.difficulty}
-                  onChange={(e) => handleDifficultyChange(parseInt(e.target.value))}
-                  className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer slider"
-                />
-                <div className="flex justify-between text-xs text-gray-500">
-                  <span>1 (Muito fácil)</span>
-                  <span className="font-medium text-blue-600">{formData.difficulty}</span>
-                  <span>5 (Muito difícil)</span>
-                </div>
+              <div className="grid grid-cols-5 gap-2">
+                {Array.from({ length: 5 }).map((_, index) => {
+                  const value = index + 1;
+                  const selected = formData.difficulty === value;
+                  return (
+                    <button
+                      key={value}
+                      type="button"
+                      onClick={() => handleDifficultyChange(value)}
+                      className={`h-12 rounded-xl border transition-all duration-200 backdrop-blur flex items-center justify-center font-medium ${
+                        selected
+                          ? 'border-white/60 bg-white/20 text-white shadow-[0_0_18px_rgba(255,255,255,0.35)]'
+                          : 'border-white/20 bg-white/5 text-white/80 hover:border-white/40'
+                      }`}
+                    >
+                      {value}
+                    </button>
+                  );
+                })}
               </div>
-            </div>
+              <div className="flex justify-between text-xs text-white/50">
+                <span>Muito fácil</span>
+                <span className="font-semibold text-white/80">{formData.difficulty}</span>
+                <span>Muito difícil</span>
+              </div>
+            </section>
 
             {/* Pergunta B: Indicação */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-3">
-                Você indicaria nossa plataforma para um amigo?
+            <section className="space-y-4">
+              <label className="block text-base lg:text-lg font-heading font-semibold">
+                Você indicaria a Memora para um amigo ou parente?
               </label>
-              <div className="space-y-2">
+              <div className="grid sm:grid-cols-3 gap-3">
                 {[
                   { value: 'sim', label: 'Sim, com certeza!' },
-                  { value: 'talvez', label: 'Talvez, precisa melhorar' },
-                  { value: 'nao', label: 'Não, não recomendaria' }
-                ].map((option) => (
-                  <label key={option.value} className="flex items-center space-x-3 cursor-pointer">
-                    <input
-                      type="radio"
-                      name="recommendation"
-                      value={option.value}
-                      checked={formData.recommendation === option.value}
-                      onChange={() => handleRecommendationChange(option.value as 'sim' | 'nao' | 'talvez')}
-                      className="w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500"
-                    />
-                    <span className="text-sm text-gray-700">{option.label}</span>
-                  </label>
-                ))}
+                  { value: 'talvez', label: 'Talvez, precisamos melhorar' },
+                  { value: 'nao', label: 'Ainda não recomendaria' }
+                ].map((option) => {
+                  const selected = formData.recommendation === option.value;
+                  return (
+                    <button
+                      key={option.value}
+                      type="button"
+                      onClick={() => handleRecommendationChange(option.value as 'sim' | 'nao' | 'talvez')}
+                      className={`rounded-2xl border p-4 text-sm text-left transition-all duration-200 backdrop-blur ${
+                        selected
+                          ? 'border-white/60 bg-white/20 text-white shadow-[0_10px_35px_rgba(90,45,176,0.35)]'
+                          : 'border-white/15 bg-white/5 text-white/80 hover:border-white/35'
+                      }`}
+                    >
+                      {option.label}
+                    </button>
+                  );
+                })}
               </div>
-            </div>
+            </section>
 
             {/* Pergunta C: Preço */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-3">
-                Quanto você pagaria por este serviço?
+            <section className="space-y-4">
+              <label className="block text-base lg:text-lg font-heading font-semibold">
+                Qual valor você considera justo para esta experiência?
               </label>
-              <div className="space-y-2">
+              <div className="grid sm:grid-cols-2 gap-3">
                 {[
                   { value: '99', label: 'R$ 99,00' },
                   { value: '149', label: 'R$ 149,00' },
-                  { value: '219', label: 'R$ 219,00' },
-                  { value: 'outro', label: 'Outro valor' }
-                ].map((option) => (
-                  <label key={option.value} className="flex items-center space-x-3 cursor-pointer">
-                    <input
-                      type="radio"
-                      name="price"
-                      value={option.value}
-                      checked={formData.price === option.value}
-                      onChange={() => handlePriceChange(option.value as '99' | '149' | '219' | 'outro')}
-                      className="w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500"
-                    />
-                    <span className="text-sm text-gray-700">{option.label}</span>
-                  </label>
-                ))}
+                  { value: '219', label: 'R$ 219,00' }
+                ].map((option) => {
+                  const selected = formData.price === option.value;
+                  return (
+                    <button
+                      key={option.value}
+                      type="button"
+                      onClick={() => handlePriceChange(option.value as '99' | '149' | '219')}
+                      className={`rounded-2xl border p-4 text-sm text-left transition-all duration-200 backdrop-blur ${
+                        selected
+                          ? 'border-white/60 bg-white/20 text-white shadow-[0_10px_35px_rgba(90,45,176,0.35)]'
+                          : 'border-white/15 bg-white/5 text-white/80 hover:border-white/35'
+                      }`}
+                    >
+                      {option.label}
+                    </button>
+                  );
+                })}
               </div>
-              
-              {/* Campo condicional para "Outro valor" */}
-              {formData.price === 'outro' && (
-                <div className="mt-3">
-                  <input
-                    type="text"
-                    placeholder="Digite o valor (ex: R$ 299,00)"
-                    value={formData.customPrice}
-                    onChange={(e) => handleCustomPriceChange(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  />
-                </div>
-              )}
-            </div>
 
-            {/* Botão de envio */}
-            <div className="pt-4">
+
+            </section>
+
+            <div className="pt-2">
               <Button
                 type="submit"
                 disabled={!isFormValid() || isSubmitting}
-                className="w-full"
-                size="lg"
+                className="w-full h-12 bg-white/20 hover:bg-white/30 text-white font-heading font-semibold rounded-2xl transition-all duration-300 disabled:opacity-50"
               >
                 {isSubmitting ? (
                   <div className="flex items-center justify-center gap-2">
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                    <div className="h-4 w-4 animate-spin rounded-full border-2 border-white/70 border-t-transparent" />
                     Enviando...
                   </div>
                 ) : (
-                  'Enviar Feedback'
+                  'Enviar feedback e continuar'
                 )}
               </Button>
+              <p className="mt-3 text-center text-xs text-white/50">
+                Obrigado por dedicar alguns segundos para melhorar a Memora Music.
+              </p>
             </div>
           </form>
-
-          <div className="mt-4 text-xs text-gray-500 text-center">
-            Suas respostas nos ajudam a melhorar a experiência para todos os usuários.
-          </div>
         </div>
-      </div>
+      </LiquidGlassCard>
     </div>
   );
 };

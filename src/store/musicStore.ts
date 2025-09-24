@@ -131,7 +131,7 @@ interface MusicStore {
   // Funções específicas
   generateLyrics: () => Promise<void>;
   generatePreview: () => Promise<void>;
-  regenerateLyrics: () => void;
+  regenerateLyrics: (onComplete?: () => void) => void;
   generateMusic: () => Promise<void>;
   
   // Novas funções para polling progressivo
@@ -326,8 +326,14 @@ export const useMusicStore = create<MusicStore>()(
     }
   },
   
-  regenerateLyrics: () => {
-    get().generateLyrics();
+  regenerateLyrics: (onComplete?: () => void) => {
+    const generateLyricsWithCallback = async () => {
+      await get().generateLyrics();
+      if (onComplete) {
+        onComplete();
+      }
+    };
+    generateLyricsWithCallback();
   },
   
   // Função específica para gerar música com polling progressivo

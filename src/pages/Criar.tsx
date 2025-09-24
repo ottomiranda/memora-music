@@ -9,7 +9,7 @@ import HighlightedTextarea from "@/components/HighlightedTextarea";
 import GenreSelector from "@/components/GenreSelector";
 import ConfettiAnimation from "@/components/ConfettiAnimation";
 import { Button } from "@/components/ui/button";
-import { HistoryFormButton } from "@/components/ui/HistoryFormButton";
+import { PurpleFormButton } from "@/components/ui/PurpleFormButton";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
@@ -180,6 +180,20 @@ export default function Criar() {
   // Campo de busca para destaque
   const [replaceText, setReplaceText] = useState(""); // deprecated (mantido para compat, não exibido)
   const saveTimerRef = React.useRef<number | null>(null);
+  const lyricsSectionRef = React.useRef<HTMLDivElement | null>(null);
+  const previousGeneratedLyricsRef = React.useRef<string | null>(null);
+  const previousIsLoadingRef = React.useRef<boolean>(isLoading);
+  const previewStatusRef = React.useRef<HTMLDivElement | null>(null);
+  const stepScrollTimeoutRef = React.useRef<number | null>(null);
+  const scrollToPageTop = React.useCallback(() => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, []);
+  const scrollToLyricsSection = React.useCallback(() => {
+    lyricsSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }, []);
+  const scrollToPreviewStatus = React.useCallback(() => {
+    previewStatusRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }, []);
   // Categoria selecionada no briefing
   const [selectedOccasionCategory, setSelectedOccasionCategory] = useState<string>(() => {
     // Tenta inferir a categoria a partir da ocasião já selecionada
@@ -200,6 +214,21 @@ export default function Criar() {
   useEffect(() => {
     window.scrollTo(0, 0);
   }, []);
+
+  useEffect(() => {
+    if (stepScrollTimeoutRef.current) {
+      window.clearTimeout(stepScrollTimeoutRef.current);
+      stepScrollTimeoutRef.current = null;
+    }
+
+    scrollToPageTop();
+
+    if (currentStep === 3) {
+      stepScrollTimeoutRef.current = window.setTimeout(() => {
+        scrollToPreviewStatus();
+      }, 200);
+    }
+  }, [currentStep, scrollToPageTop, scrollToPreviewStatus]);
 
   // useEffect para processar parâmetros da URL
   useEffect(() => {
@@ -240,6 +269,10 @@ export default function Criar() {
         window.clearTimeout(saveTimerRef.current);
         saveTimerRef.current = null;
       }
+      if (stepScrollTimeoutRef.current) {
+        window.clearTimeout(stepScrollTimeoutRef.current);
+        stepScrollTimeoutRef.current = null;
+      }
     };
   }, []);
 
@@ -249,6 +282,20 @@ export default function Criar() {
       setShowConfetti(true);
     }
   }, [formData.lyrics, isLoading, currentStep]);
+
+  useEffect(() => {
+    if (currentStep === 1 && generatedLyrics && previousGeneratedLyricsRef.current !== generatedLyrics) {
+      scrollToLyricsSection();
+    }
+    previousGeneratedLyricsRef.current = generatedLyrics;
+  }, [generatedLyrics, currentStep, scrollToLyricsSection]);
+
+  useEffect(() => {
+    if (currentStep === 1 && previousIsLoadingRef.current && !isLoading) {
+      scrollToLyricsSection();
+    }
+    previousIsLoadingRef.current = isLoading;
+  }, [currentStep, isLoading, scrollToLyricsSection]);
 
   const clearPendingAutoSave = () => {
     if (saveTimerRef.current) {
@@ -339,10 +386,7 @@ export default function Criar() {
     if (currentStep === 0) {
       // Avançar para a etapa 1 primeiro
       nextStep();
-      
-      // Scroll suave para o topo da página
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-      
+
       // Gerar letra de forma assíncrona sem bloquear a navegação
       setTimeout(() => {
         generateLyrics();
@@ -361,7 +405,7 @@ export default function Criar() {
       
       // Avançar para a etapa 3 primeiro
       nextStep();
-      
+
       // Depois chamar a geração de música
       await generateMusic();
     } else {
@@ -588,14 +632,14 @@ export default function Criar() {
                   <p className="text-muted-foreground">
                     Vamos gerar a letra da sua música baseada na história que você contou.
                   </p>
-                  <HistoryFormButton 
+                  <PurpleFormButton 
                     onClick={generateLyrics} 
                     isLoading={isLoading}
                     loadingText="Gerando letra..."
                     disabled={isLoading || !formData.occasion || !formData.recipientName || !formData.relationship}
                   >
                     Gerar Letra da Música
-                  </HistoryFormButton>
+                  </PurpleFormButton>
                 </div>
               )}
 
@@ -607,7 +651,7 @@ export default function Criar() {
                   <div>
                     <p className="font-medium text-white">Criando sua letra personalizada...</p>
                     <p className="text-sm text-white/50">
-                      Nossa IA está analisando sua história e criando versos únicos
+                      Estamos analisando sua história e criando versos únicos
                     </p>
                   </div>
                 </div>
@@ -739,15 +783,18 @@ export default function Criar() {
                   </LiquidGlassCard>
                   
                   <div className="flex flex-col sm:flex-row gap-3">
-                    <HistoryFormButton 
-                      onClick={regenerateLyrics} 
+                    <PurpleFormButton 
+                      onClick={() => {
+                        scrollToLyricsSection();
+                        regenerateLyrics();
+                      }} 
                       className="flex-1"
                       isLoading={isLoading}
                       loadingText="Gerando nova letra..."
                     >
                       <RotateCcw className="w-4 h-4 mr-2" />
                       Gerar Nova Letra
-                    </HistoryFormButton>
+                    </PurpleFormButton>
 
                   </div>
                   
@@ -905,7 +952,7 @@ export default function Criar() {
 
         return (
           <div className="space-y-8">
-            <div className="text-center space-y-3">
+            <div ref={previewStatusRef} className="text-center space-y-3">
               <div className="mx-auto h-3 w-36 rounded-full bg-gradient-yellow-purple blur-xl opacity-80" aria-hidden />
               <h2 className="text-3xl font-extrabold font-heading bg-gradient-yellow-purple bg-clip-text text-transparent drop-shadow-sm">
                 Sua música está sendo gerada...
@@ -932,9 +979,6 @@ export default function Criar() {
                           </span>
                         ) : null}
                       </div>
-                      <p className="text-sm text-white/70">
-                        Estilo: {formData.genre ? formData.genre.charAt(0).toUpperCase() + formData.genre.slice(1) : 'Pop'} · Emoção: {formData.emotion || 'Feliz e animado'} · Vocal: {formData.vocalPreference || 'Feminino'}
-                      </p>
                     </div>
 
                     {(isPolling || isPreviewLoading) && totalExpected > 0 && (
@@ -955,24 +999,24 @@ export default function Criar() {
 
                   <div className="space-y-4">
                     {audioClips && audioClips.length > 0 && (
-                      <div className="rounded-2xl border border-white/10 bg-white/5 p-6 backdrop-blur">
-                        <div className="mb-4 space-y-2">
+                      <LiquidGlassCard className="p-6 space-y-4">
+                        <div className="space-y-2">
                           <h4 className="flex items-center gap-2 text-lg font-semibold font-heading text-white">
                             <Music className="h-5 w-5 text-secondary" />
                             Suas músicas personalizadas
                           </h4>
-                          <p className="text-sm text-white/70">Explore, compare e escolha a melhor versão para compartilhar.</p>
+                          <p className="text-sm text-white/70">Ouça, compare e escolha a melhor versão para compartilhar.</p>
                         </div>
                         <NewMusicPlayer clips={audioClips} />
-                      </div>
+                      </LiquidGlassCard>
                     )}
 
                     {isPolling && totalExpected > 0 && Array.from({ length: Math.max(0, totalExpected - (audioClips?.length || 0)) }).map((_, index) => {
                       const placeholderIndex = (audioClips?.length || 0) + index + 1;
                       return (
-                        <div
+                        <LiquidGlassCard
                           key={`placeholder-${placeholderIndex}`}
-                          className="rounded-2xl border border-dashed border-white/15 bg-white/5 p-6 backdrop-blur"
+                          className="p-6 space-y-4 !border-dashed !border-white/15"
                         >
                           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                             <div className="space-y-1">
@@ -991,13 +1035,13 @@ export default function Criar() {
                             </div>
                           </div>
 
-                          <div className="mt-4 flex flex-col gap-4 md:flex-row md:items-center">
-                            <div className="flex h-20 w-full items-center justify-center rounded-xl bg-white/5 text-white/60 md:w-24">
+                          <div className="flex flex-col gap-4 md:flex-row md:items-center">
+                            <LiquidGlassCard size="sm" className="flex h-20 w-full items-center justify-center !p-0 text-white/70 md:w-24">
                               <Music className="h-6 w-6" />
-                            </div>
-                            <div className="flex-1 rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white/70">
+                            </LiquidGlassCard>
+                            <LiquidGlassCard size="sm" className="flex-1 !p-0 px-4 py-3 text-sm text-white/70">
                               O player aparecerá aqui assim que a versão estiver pronta.
-                            </div>
+                            </LiquidGlassCard>
                           </div>
 
                           <div className="mt-4">
@@ -1006,15 +1050,15 @@ export default function Criar() {
                               Aguardando geração...
                             </Button>
                           </div>
-                        </div>
+                        </LiquidGlassCard>
                       );
                     })}
 
                     {(!audioClips || audioClips.length === 0) && !isPolling && (
-                      <div className="rounded-2xl border border-white/10 bg-white/5 p-6 text-center text-white/70 backdrop-blur">
+                      <LiquidGlassCard className="p-6 text-center text-white/70">
                         <h4 className="mb-2 text-lg font-semibold font-heading text-white">Nenhuma prévia disponível</h4>
                         <p className="text-sm">Tente gerar a música novamente.</p>
-                      </div>
+                      </LiquidGlassCard>
                     )}
                   </div>
 
@@ -1065,7 +1109,9 @@ export default function Criar() {
             <ParticlesAndWaves className="h-32 -mt-4" maxParticles={60} reducedMotion={false} disableWaves={true} />
             
             <div className="space-y-6">
-              {renderStepContent(currentStep, isLoading, musicStore.audioClips || [])}
+              <div ref={currentStep === 1 ? lyricsSectionRef : null}>
+                {renderStepContent(currentStep, isLoading, musicStore.audioClips || [])}
+              </div>
               
               {/* Navigation Buttons */}
               <div className={`flex ${currentStep === 0 ? 'justify-end' : 'justify-between'}`}>

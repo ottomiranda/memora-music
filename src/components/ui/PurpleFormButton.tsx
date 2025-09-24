@@ -1,7 +1,7 @@
 import React from 'react'
 import { Loader2 } from 'lucide-react'
 
-interface HistoryFormButtonProps {
+interface PurpleFormButtonProps {
   children: React.ReactNode
   onClick?: () => void
   disabled?: boolean
@@ -11,7 +11,7 @@ interface HistoryFormButtonProps {
   type?: 'button' | 'submit' | 'reset'
 }
 
-export const HistoryFormButton: React.FC<HistoryFormButtonProps> = ({
+export const PurpleFormButton: React.FC<PurpleFormButtonProps> = ({
   children,
   onClick,
   disabled = false,

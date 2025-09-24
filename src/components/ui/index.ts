@@ -4,7 +4,7 @@ export { LiquidGlassButton } from './LiquidGlassButton';
 export { LiquidGlassButtonSmall } from './LiquidGlassButtonSmall';
 export { LiquidGlassButtonWhite } from './LiquidGlassButtonWhite';
 export { LiquidGlassButtonWhiteSmall } from './LiquidGlassButtonWhiteSmall';
-export { HistoryFormButton } from './HistoryFormButton';
+export { PurpleFormButton } from './PurpleFormButton';
 export { HeroCard } from './HeroCard';
 export { SectionTitle } from './SectionTitle';
 export { SectionSubtitle } from './SectionSubtitle';

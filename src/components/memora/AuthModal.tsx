@@ -5,6 +5,8 @@ import { Eye, EyeOff, X, Mail, CheckCircle } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { LiquidGlassCard } from "@/components/ui/LiquidGlassCard";
+import { PurpleFormButton } from "@/components/ui/PurpleFormButton";
 import { useAuthStore } from "@/store/authStore";
 import { useUiStore } from "@/store/uiStore";
 import { getAuthSchema, type AuthFormData } from "@/schemas/authSchema";
@@ -175,44 +177,41 @@ const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center">
-      {/* Overlay */}
-      <div 
-        className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4">
+      <div
+        className="absolute inset-0 bg-black/60 backdrop-blur-md"
         onClick={onClose}
       />
-      
-      {/* Modal */}
-      <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 p-6">
-        {/* Close Button */}
+
+      <LiquidGlassCard
+        variant="primary"
+        className="relative w-full max-w-lg sm:max-w-md mx-auto border-white/25 p-5 sm:p-6"
+      >
         <Button
           onClick={onClose}
           variant="ghost"
           size="icon"
-          className="absolute top-4 right-4 text-memora-gray hover:text-memora-black"
+          className="absolute top-4 right-4 text-white/70 hover:text-white"
           aria-label="Fechar modal"
         >
-          <X className="w-6 h-6" />
+          <X className="w-5 h-5" />
         </Button>
 
-        {/* Header */}
-        <div className="text-center mb-6">
-          <h2 className="text-2xl font-heading font-bold text-memora-black mb-2">
-            {isLogin ? "Entrar" : "Criar conta"}
+        <div className="text-center mb-5 sm:mb-6 text-white space-y-2">
+          <h2 className="text-xl sm:text-2xl font-heading font-bold">
+            {isLogin ? "Entre na sua conta" : "Criar nova conta"}
           </h2>
-          <p className="text-memora-gray">
-            {isLogin 
-              ? "Acesse suas músicas personalizadas" 
-              : "Comece a criar suas músicas únicas"
-            }
+          <p className="text-white/70 text-xs sm:text-sm">
+            {isLogin
+              ? "Acesse suas músicas personalizadas e continue criando memórias."
+              : "Comece agora mesmo a transformar sentimentos em música."}
           </p>
         </div>
 
-        {/* Google Auth Button */}
         <Button
           onClick={handleGoogleAuth}
-          variant="outline"
-          className="w-full mb-4 border-2 border-memora-gray-light hover:border-memora-primary hover:bg-memora-primary/5"
+          variant="ghost"
+          className="w-full mb-5 h-11 rounded-2xl border border-white/20 bg-white/10 text-white font-medium hover:bg-white/15"
           data-attr={isLogin ? "google-login" : "google-signup"}
         >
           <svg className="w-5 h-5 mr-3" viewBox="0 0 24 24">
@@ -236,72 +235,69 @@ const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
           Continuar com Google
         </Button>
 
-        {/* Divider */}
-        <div className="relative mb-4">
+        <div className="relative mb-5">
           <div className="absolute inset-0 flex items-center">
-            <div className="w-full border-t border-memora-gray-light" />
+            <div className="w-full border-t border-white/15" />
           </div>
-          <div className="relative flex justify-center text-sm">
-            <span className="px-2 bg-white text-memora-gray">ou</span>
+          <div className="relative flex justify-center text-[10px] uppercase tracking-[0.3em] text-white/50">
+            <span className="px-2.5 bg-white/5 rounded-full py-0.5">ou</span>
           </div>
         </div>
 
-        {/* Error Message */}
         {error && (
-          <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
-            <p className="text-red-600 text-sm">{error}</p>
+          <div className="mb-3 rounded-2xl border border-red-300/40 bg-red-500/10 p-3 text-xs text-red-200">
+            {error}
           </div>
         )}
 
-        {/* Email Form */}
         <form onSubmit={handleSubmit(handleEmailAuth)} className="space-y-4">
           {!isLogin && (
             <div>
-              <Label htmlFor="name" className="text-memora-black font-medium">
+              <Label htmlFor="name" className="text-white font-medium">
                 Nome completo
               </Label>
               <Input
                 id="name"
                 type="text"
                 {...register('name')}
-                className="mt-1 h-12 border-2 border-memora-gray-light focus:border-memora-primary rounded-2xl"
+                className="mt-1.5 h-11 rounded-2xl border border-white/20 bg-white/10 text-white placeholder:text-white/40 focus:border-white/40"
                 placeholder="Seu nome"
               />
               {errors.name && (
-                <p className="text-red-500 text-sm mt-1">{errors.name.message}</p>
+                <p className="text-red-200 text-xs mt-1">{errors.name.message}</p>
               )}
             </div>
           )}
           
           <div>
-            <Label htmlFor="email" className="text-memora-black font-medium">
+            <Label htmlFor="email" className="text-white font-medium">
               E-mail
             </Label>
-            <div className="relative mt-1">
+            <div className="relative mt-1.5">
               <Input
                 id="email"
                 type="email"
                 {...register('email')}
-                className="h-12 border-2 border-memora-gray-light focus:border-memora-primary rounded-2xl pl-10"
+                className="h-11 rounded-2xl border border-white/20 bg-white/10 text-white placeholder:text-white/40 focus:border-white/40 pl-11"
                 placeholder="seu@email.com"
               />
-              <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-memora-gray" />
+              <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-5 h-5 text-white/50" />
             </div>
             {errors.email && (
-              <p className="text-red-500 text-sm mt-1">{errors.email.message}</p>
+              <p className="text-red-200 text-xs mt-1">{errors.email.message}</p>
             )}
           </div>
 
           <div>
-            <Label htmlFor="password" className="text-memora-black font-medium">
+            <Label htmlFor="password" className="text-white font-medium">
               Senha
             </Label>
-            <div className="relative mt-1">
+            <div className="relative mt-1.5">
               <Input
                 id="password"
                 type={showPassword ? "text" : "password"}
                 {...register('password')}
-                className="h-12 border-2 border-memora-gray-light focus:border-memora-primary rounded-2xl pr-10"
+                className="h-11 rounded-2xl border border-white/20 bg-white/10 text-white placeholder:text-white/40 focus:border-white/40 pr-11"
                 placeholder="Sua senha"
               />
               <Button
@@ -309,7 +305,7 @@ const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
                 onClick={() => setShowPassword(!showPassword)}
                 variant="ghost"
                 size="icon"
-                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-memora-gray hover:text-memora-black h-auto w-auto p-0"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-white/60 hover:text-white h-auto w-auto p-0"
                 aria-label={showPassword ? "Ocultar senha" : "Mostrar senha"}
               >
                 {showPassword ? (
@@ -320,14 +316,14 @@ const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
               </Button>
             </div>
             {errors.password && (
-              <p className="text-red-500 text-sm mt-1">{errors.password.message}</p>
+              <p className="text-red-200 text-xs mt-1">{errors.password.message}</p>
             )}
           </div>
 
-          <Button
+          <PurpleFormButton
             type="submit"
             disabled={isLoading}
-            className="w-full bg-memora-primary hover:bg-memora-primary/90 text-white font-medium disabled:opacity-50"
+            className="w-full h-11 flex items-center justify-center text-sm"
             data-attr={isLogin ? "email-login" : "email-signup"}
           >
             {isLoading ? (
@@ -338,12 +334,11 @@ const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
             ) : (
               isLogin ? "Entrar" : "Criar conta"
             )}
-          </Button>
+          </PurpleFormButton>
         </form>
 
-        {/* Toggle Login/Signup */}
-        <div className="text-center mt-6">
-          <p className="text-memora-gray">
+        <div className="text-center mt-6 text-white/70 text-xs sm:text-sm">
+          <p>
             {isLogin ? "Não tem uma conta?" : "Já tem uma conta?"}
             <Button
               onClick={() => {
@@ -358,17 +353,17 @@ const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
                 });
               }}
               variant="link"
-              className="ml-1 text-memora-primary hover:text-memora-primary/80 font-medium p-0 h-auto"
+              className="ml-1 text-white font-semibold p-0 h-auto hover:text-white/80"
             >
               {isLogin ? "Criar conta" : "Entrar"}
             </Button>
           </p>
           {isLogin && (
-            <div className="mt-2">
+            <div className="mt-1.5">
               <Button
                 type="button"
                 variant="link"
-                className="text-memora-primary hover:text-memora-primary/80 font-medium p-0 h-auto"
+                className="text-white/80 hover:text-white font-medium p-0 h-auto"
                 onClick={handleForgotPassword}
               >
                 Esqueci minha senha
@@ -377,54 +372,48 @@ const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
           )}
         </div>
 
-        {/* Tela de confirmação de email */}
         {showEmailConfirmation && (
-          <div className="absolute inset-0 bg-white rounded-2xl flex flex-col items-center justify-center p-8 text-center">
-            <div className="mb-6">
-              <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <Mail className="w-8 h-8 text-blue-600" />
-              </div>
-              <h3 className="text-xl font-semibold text-gray-900 mb-2">
-                Confirme seu e-mail
-              </h3>
-              <p className="text-gray-600 mb-4">
-                Enviamos um link de confirmação para:
-              </p>
-              <p className="font-medium text-gray-900 mb-6">
-                {userEmail}
-              </p>
-              <p className="text-sm text-gray-500 mb-6">
-                Clique no link do e-mail para ativar sua conta. Após a confirmação, você será redirecionado automaticamente.
-              </p>
+          <LiquidGlassCard
+            variant="primary"
+            className="absolute inset-0 flex flex-col items-center justify-center text-center p-6 sm:p-7 border-white/30"
+          >
+            <div className="w-14 h-14 rounded-full bg-white/15 flex items-center justify-center mb-5">
+              <Mail className="w-8 h-8 text-white" />
             </div>
-            
-            <div className="space-y-3 w-full max-w-sm">
-              <Button
+            <h3 className="text-xl sm:text-2xl font-heading font-bold text-white mb-2">Confirme seu e-mail</h3>
+            <p className="text-white/70 max-w-sm text-sm mb-3">
+              Enviamos um link de ativação para:
+            </p>
+            <p className="text-white font-semibold text-sm mb-4">{userEmail}</p>
+            <p className="text-xs sm:text-sm text-white/60 max-w-md mb-6">
+              Assim que você confirmar, carregaremos automaticamente sua conta para continuar criando sem interrupções.
+            </p>
+
+            <div className="w-full max-w-sm space-y-2.5">
+              <PurpleFormButton
                 onClick={handleResendEmail}
-                variant="outline"
-                className="w-full"
                 disabled={isLoading}
+                className="w-full h-10 flex items-center justify-center text-sm"
                 data-resend-button
               >
                 {isLoading ? 'Reenviando...' : 'Reenviar e-mail'}
-              </Button>
-              
+              </PurpleFormButton>
               <Button
                 onClick={handleCloseModal}
                 variant="ghost"
-                className="w-full text-gray-500"
+                className="w-full text-white/70 hover:text-white text-sm"
               >
                 Fechar
               </Button>
             </div>
-            
-            <div className="mt-6 flex items-center text-sm text-gray-500">
-              <CheckCircle className="w-4 h-4 mr-2 text-green-500" />
+
+            <div className="mt-4 flex items-center text-xs sm:text-sm text-white/60">
+              <CheckCircle className="w-4 h-4 mr-2 text-memora-primary" />
               Monitorando confirmação automaticamente...
             </div>
-          </div>
+          </LiquidGlassCard>
         )}
-      </div>
+      </LiquidGlassCard>
     </div>
   );
 };

@@ -2,6 +2,8 @@ import React, { useMemo, useState } from 'react';
 import { PaymentElement, useStripe, useElements } from '@stripe/react-stripe-js';
 import { AlertCircle, CheckCircle, CreditCard } from 'lucide-react';
 import { useAuthStore } from '@/store/authStore';
+import { LiquidGlassCard } from '@/components/ui/LiquidGlassCard';
+import { LiquidGlassButton } from '@/components/ui/LiquidGlassButton';
 
 interface StripePaymentFormProps {
   amount: number;
@@ -114,70 +116,109 @@ const StripePaymentForm: React.FC<StripePaymentFormProps> = ({
   }), [user?.name, user?.email]);
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
-      <div className="space-y-4">
-        <div className="flex items-center justify-between">
-          <h3 className="text-lg font-semibold text-gray-900">Pagamento Seguro</h3>
-          <div className="text-2xl font-bold text-indigo-600">
-            {formatCurrency(amount)}
-          </div>
-        </div>
-
-        <div className="border border-gray-300 rounded-lg p-4 bg-white">
-          <div className="flex items-center gap-2 mb-3">
-            <CreditCard className="h-5 w-5 text-gray-500" />
-            <span className="text-sm font-medium text-gray-700">Método de Pagamento</span>
-          </div>
-          <PaymentElement options={paymentElementOptions} />
-        </div>
-
-        {errorMessage && (
-          <div className="bg-red-50 border border-red-200 rounded-lg p-4 flex items-start space-x-3">
-            <AlertCircle className="h-5 w-5 text-red-500 mt-0.5 flex-shrink-0" />
-            <div>
-              <h4 className="text-red-800 font-medium text-sm">Erro no pagamento</h4>
-              <p className="text-red-700 text-sm mt-1">{errorMessage}</p>
+    <form onSubmit={handleSubmit} className="space-y-5">
+      <div className="relative">
+        <div
+          aria-hidden
+          className="pointer-events-none absolute -inset-6 -z-20 rounded-[36px] bg-gradient-to-br from-white/20 via-white/10 to-transparent blur-[60px] opacity-80"
+        />
+        <div
+          aria-hidden
+          className="pointer-events-none absolute -inset-1 -z-10 rounded-[28px] border border-white/25 bg-white/6 backdrop-blur-2xl"
+        />
+        <LiquidGlassCard
+          variant="primary"
+          size="md"
+          className="relative z-10 space-y-4 border-white/25 p-4 sm:p-5 text-white"
+        >
+          <div className="flex items-center justify-between">
+            <h3 className="text-lg font-semibold sm:text-xl">Pagamento Seguro</h3>
+            <div className="text-xl font-heading font-semibold sm:text-2xl">
+              {formatCurrency(amount)}
             </div>
           </div>
-        )}
 
-        {paymentStatus === 'succeeded' && (
-          <div className="bg-green-50 border border-green-200 rounded-lg p-4 flex items-start space-x-3">
-            <CheckCircle className="h-5 w-5 text-green-500 mt-0.5 flex-shrink-0" />
-            <div>
-              <h4 className="text-green-800 font-medium text-sm">Pagamento realizado!</h4>
-              <p className="text-green-700 text-sm mt-1">Seu upgrade foi processado com sucesso.</p>
+          <LiquidGlassCard
+            variant="secondary"
+            size="md"
+            className="relative z-10 space-y-4 border-white/20 bg-white/90 p-4 text-slate-900 overflow-hidden"
+          >
+            <div
+              aria-hidden
+              className="pointer-events-none absolute -inset-3 -z-10 rounded-[28px] border border-white/40 bg-gradient-to-br from-white via-white/70 to-white/40 opacity-90 blur-[18px]"
+            />
+            <div className="flex items-center gap-2 text-sm font-semibold text-slate-700">
+              <CreditCard className="h-5 w-5 text-slate-500" />
+              <span>Método de Pagamento</span>
             </div>
-          </div>
-        )}
+            <div className="rounded-2xl border border-slate-200/70 bg-white p-2 shadow-[0_12px_32px_rgba(15,23,42,0.08)]">
+              <PaymentElement options={paymentElementOptions} />
+            </div>
+          </LiquidGlassCard>
+
+          {errorMessage && (
+            <LiquidGlassCard
+              variant="secondary"
+            size="md"
+            className="flex items-start gap-3 border-red-200/60 bg-red-500/20 p-4 text-sm text-white shadow-none"
+          >
+            <AlertCircle className="h-5 w-5 text-red-100 mt-0.5 flex-shrink-0" />
+            <div>
+              <h4 className="font-semibold">Erro no pagamento</h4>
+              <p className="mt-1 text-sm text-red-50">{errorMessage}</p>
+            </div>
+            </LiquidGlassCard>
+          )}
+
+          {paymentStatus === 'succeeded' && (
+            <LiquidGlassCard
+              variant="secondary"
+              size="md"
+              className="flex items-start gap-3 border-emerald-200/60 bg-emerald-500/20 p-4 text-sm text-white shadow-none"
+            >
+              <CheckCircle className="h-5 w-5 text-emerald-100 mt-0.5 flex-shrink-0" />
+              <div>
+                <h4 className="font-semibold">Pagamento realizado!</h4>
+                <p className="mt-1 text-sm text-emerald-50">Seu upgrade foi processado com sucesso.</p>
+              </div>
+            </LiquidGlassCard>
+          )}
+        </LiquidGlassCard>
       </div>
 
-      {/* Sticky footer with CTA to keep visible on small screens */}
-      <div className="sticky bottom-0 left-0 right-0 bg-white pt-3 pb-3 sm:pb-4 border-t border-gray-200 [--s:env(safe-area-inset-bottom)] pb-[max(0px,var(--s))]">
-        <button
-          type="submit"
-          disabled={!stripe || isProcessing || disabled || paymentStatus === 'succeeded'}
-          className="bg-purple-600 hover:bg-purple-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white font-medium py-2 px-6 rounded-lg transition-colors duration-200 flex items-center space-x-2 w-full h-12 text-base font-semibold justify-center shadow-lg"
-        >
-          {isProcessing ? (
-            <>
-              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-              <span>Processando...</span>
-            </>
-          ) : paymentStatus === 'succeeded' ? (
-            <>
-              <CheckCircle className="mr-2 h-5 w-5" />
-              Pagamento Concluído
-            </>
-          ) : (
-            <>
-              <CreditCard className="mr-2 h-5 w-5" />
-              Pagar {formatCurrency(amount)}
-            </>
-          )}
-        </button>
+      <div className="sticky bottom-0 left-0 right-0 pt-2 pb-3 sm:pb-4 [--s:env(safe-area-inset-bottom)] pb-[max(0px,var(--s))]">
+        <div className="relative">
+          <div
+            aria-hidden
+            className="pointer-events-none absolute -inset-2 -z-10 rounded-[24px] bg-gradient-to-br from-white/30 via-white/10 to-transparent blur-2xl opacity-80"
+          />
+          <LiquidGlassButton
+            type="submit"
+            disabled={!stripe || isProcessing || disabled || paymentStatus === 'succeeded'}
+            className="w-full h-12 text-base font-semibold disabled:opacity-60"
+          >
+            {isProcessing ? (
+              <>
+                <span className="mr-2 flex h-4 w-4 items-center justify-center">
+                  <span className="h-4 w-4 animate-spin rounded-full border-b-2 border-white" />
+                </span>
+                Processando...
+              </>
+            ) : paymentStatus === 'succeeded' ? (
+              <>
+                <CheckCircle className="mr-2 h-5 w-5" />
+                Pagamento Concluído
+              </>
+            ) : (
+              <>
+                <CreditCard className="mr-2 h-5 w-5" />
+                Pagar {formatCurrency(amount)}
+              </>
+            )}
+          </LiquidGlassButton>
+        </div>
 
-        <div className="mt-2 text-[11px] leading-4 text-gray-500 text-center">
+        <div className="mt-2 text-center text-[11px] leading-4 text-white/80">
           <p>🔒 Pagamento seguro processado pelo Stripe</p>
         </div>
       </div>

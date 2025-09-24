@@ -4,6 +4,8 @@ import { toast } from "sonner";
 import { API_BASE_URL } from "../../config/api";
 import { Button } from '@/components/ui/button';
 import { LiquidGlassCard } from '@/components/ui/LiquidGlassCard';
+import { PurpleFormButton } from '@/components/ui/PurpleFormButton';
+import { LiquidGlassButtonSmall } from '@/components/ui/LiquidGlassButtonSmall';
 
 interface FeedbackPopupProps {
   isOpen: boolean;
@@ -22,8 +24,7 @@ const FeedbackPopup = ({ isOpen, onClose }: FeedbackPopupProps) => {
   const priceOptions = [
     { value: '99', label: 'R$ 99,00' },
     { value: '149', label: 'R$ 149,00' },
-    { value: '219', label: 'R$ 219,00' },
-    { value: 'other', label: 'Outro valor' }
+    { value: '219', label: 'R$ 219,00' }
   ];
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -48,7 +49,7 @@ const FeedbackPopup = ({ isOpen, onClose }: FeedbackPopupProps) => {
         body: JSON.stringify({
           difficulty: parseInt(formData.difficulty),
           would_recommend: formData.would_recommend === 'sim',
-          price_willingness: formData.price_willingness === 'other' ? 0 : parseFloat(formData.price_willingness)
+          price_willingness: parseFloat(formData.price_willingness)
         }),
       });
 
@@ -83,7 +84,7 @@ const FeedbackPopup = ({ isOpen, onClose }: FeedbackPopupProps) => {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6">
       {/* Overlay */}
       <div 
         className="absolute inset-0 bg-black/50 backdrop-blur-sm"
@@ -93,7 +94,7 @@ const FeedbackPopup = ({ isOpen, onClose }: FeedbackPopupProps) => {
       {/* Modal */}
       <LiquidGlassCard
         variant="primary"
-        className="relative max-w-2xl w-full max-h-[88vh] overflow-y-auto p-5 lg:p-6 border-white/30"
+        className={`relative w-full ${isSubmitted ? 'max-w-md sm:max-w-lg px-6 sm:px-7 py-6 sm:py-7' : 'max-w-3xl px-8 sm:px-12 py-6 sm:py-8'} border-white/25`}
       >
         {/* Close Button */}
         <Button
@@ -108,69 +109,72 @@ const FeedbackPopup = ({ isOpen, onClose }: FeedbackPopupProps) => {
         </Button>
 
         {/* Content */}
-        <div className="pr-10 text-white">
+        <div className="text-white space-y-6">
           {!isSubmitted && (
-            <div className="text-center mb-6">
-              <h3 className="text-xl lg:text-2xl font-heading font-bold mb-3">
+            <div className="text-center space-y-2">
+              <h3 className="text-xs sm:text-sm font-heading font-semibold tracking-[0.24em] uppercase text-white/80">
                 Ajude-nos a melhorar a Memora Music
               </h3>
-              <p className="text-white/70 max-w-lg mx-auto text-sm">
+              <p className="text-white/70 max-w-2xl mx-auto text-xs sm:text-sm leading-relaxed">
                 Sua opinião é fundamental para criarmos a melhor experiência possível. Responda algumas perguntas rápidas:
               </p>
             </div>
           )}
 
           {isSubmitted ? (
-            <div className="text-center py-12">
-              <div className="w-20 h-20 bg-green-400/15 rounded-full flex items-center justify-center mx-auto mb-6">
-                <CheckCircle className="w-10 h-10 text-green-300" />
+            <div className="text-center py-8 space-y-4">
+              <div className="w-16 h-16 bg-green-400/15 rounded-full flex items-center justify-center mx-auto mb-5">
+                <CheckCircle className="w-9 h-9 text-green-300" />
               </div>
-              <h4 className="text-2xl font-heading font-bold mb-4">
+              <h4 className="text-lg font-heading font-semibold">
                 Obrigado pelo seu feedback!
               </h4>
-              <p className="text-white/70 mb-6">
+              <p className="text-white/70 text-sm">
                 Suas respostas nos ajudarão a criar uma experiência ainda melhor.
               </p>
-              <Button
+              <LiquidGlassButtonSmall
                 onClick={handleClose}
-                className="bg-white/15 hover:bg-white/25 text-white font-heading font-bold py-3 px-6 rounded-xl transition-all duration-300"
-                size="lg"
+                className="mx-auto px-6 text-sm"
+                type="button"
               >
                 Fechar
-              </Button>
+              </LiquidGlassButtonSmall>
             </div>
           ) : (
-            <form onSubmit={handleSubmit} className="space-y-8">
+            <form onSubmit={handleSubmit} className="space-y-6">
               {/* Question 1: Difficulty */}
               <div>
-                <label className="block text-base lg:text-lg font-heading font-bold mb-3">
+                <label className="block text-xs sm:text-[15px] font-heading text-white/85 mb-2">
                   De 1 a 10, qual foi o nível de dificuldade para gerar sua música?
                 </label>
                 <div className="grid grid-cols-5 sm:grid-cols-10 gap-2">
                   {[...Array(10)].map((_, i) => {
                     const value = (i + 1).toString();
+                    const isSelected = formData.difficulty === value;
                     return (
                       <label key={i} className="relative">
                         <input
                           type="radio"
                           name="difficulty"
                           value={value}
-                          checked={formData.difficulty === value}
+                          checked={isSelected}
                           onChange={(e) => setFormData({ ...formData, difficulty: e.target.value })}
                           className="sr-only"
                         />
-                        <div className={`w-11 h-11 rounded-xl border flex items-center justify-center cursor-pointer transition-all duration-200 backdrop-blur ${
-                          formData.difficulty === value
-                            ? 'border-white/60 bg-white/20 text-white shadow-[0_0_18px_rgba(255,255,255,0.35)]'
-                            : 'border-white/20 bg-white/5 text-white/70 hover:border-white/40'
-                        }`}>
-                          {i + 1}
-                        </div>
+                        {isSelected ? (
+                          <PurpleFormButton className="pointer-events-none w-full h-10 sm:h-11 flex items-center justify-center text-xs sm:text-sm font-heading">
+                            {i + 1}
+                          </PurpleFormButton>
+                        ) : (
+                          <div className="p-2.5 sm:p-3 rounded-2xl border border-white/20 bg-white/8 text-white/70 hover:border-white/35 text-xs sm:text-sm text-center cursor-pointer transition-all duration-200 backdrop-blur font-heading">
+                            {i + 1}
+                          </div>
+                        )}
                       </label>
                     );
                   })}
                 </div>
-                <div className="flex justify-between text-xs text-white/50 mt-1.5">
+                <div className="flex justify-between text-[10px] text-white/50 mt-1">
                   <span>Muito fácil</span>
                   <span>Muito difícil</span>
                 </div>
@@ -178,7 +182,7 @@ const FeedbackPopup = ({ isOpen, onClose }: FeedbackPopupProps) => {
 
               {/* Question 2: Recommendation */}
               <div>
-                <label className="block text-base lg:text-lg font-heading font-bold mb-3">
+                <label className="block text-xs sm:text-[15px] font-heading text-white/85 mb-2">
                   Você indicaria a Memora para um amigo ou parente?
                 </label>
                 <div className="grid sm:grid-cols-3 gap-3">
@@ -196,13 +200,15 @@ const FeedbackPopup = ({ isOpen, onClose }: FeedbackPopupProps) => {
                         onChange={(e) => setFormData({ ...formData, would_recommend: e.target.value })}
                         className="sr-only"
                       />
-                      <div className={`p-3.5 rounded-2xl border text-center cursor-pointer transition-all duration-200 backdrop-blur ${
-                        formData.would_recommend === option.value
-                          ? 'border-white/60 bg-white/15 text-white shadow-[0_0_20px_rgba(255,255,255,0.25)]'
-                          : 'border-white/20 bg-white/5 text-white/70 hover:border-white/40'
-                      }`}>
-                        <span className="font-heading font-bold">{option.label}</span>
-                      </div>
+                      {formData.would_recommend === option.value ? (
+                        <PurpleFormButton className="pointer-events-none w-full h-11 flex items-center justify-center text-sm font-heading">
+                          {option.label}
+                        </PurpleFormButton>
+                      ) : (
+                        <div className="p-3 rounded-2xl border border-white/20 bg-white/5 text-white/70 hover:border-white/40 text-sm text-center cursor-pointer transition-all duration-200 backdrop-blur font-heading">
+                          {option.label}
+                        </div>
+                      )}
                     </label>
                   ))}
                 </div>
@@ -210,10 +216,10 @@ const FeedbackPopup = ({ isOpen, onClose }: FeedbackPopupProps) => {
 
               {/* Question 3: Price Willingness */}
               <div>
-                <label className="block text-base lg:text-lg font-heading font-bold mb-3">
+                <label className="block text-xs sm:text-[15px] font-heading text-white/85 mb-2">
                   Quanto você estaria disposto a pagar por uma música completa e personalizada?
                 </label>
-                <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                   {priceOptions.map((option) => (
                     <label key={option.value} className="relative">
                       <input
@@ -224,39 +230,40 @@ const FeedbackPopup = ({ isOpen, onClose }: FeedbackPopupProps) => {
                         onChange={(e) => setFormData({ ...formData, price_willingness: e.target.value })}
                         className="sr-only"
                       />
-                      <div className={`p-3.5 rounded-2xl border text-center cursor-pointer transition-all duration-200 backdrop-blur ${
-                        formData.price_willingness === option.value
-                          ? 'border-white/60 bg-white/15 text-white shadow-[0_0_20px_rgba(255,255,255,0.25)]'
-                          : 'border-white/20 bg-white/5 text-white/70 hover:border-white/40'
-                      }`}>
-                        <span className="font-heading font-bold">{option.label}</span>
-                      </div>
+                      {formData.price_willingness === option.value ? (
+                        <PurpleFormButton className="pointer-events-none w-full h-11 flex items-center justify-center text-sm font-heading">
+                          {option.label}
+                        </PurpleFormButton>
+                      ) : (
+                        <div className="p-3 rounded-2xl border border-white/20 bg-white/5 text-white/70 hover:border-white/40 text-sm text-center cursor-pointer transition-all duration-200 backdrop-blur font-heading">
+                          {option.label}
+                        </div>
+                      )}
                     </label>
                   ))}
                 </div>
               </div>
 
               {/* Submit Button */}
-              <div className="text-center pt-2 pb-2">
-                <Button
+              <div className="text-center pt-4">
+                <LiquidGlassButtonSmall
                   type="submit"
                   disabled={isSubmitting}
-                  className="bg-white/15 hover:bg-white/25 disabled:bg-white/10 text-white font-heading font-bold py-4 px-8 rounded-xl transition-all duration-300 disabled:hover:scale-100 flex items-center space-x-2 mx-auto"
+                  className="mx-auto flex h-11 items-center justify-center gap-2 px-10 text-sm"
                   data-attr="mvp-feedback-submit"
-                  size="lg"
                 >
                   {isSubmitting ? (
                     <>
-                      <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                      <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                       <span>Enviando...</span>
                     </>
                   ) : (
                     <>
-                      <Send className="w-5 h-5" />
+                      <Send className="w-4 h-4" />
                       <span>Enviar feedback</span>
                     </>
                   )}
-                </Button>
+                </LiquidGlassButtonSmall>
               </div>
             </form>
           )}
