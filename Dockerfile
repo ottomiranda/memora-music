@@ -2,7 +2,7 @@
 # Multi-stage build para otimizar o tamanho da imagem final
 
 # Stage 1: Base image com Node.js LTS
-FROM node:20.11.1-alpine AS base
+FROM node:20-bookworm-slim AS base
 
 # Instalar dependências do sistema necessárias
 RUN apk add --no-cache libc6-compat
@@ -88,7 +88,7 @@ RUN npm run build
 RUN npm run build:server
 
 # Stage 4: Produção - imagem final otimizada
-FROM node:20.11.1-alpine AS production
+FROM node:20-bookworm-slim AS production
 
 # Instalar dependências do sistema para produção
 RUN apk add --no-cache libc6-compat dumb-init
