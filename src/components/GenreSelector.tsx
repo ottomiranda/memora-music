@@ -271,7 +271,7 @@ export const GenreSelector: React.FC<GenreSelectorProps> = ({
         {/* Animated border glow */}
         <div className="absolute -inset-px bg-gradient-to-r from-blue-400/20 via-purple-400/20 to-pink-400/20 opacity-0 group-hover:opacity-100 transition-opacity duration-700 blur-sm rounded-2xl z-0" />
         
-        <div className="relative z-20 p-8 pb-4">
+        <div className="relative z-20 p-8 pb-6">
           {/* Header apenas para subgêneros */}
           {currentView === 'subgenres' && (
             <div className="flex items-center space-x-2 mb-8">
@@ -304,7 +304,7 @@ export const GenreSelector: React.FC<GenreSelectorProps> = ({
           
           {/* Campo de busca para gêneros */}
           {currentView === 'genres' && (
-            <div className="relative mb-4">
+            <div className="relative mb-6">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-white/60" />
               <Input
                 placeholder="Buscar por gênero ou estilo..."
@@ -349,7 +349,7 @@ export const GenreSelector: React.FC<GenreSelectorProps> = ({
                 ) : (
                   // Visualização por categorias com abas
                   <Tabs defaultValue="brasileiros" className="w-full">
-                    <TabsList className="grid w-full grid-cols-2 bg-white/10 border-white/20 mt-1">
+                    <TabsList className="grid w-full grid-cols-2 bg-white/10 border-white/20 mt-2">
                       <TabsTrigger value="brasileiros" className="flex items-center gap-2 text-white/70 data-[state=active]:text-white data-[state=active]:bg-white/20">
                         <MapPin className="w-4 h-4" />
                         Gêneros Brasileiros
@@ -360,7 +360,7 @@ export const GenreSelector: React.FC<GenreSelectorProps> = ({
                       </TabsTrigger>
                     </TabsList>
                     
-                    <TabsContent value="brasileiros" className="mt-4">
+                    <TabsContent value="brasileiros" className="mt-6">
                       <GenreSection 
                         title="Gêneros Brasileiros" 
                         genres={brazilianGenres} 
@@ -368,7 +368,7 @@ export const GenreSelector: React.FC<GenreSelectorProps> = ({
                       />
                     </TabsContent>
                     
-                    <TabsContent value="internacionais" className="mt-4">
+                    <TabsContent value="internacionais" className="mt-6">
                       <GenreSection 
                         title="Gêneros Internacionais" 
                         genres={internationalGenres} 

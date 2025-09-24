@@ -55,8 +55,8 @@ export const CountdownTimer: React.FC<CountdownTimerProps> = ({
         Tempo estimado restante
       </span>
       <div className="relative">
-        <div className="absolute inset-0 blur-3xl bg-accent-turquoise/20" aria-hidden />
-        <div className="relative text-3xl md:text-4xl font-mono font-bold text-accent-turquoise drop-shadow-[0_0_18px_rgba(45,212,191,0.45)]">
+        <div className="absolute inset-0 blur-3xl bg-secondary/25" aria-hidden />
+        <div className="relative text-3xl md:text-4xl font-mono font-bold text-secondary drop-shadow-[0_0_18px_rgba(254,198,65,0.45)]">
           {formatTime(timeLeft)}
         </div>
       </div>

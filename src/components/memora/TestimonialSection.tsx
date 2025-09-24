@@ -19,29 +19,47 @@ const TestimonialSection = () => {
   const testimonials = [
     {
       id: 1,
-      text: "Recebi uma música da minha filha no meu aniversário e foi o presente mais emocionante que já ganhei.",
-      author: "Maria",
-      age: 42,
-      location: "São Paulo",
-      avatar: "https://trae-api-us.mchost.guru/api/ide/v1/text_to_image?prompt=middle%20aged%20woman%20smiling%20warmly%20portrait%20happy%20mother%20professional%20photo&image_size=square",
-      rating: 5
-    },
-    {
-      id: 2,
-      text: "Criei uma música para o meu marido no nosso aniversário de casamento. Ele chorou de emoção quando ouviu.",
-      author: "Ana",
-      age: 35,
-      location: "Rio de Janeiro",
-      avatar: "https://trae-api-us.mchost.guru/api/ide/v1/text_to_image?prompt=young%20woman%20smiling%20portrait%20happy%20wife%20professional%20photo%20warm%20lighting&image_size=square",
-      rating: 5
-    },
-    {
-      id: 3,
       text: "Nunca imaginei que seria tão fácil criar uma música personalizada. O resultado superou todas as minhas expectativas.",
       author: "Carlos",
       age: 28,
       location: "Belo Horizonte",
-      avatar: "https://trae-api-us.mchost.guru/api/ide/v1/text_to_image?prompt=young%20man%20smiling%20portrait%20happy%20professional%20photo%20confident%20expression&image_size=square",
+      avatar: "https://trae-api-us.mchost.guru/api/ide/v1/text_to_image?prompt=professional%20headshot%20of%20a%2028%20year%20old%20Brazilian%20man%20with%20short%20dark%20hair%2C%20warm%20smile%2C%20olive%20skin%20tone%2C%20wearing%20casual%20shirt%2C%20studio%20lighting%2C%20clean%20background&image_size=square",
+      rating: 5
+    },
+    {
+      id: 2,
+      text: "A música que criei para minha mãe no Dia das Mães foi o presente mais especial que já dei. Ela chorou de emoção!",
+      author: "Maria",
+      age: 42,
+      location: "São Paulo",
+      avatar: "https://trae-api-us.mchost.guru/api/ide/v1/text_to_image?prompt=professional%20headshot%20of%20a%2042%20year%20old%20Brazilian%20woman%20with%20shoulder%20length%20brown%20hair%2C%20gentle%20smile%2C%20warm%20brown%20skin%20tone%2C%20wearing%20elegant%20blouse%2C%20studio%20lighting%2C%20clean%20background&image_size=square",
+      rating: 5
+    },
+    {
+      id: 3,
+      text: "Incrível como a IA conseguiu capturar exatamente o sentimento que eu queria transmitir. A qualidade da música é profissional!",
+      author: "João",
+      age: 35,
+      location: "Rio de Janeiro",
+      avatar: "https://trae-api-us.mchost.guru/api/ide/v1/text_to_image?prompt=professional%20headshot%20of%20a%2035%20year%20old%20Brazilian%20man%20with%20beard%2C%20confident%20smile%2C%20medium%20brown%20skin%20tone%2C%20wearing%20button%20up%20shirt%2C%20studio%20lighting%2C%20clean%20background&image_size=square",
+      rating: 5
+    },
+    {
+      id: 4,
+      text: "Usei o Memora para criar uma música de aniversário para minha filha. Ela ficou tão feliz que pediu para tocar na festa toda!",
+      author: "Ana",
+      age: 38,
+      location: "Salvador",
+      avatar: "https://trae-api-us.mchost.guru/api/ide/v1/text_to_image?prompt=professional%20headshot%20of%20a%2038%20year%20old%20Brazilian%20woman%20with%20curly%20black%20hair%2C%20joyful%20smile%2C%20darker%20skin%20tone%2C%20wearing%20colorful%20top%2C%20studio%20lighting%2C%20clean%20background&image_size=square",
+      rating: 5
+    },
+    {
+      id: 5,
+      text: "Como músico, fiquei impressionado com a qualidade das composições. É uma ferramenta incrível para criar presentes únicos!",
+      author: "Rafael",
+      age: 31,
+      location: "Recife",
+      avatar: "https://trae-api-us.mchost.guru/api/ide/v1/text_to_image?prompt=professional%20headshot%20of%20a%2031%20year%20old%20Brazilian%20man%20with%20wavy%20dark%20hair%2C%20artistic%20look%2C%20medium%20tan%20skin%20tone%2C%20wearing%20casual%20jacket%2C%20studio%20lighting%2C%20clean%20background&image_size=square",
       rating: 5
     }
   ];

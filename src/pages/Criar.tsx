@@ -845,7 +845,7 @@ export default function Criar() {
         const summaryCard = summaryItems.length > 0 ? (
           <LiquidGlassCard size="lg" className="p-8 space-y-6 text-left">
             <div className="flex justify-end">
-              <span className="h-2 w-2 rounded-full bg-accent-turquoise shadow-[0_0_12px_rgba(45,212,191,0.6)]" aria-hidden />
+              <span className="h-2 w-2 rounded-full bg-secondary shadow-[0_0_12px_rgba(254,198,65,0.65)]" aria-hidden />
             </div>
             <div>
               <h3 className="text-2xl font-semibold font-heading text-white">Resumo da sua música</h3>
@@ -867,8 +867,8 @@ export default function Criar() {
           <LiquidGlassCard size="lg" className="p-8 flex flex-col items-center gap-6 text-center">
             {!currentTaskId ? (
               <div className="flex flex-col items-center gap-4">
-                <div className="h-14 w-14 rounded-full border-2 border-accent-turquoise/60 border-t-transparent animate-spin" />
-                <p className="text-sm text-white/70">Conectando com a Suno API...</p>
+                <div className="h-14 w-14 rounded-full border-2 border-secondary/60 border-t-transparent animate-spin" />
+                <p className="text-sm text-white/70">Conectando como nosso estúdio digital...</p>
               </div>
             ) : (
               <CountdownTimer className="w-full" />
@@ -879,7 +879,7 @@ export default function Criar() {
               </h3>
               <p className="text-sm text-white/70 max-w-md mx-auto">
                 {!currentTaskId
-                  ? 'Estamos preparando a ligação com a Suno para começar a gerar sua música personalizada.'
+                  ? 'Estamos preparando tudo para transformar sua história em canção personalizada.'
                   : totalExpected > 0
                     ? `Gerando ${totalExpected} versões exclusivas para você.`
                     : 'Estamos finalizando os últimos detalhes antes de liberar sua música.'}
@@ -894,7 +894,7 @@ export default function Criar() {
                 </div>
                 <div className="h-2 w-full overflow-hidden rounded-full bg-white/10">
                   <div
-                    className="h-full rounded-full bg-gradient-to-r from-accent-turquoise via-primary/70 to-purple-500/70 transition-all duration-500"
+                    className="h-full rounded-full bg-gradient-yellow-purple transition-all duration-500"
                     style={{ width: `${totalExpected > 0 ? ((completedClips || 0) / totalExpected) * 100 : 0}%` }}
                   />
                 </div>
@@ -906,8 +906,8 @@ export default function Criar() {
         return (
           <div className="space-y-8">
             <div className="text-center space-y-3">
-              <div className="mx-auto h-3 w-36 rounded-full bg-gradient-to-r from-accent-turquoise via-white/70 to-fuchsia-500 blur-xl opacity-80" aria-hidden />
-              <h2 className="text-3xl font-extrabold font-heading bg-gradient-to-r from-white via-accent-turquoise to-primary bg-clip-text text-transparent drop-shadow-sm">
+              <div className="mx-auto h-3 w-36 rounded-full bg-gradient-yellow-purple blur-xl opacity-80" aria-hidden />
+              <h2 className="text-3xl font-extrabold font-heading bg-gradient-yellow-purple bg-clip-text text-transparent drop-shadow-sm">
                 Sua música está sendo gerada...
               </h2>
             </div>
@@ -927,7 +927,7 @@ export default function Criar() {
                           Música para {formData.recipientName || 'Pessoa Especial'}
                         </h3>
                         {audioClips?.length ? (
-                          <span className="inline-flex items-center gap-2 rounded-full bg-accent-turquoise/20 px-4 py-2 text-xs font-medium text-accent-turquoise backdrop-blur">
+                          <span className="inline-flex items-center gap-2 rounded-full bg-secondary/20 px-4 py-2 text-xs font-medium text-secondary backdrop-blur">
                             ✓ {audioClips.filter((clip) => clip.audio_url).length} versão{audioClips.filter((clip) => clip.audio_url).length !== 1 ? 's' : ''} pronta{audioClips.filter((clip) => clip.audio_url).length !== 1 ? 's' : ''}
                           </span>
                         ) : null}
@@ -945,7 +945,7 @@ export default function Criar() {
                         </div>
                         <div className="h-2 w-full overflow-hidden rounded-full bg-white/10">
                           <div
-                            className="h-full rounded-full bg-gradient-to-r from-accent-turquoise via-primary/70 to-purple-500/70 transition-all duration-500 ease-out"
+                            className="h-full rounded-full bg-gradient-yellow-purple transition-all duration-500 ease-out"
                             style={{ width: `${totalExpected > 0 ? ((completedClips || 0) / totalExpected) * 100 : 0}%` }}
                           />
                         </div>
@@ -958,7 +958,7 @@ export default function Criar() {
                       <div className="rounded-2xl border border-white/10 bg-white/5 p-6 backdrop-blur">
                         <div className="mb-4 space-y-2">
                           <h4 className="flex items-center gap-2 text-lg font-semibold font-heading text-white">
-                            <Music className="h-5 w-5 text-accent-turquoise" />
+                            <Music className="h-5 w-5 text-secondary" />
                             Suas músicas personalizadas
                           </h4>
                           <p className="text-sm text-white/70">Explore, compare e escolha a melhor versão para compartilhar.</p>
@@ -978,8 +978,8 @@ export default function Criar() {
                             <div className="space-y-1">
                               <h4 className="flex items-center gap-2 text-lg font-semibold font-heading text-white">
                                 Opção {placeholderIndex}
-                                <span className="inline-flex items-center gap-1 rounded-full bg-yellow-400/20 px-3 py-1 text-xs font-medium text-yellow-300">
-                                  <Loader2 className="h-4 w-4 animate-spin" />
+                                <span className="inline-flex items-center gap-1 rounded-full bg-secondary/15 px-3 py-1 text-xs font-medium text-secondary">
+                                  <Loader2 className="h-4 w-4 animate-spin text-secondary" />
                                   Gerando...
                                 </span>
                               </h4>
