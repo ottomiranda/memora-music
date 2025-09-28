@@ -1,5 +1,5 @@
 import { SongService } from '../src/lib/services/songService.js';
-import { MigrateGuestDataSchema } from '../src/lib/schemas/song.js';
+import { MigrateGuestDataSchema } from '../src/lib/schemas/song';
 export default async function handler(req, res) {
     // Configurar CORS
     res.setHeader('Access-Control-Allow-Credentials', 'true');

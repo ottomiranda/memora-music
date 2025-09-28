@@ -5,6 +5,7 @@
 import { Router } from 'express';
 import { getSupabaseServiceClient } from '../../src/lib/supabase-client.js';
 import { optionalAuthMiddleware } from '../middleware/optionalAuth.js';
+import { hasUnlimitedAccess, normalizeIds, resolveFreeUsage } from '../lib/paywall-utils.js';
 const router = Router();
 // Função para obter cliente Supabase sob demanda (compatibilidade)
 const getSupabaseClient = () => {
@@ -75,130 +76,54 @@ router.get('/creation-status', optionalAuthMiddleware, async (req, res) => {
         const clientIp = req.ip;
         console.log('[DEBUG] Dados de identificação:', { userId, deviceId, clientIp });
         const supabase = getSupabaseClient();
+        const supabaseUrl = process.env.SUPABASE_URL;
+        const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+        console.log('[SUPABASE_CONFIG] Verificando configuração:', {
+            hasUrl: !!supabaseUrl,
+            hasServiceKey: !!supabaseServiceKey,
+            urlLength: supabaseUrl?.length || 0,
+            keyLength: supabaseServiceKey?.length || 0,
+            nodeEnv: process.env.NODE_ENV,
+            timestamp: new Date().toISOString()
+        });
+        if (!supabaseUrl || !supabaseServiceKey) {
+            console.error('[SUPABASE_CONFIG_ERROR] Variáveis de ambiente não configuradas:', {
+                SUPABASE_URL: supabaseUrl ? 'definida' : 'UNDEFINED',
+                SUPABASE_SERVICE_ROLE_KEY: supabaseServiceKey ? 'definida' : 'UNDEFINED',
+                allEnvKeys: Object.keys(process.env).filter(key => key.includes('SUPABASE')),
+                nodeEnv: process.env.NODE_ENV
+            });
+            return res.status(500).json({
+                success: false,
+                error: 'Configuração do servidor incompleta',
+                message: 'Serviço temporariamente indisponível',
+                debug: process.env.NODE_ENV === 'development' ? {
+                    missingVars: {
+                        SUPABASE_URL: !supabaseUrl,
+                        SUPABASE_SERVICE_ROLE_KEY: !supabaseServiceKey
+                    }
+                } : undefined
+            });
+        }
         let foundUser = null;
         let findError = null;
-        // 1) Usuário autenticado
-        if (userId) {
-            console.log('[DEBUG] Verificando status para usuário autenticado (prioridade 1):', userId);
-            // Buscar contagem de criações do usuário na tabela user_creations
-            const { data, error } = await supabase
-                .from('user_creations')
-                .select('freesongsused, device_id')
-                .eq('user_id', userId)
-                .maybeSingle();
-            if (data) {
-                const currentFree = data.freesongsused || 0;
-                foundUser = { freesongsused: currentFree };
-                // Se existir um deviceId atual diferente, combinar contadores
-                const candidateDeviceId = deviceId || data.device_id || null;
-                if (candidateDeviceId && (!deviceId || candidateDeviceId !== deviceId)) {
-                    const { data: mergeRow, error: mergeError } = await supabase
-                        .from('user_creations')
-                        .select('freesongsused')
-                        .eq('device_id', candidateDeviceId)
-                        .maybeSingle();
-                    if (!mergeError && mergeRow) {
-                        foundUser.freesongsused = Math.max(foundUser.freesongsused, mergeRow.freesongsused || 0);
-                    }
-                }
-            }
-            else {
-                foundUser = null;
-            }
-            // Verificação robusta de configuração do Supabase
-            const supabaseUrl = process.env.SUPABASE_URL;
-            const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-            console.log('[SUPABASE_CONFIG] Verificando configuração:', {
-                hasUrl: !!supabaseUrl,
-                hasServiceKey: !!supabaseServiceKey,
-                urlLength: supabaseUrl?.length || 0,
-                keyLength: supabaseServiceKey?.length || 0,
-                nodeEnv: process.env.NODE_ENV,
-                timestamp: new Date().toISOString()
+        let usageRecords = [];
+        try {
+            const usage = await resolveFreeUsage(supabase, {
+                userId,
+                deviceIds: [deviceId, guestId],
             });
-            if (!supabaseUrl || !supabaseServiceKey) {
-                console.error('[SUPABASE_CONFIG_ERROR] Variáveis de ambiente não configuradas:', {
-                    SUPABASE_URL: supabaseUrl ? 'definida' : 'UNDEFINED',
-                    SUPABASE_SERVICE_ROLE_KEY: supabaseServiceKey ? 'definida' : 'UNDEFINED',
-                    allEnvKeys: Object.keys(process.env).filter(key => key.includes('SUPABASE')),
-                    nodeEnv: process.env.NODE_ENV
-                });
-                return res.status(500).json({
-                    success: false,
-                    error: 'Configuração do servidor incompleta',
-                    message: 'Serviço temporariamente indisponível',
-                    debug: process.env.NODE_ENV === 'development' ? {
-                        missingVars: {
-                            SUPABASE_URL: !supabaseUrl,
-                            SUPABASE_SERVICE_ROLE_KEY: !supabaseServiceKey
-                        }
-                    } : undefined
-                });
-            }
-            // Só considerar erro se não for "nenhum resultado encontrado"
-            if (error && error.code !== 'PGRST116') {
-                console.error('[PAYWALL_ERROR] Erro ao buscar usuário por deviceId:', {
-                    deviceId,
-                    error: {
-                        code: error.code,
-                        message: error.message,
-                        details: error.details,
-                        hint: error.hint
-                    },
-                    supabaseConfig: {
-                        url: process.env.SUPABASE_URL?.substring(0, 30) + '...',
-                        hasServiceKey: !!process.env.SUPABASE_SERVICE_ROLE_KEY,
-                        keyPrefix: process.env.SUPABASE_SERVICE_ROLE_KEY?.substring(0, 10) + '...'
-                    },
-                    timestamp: new Date().toISOString()
-                });
-                findError = error;
+            usageRecords = usage.records;
+            if (usage.records.length > 0) {
+                foundUser = {
+                    freesongsused: usage.maxFreeSongs,
+                    device_id: usage.primaryRecord?.device_id ?? usage.records.find(record => record.device_id)?.device_id ?? null,
+                };
             }
         }
-        // 2) Se não autenticado ou não encontrado, tentar pelo deviceId
-        if (deviceId) {
-            console.log('[DEBUG] Usuário convidado - buscando por deviceId (prioridade 2):', deviceId);
-            const { data, error } = await supabase
-                .from('user_creations')
-                .select('freesongsused')
-                .eq('device_id', deviceId)
-                .maybeSingle();
-            if (data) {
-                const freeCount = data.freesongsused || 0;
-                if (foundUser) {
-                    foundUser.freesongsused = Math.max(foundUser.freesongsused || 0, freeCount);
-                }
-                else {
-                    foundUser = { freesongsused: freeCount };
-                }
-            }
-            // Só considerar erro se não for "nenhum resultado encontrado"
-            if (error && error.code !== 'PGRST116') {
-                findError = error;
-            }
-        }
-        // 2.5) Fallback dedicado para guests identificados apenas por guestId
-        if (guestId) {
-            console.log('[DEBUG] Usuário convidado - fallback por guestId (prioridade 2.5):', guestId);
-            const { data, error } = await supabase
-                .from('user_creations')
-                .select('freesongsused')
-                .eq('device_id', guestId)
-                .maybeSingle();
-            if (data) {
-                const freeCount = data.freesongsused || 0;
-                if (foundUser) {
-                    foundUser.freesongsused = Math.max(foundUser.freesongsused || 0, freeCount);
-                }
-                else {
-                    foundUser = { freesongsused: freeCount };
-                }
-            }
-            // Só considerar erro se não for "nenhum resultado encontrado"
-            if (error && error.code !== 'PGRST116') {
-                console.error('[PAYWALL_ERROR] Erro ao buscar usuário por guestId:', JSON.stringify(error, null, 2));
-                findError = error;
-            }
+        catch (error) {
+            console.error('[PAYWALL_ERROR] Erro ao consolidar contagem de músicas gratuitas:', error);
+            findError = error;
         }
         // 3) Se ainda não encontrado, fallback por IP com TTL (configurável)
         if (!foundUser && clientIp) {
@@ -213,12 +138,10 @@ router.get('/creation-status', optionalAuthMiddleware, async (req, res) => {
                 .gte('created_at', cutoff)
                 .order('created_at', { ascending: false })
                 .maybeSingle();
-            // Registrar métrica (attempt e se houve hit)
             recordIpFallback(!!data, ttlDays);
             if (data) {
-                foundUser = { freesongsused: data.freesongsused || 0 };
+                foundUser = { freesongsused: data.freesongsused || 0, device_id: null };
             }
-            // Só considerar erro se não for "nenhum resultado encontrado"
             if (error && error.code !== 'PGRST116') {
                 console.error('[PAYWALL_ERROR] Erro ao buscar usuário por IP:', JSON.stringify(error, null, 2));
                 findError = error;
@@ -237,8 +160,24 @@ router.get('/creation-status', optionalAuthMiddleware, async (req, res) => {
             return;
         }
         if (!foundUser) {
-            // Se NENHUM usuário foi encontrado com os critérios, é um novo convidado
             console.log('[DEBUG] Nenhum usuário encontrado - novo convidado');
+            const premiumDeviceCandidates = [deviceId, guestId];
+            const hasPremiumAccess = await hasUnlimitedAccess(supabase, {
+                userId,
+                deviceIds: premiumDeviceCandidates,
+            });
+            if (hasPremiumAccess) {
+                console.log('[PAYWALL] Plano ativo detectado para convidado sem registro - acesso ilimitado liberado');
+                res.status(200).json({
+                    success: true,
+                    isFree: true,
+                    freeSongsUsed: 0,
+                    message: 'Plano ativo: criações ilimitadas liberadas.',
+                    userType: userId ? 'authenticated_premium' : 'guest_premium',
+                    hasUnlimitedAccess: true,
+                });
+                return;
+            }
             res.status(200).json({
                 success: true,
                 isFree: true,
@@ -248,10 +187,34 @@ router.get('/creation-status', optionalAuthMiddleware, async (req, res) => {
             });
             return;
         }
-        // Se um usuário foi encontrado, verifique sua cota
+        const usageDeviceIds = usageRecords
+            .map(record => record.device_id)
+            .filter((value) => Boolean(value));
+        const premiumDeviceCandidates = normalizeIds([
+            deviceId,
+            guestId,
+            foundUser.device_id ?? null,
+            ...usageDeviceIds,
+        ]);
+        const hasPremiumAccess = await hasUnlimitedAccess(supabase, {
+            userId,
+            deviceIds: premiumDeviceCandidates,
+        });
+        if (hasPremiumAccess) {
+            console.log('[PAYWALL] Plano ativo detectado - ignorando limite de criações gratuitas');
+            res.status(200).json({
+                success: true,
+                isFree: true,
+                freeSongsUsed: foundUser.freesongsused || 0,
+                message: 'Plano ativo: criações ilimitadas liberadas.',
+                userType: userId ? 'authenticated_premium' : 'guest_premium',
+                hasUnlimitedAccess: true,
+            });
+            return;
+        }
         const FREE_SONG_LIMIT = 1;
         const freeSongsUsed = foundUser.freesongsused || 0;
-        const isFree = freeSongsUsed < FREE_SONG_LIMIT; // Usuário é bloqueado quando freeSongsUsed >= FREE_SONG_LIMIT
+        const isFree = freeSongsUsed < FREE_SONG_LIMIT;
         console.log('[DEBUG] Status do usuário encontrado:', { freeSongsUsed, isFree, userType: userId ? 'authenticated' : (deviceId ? 'guest_device' : 'guest_ip') });
         res.status(200).json({
             success: true,

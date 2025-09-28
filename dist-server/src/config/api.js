@@ -278,8 +278,8 @@ export const sunoApi = {
     }
 };
 // Importações necessárias para o sistema de identidade
-import { getOrCreateGuestId } from '../utils/guest.js';
-import { GUEST_ID_HEADER } from '../types/guest.js';
+import { getOrCreateGuestId } from '../utils/guest';
+import { GUEST_ID_HEADER } from '../types/guest';
 // Função helper para fazer requisições com tratamento de erro e identidade
 export const apiRequest = async (endpoint, options = {}) => {
     const { method = 'GET', body, headers = {} } = options;
@@ -295,7 +295,7 @@ export const apiRequest = async (endpoint, options = {}) => {
         // Sempre incluir o deviceId em todas as requisições
         const deviceId = localStorage.getItem('deviceId');
         if (deviceId) {
-            requestHeaders['X-Device-ID'] = deviceId;
+            requestHeaders['x-device-id'] = deviceId;
         }
         if (isLoggedIn && token) {
             // Usuário autenticado: usar token de autorização

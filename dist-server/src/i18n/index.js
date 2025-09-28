@@ -100,6 +100,19 @@ const detectionOptions = {
     excludeCacheFor: ['cimode'],
     // Check for supported languages
     checkWhitelist: true,
+    // Language mapping to normalize browser languages
+    lookupLocalStorage: 'i18nextLng',
+    lookupSessionStorage: 'i18nextLng',
+};
+// Language normalization function
+const normalizeLanguage = (lng) => {
+    // Normalize common language variants
+    if (lng.startsWith('en'))
+        return 'en';
+    if (lng.startsWith('pt'))
+        return 'pt';
+    // Default fallback
+    return 'pt';
 };
 // Initialize i18next
 i18n
@@ -156,6 +169,18 @@ i18n
     preload: ['pt', 'en'],
     // Clean code
     cleanCode: true,
+    // Language mapping for normalization
+    lng: undefined, // Let the detector handle initial language
+    // Normalize detected languages
+    initImmediate: false,
+})
+    .then(() => {
+    // Normalize the detected language after initialization
+    const currentLang = i18n.language;
+    const normalizedLang = normalizeLanguage(currentLang);
+    if (currentLang !== normalizedLang) {
+        i18n.changeLanguage(normalizedLang);
+    }
 });
 // Export configured i18n instance
 export default i18n;

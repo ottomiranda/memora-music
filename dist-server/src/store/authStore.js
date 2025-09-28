@@ -1,9 +1,10 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { migrationApi } from '../config/api.js';
+import { migrationApi } from '../config/api';
 import getSupabaseBrowserClient from '@/lib/supabase-browser';
-import { getCurrentGuestId, clearGuestId } from '../utils/guest.js';
-import i18n from '../i18n/index.js';
+import { getCurrentGuestId, clearGuestId } from '../utils/guest';
+import i18n from '../i18n';
+import { useUiStore } from './uiStore';
 /**
  * Função para migrar dados do convidado para o usuário logado
  * Agora inclui chamada automática da função merge_guest_into_user
@@ -163,6 +164,9 @@ export const useAuthStore = create()(persist((set, get) => ({
     },
     logout: async () => {
         try {
+            const { suppressAuthPopup, hideAuthPopup } = useUiStore.getState();
+            suppressAuthPopup();
+            hideAuthPopup();
             // Limpar completamente o localStorage
             localStorage.removeItem('authToken');
             localStorage.removeItem('guestId');
@@ -182,6 +186,9 @@ export const useAuthStore = create()(persist((set, get) => ({
         catch (error) {
             console.error(i18n.t('auth.logoutError', { ns: 'authStore' }), error);
             // Mesmo com erro, limpar dados locais e redirecionar
+            const { suppressAuthPopup, hideAuthPopup } = useUiStore.getState();
+            suppressAuthPopup();
+            hideAuthPopup();
             localStorage.removeItem('authToken');
             localStorage.removeItem('guestId');
             set({ user: null, token: null, isLoggedIn: false, error: null });

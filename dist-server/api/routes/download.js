@@ -1,13 +1,23 @@
 import { Router } from 'express';
 import axios from 'axios';
 const router = Router();
+const ensureMp3Extension = (filename) => {
+    if (!filename) {
+        return 'musica_personalizada.mp3';
+    }
+    const trimmed = filename.trim();
+    if (!trimmed) {
+        return 'musica_personalizada.mp3';
+    }
+    return trimmed.toLowerCase().endsWith('.mp3') ? trimmed : `${trimmed}.mp3`;
+};
 /**
  * Endpoint de proxy para download de arquivos de áudio
  * Resolve problemas de cross-origin ao fazer proxy de arquivos externos
  */
 router.get('/', async (req, res) => {
     const externalUrl = req.query.url;
-    const filename = req.query.filename || 'musica_personalizada.mp3';
+    const filename = ensureMp3Extension(typeof req.query.filename === 'string' ? req.query.filename : undefined);
     if (!externalUrl) {
         return res.status(400).json({ error: 'URL do arquivo é obrigatória.' });
     }

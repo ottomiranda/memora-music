@@ -1,5 +1,5 @@
 import { v4 as uuidv4 } from 'uuid';
-import { GUEST_ID_KEY } from '../types/guest.js';
+import { GUEST_ID_KEY } from '../types/guest';
 /**
  * Gera ou recupera o guestId do localStorage
  * @returns string - UUID único para o usuário convidado

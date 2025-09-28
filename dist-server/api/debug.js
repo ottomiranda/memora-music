@@ -1,4 +1,4 @@
-import { testSupabaseConnection } from '../src/lib/supabase-client.js';
+import { testSupabaseConnection } from '../src/lib/supabase-client';
 // Configurar CORS
 function setCorsHeaders(res) {
     res.setHeader('Access-Control-Allow-Origin', '*');
