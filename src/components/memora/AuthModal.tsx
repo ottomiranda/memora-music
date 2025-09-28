@@ -10,6 +10,9 @@ import { PurpleFormButton } from "@/components/ui/PurpleFormButton";
 import { useAuthStore } from "@/store/authStore";
 import { useUiStore } from "@/store/uiStore";
 import { getAuthSchema, type AuthFormData } from "@/schemas/authSchema";
+import { useValidationSchemas } from "@/lib/validations";
+import { useTranslation } from '@/i18n/hooks/useTranslation';
+import { useLocalizedRoutes } from '@/hooks/useLocalizedRoutes';
 
 interface AuthModalProps {
   isOpen: boolean;
@@ -24,7 +27,12 @@ const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
   const [userEmail, setUserEmail] = useState('');
   
   const { login, signup, isLoading, error, clearError, resetPassword, isLoggedIn, resendConfirmationEmail } = useAuthStore()
+
+
   const { hideAuthPopup, executeAuthCallback } = useUiStore();
+  const { t } = useTranslation('auth');
+  const { buildPath } = useLocalizedRoutes();
+  const dashboardPath = buildPath('myMusic');
 
   // Monitorar mudanças na autenticação para fechar o modal automaticamente
   useEffect(() => {
@@ -33,9 +41,9 @@ const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
       executeAuthCallback();
       onClose();
       // Redirecionar para o dashboard após verificação bem-sucedida
-      window.location.href = '/minhas-musicas';
+      window.location.href = dashboardPath;
     }
-  }, [isLoggedIn, showEmailConfirmation, hideAuthPopup, executeAuthCallback, onClose]);
+  }, [dashboardPath, executeAuthCallback, hideAuthPopup, isLoggedIn, onClose, showEmailConfirmation]);
 
   useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
@@ -58,6 +66,9 @@ const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
     }
   }, [showEmailConfirmation, isLoggedIn]);
 
+  // Obter esquemas traduzidos
+  const { getAuthSchema: getTranslatedAuthSchema } = useValidationSchemas('validation');
+  
   // Configuração do react-hook-form com validação zod
   const {
     register,
@@ -66,7 +77,7 @@ const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
     reset,
     watch
   } = useForm<AuthFormData>({
-    resolver: zodResolver(getAuthSchema(isLogin)),
+    resolver: zodResolver(getTranslatedAuthSchema(isLogin)),
     mode: 'onChange',
     defaultValues: {
       email: '',
@@ -125,12 +136,12 @@ const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
     const email = watch('email');
     if (!email) {
       // precise, mas não dependemos de toast aqui
-      alert('Informe seu e-mail para recuperar a senha.');
+      alert(t('forgotPassword.emailRequired'));
       return;
     }
     const ok = await resetPassword(email);
     if (ok) {
-      alert('Enviamos um e-mail com instruções para redefinir sua senha.');
+      alert(t('forgotPassword.emailSent'));
     }
   };
 
@@ -144,7 +155,7 @@ const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
         const button = document.querySelector('[data-resend-button]') as HTMLButtonElement;
         if (button) {
           const originalText = button.textContent;
-          button.textContent = 'E-mail enviado!';
+          button.textContent = t('emailConfirmation.emailSent');
           button.disabled = true;
           setTimeout(() => {
             button.textContent = originalText;
@@ -158,7 +169,7 @@ const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
       const button = document.querySelector('[data-resend-button]') as HTMLButtonElement;
       if (button) {
         const originalText = button.textContent;
-        button.textContent = 'Erro ao enviar';
+        button.textContent = t('emailConfirmation.sendError');
         setTimeout(() => {
           button.textContent = originalText;
         }, 3000);
@@ -172,12 +183,12 @@ const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
     onClose();
     // Redirecionar para /minhas-musicas se o usuário estiver logado
     if (isLoggedIn) {
-      window.location.href = '/minhas-musicas';
+      window.location.href = dashboardPath;
     }
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4">
+    <div className="fixed inset-0 z-[90] flex items-center justify-center p-3 sm:p-4">
       <div
         className="absolute inset-0 bg-black/60 backdrop-blur-md"
         onClick={onClose}
@@ -192,19 +203,17 @@ const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
           variant="ghost"
           size="icon"
           className="absolute top-4 right-4 text-white/70 hover:text-white"
-          aria-label="Fechar modal"
+          aria-label={t('modal.closeLabel')}
         >
           <X className="w-5 h-5" />
         </Button>
 
         <div className="text-center mb-5 sm:mb-6 text-white space-y-2">
           <h2 className="text-xl sm:text-2xl font-heading font-bold">
-            {isLogin ? "Entre na sua conta" : "Criar nova conta"}
+            {isLogin ? t('login.title') : t('signup.title')}
           </h2>
           <p className="text-white/70 text-xs sm:text-sm">
-            {isLogin
-              ? "Acesse suas músicas personalizadas e continue criando memórias."
-              : "Comece agora mesmo a transformar sentimentos em música."}
+            {isLogin ? t('login.subtitle') : t('signup.subtitle')}
           </p>
         </div>
 
@@ -232,7 +241,7 @@ const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
               d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
             />
           </svg>
-          Continuar com Google
+          {t('social.continueWithGoogle')}
         </Button>
 
         <div className="relative mb-5">
@@ -240,7 +249,7 @@ const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
             <div className="w-full border-t border-white/15" />
           </div>
           <div className="relative flex justify-center text-[10px] uppercase tracking-[0.3em] text-white/50">
-            <span className="px-2.5 bg-white/5 rounded-full py-0.5">ou</span>
+            <span className="px-2.5 bg-white/5 rounded-full py-0.5">{t('common.or')}</span>
           </div>
         </div>
 
@@ -254,14 +263,14 @@ const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
           {!isLogin && (
             <div>
               <Label htmlFor="name" className="text-white font-medium">
-                Nome completo
+                {t('form.fullName')}
               </Label>
               <Input
                 id="name"
                 type="text"
                 {...register('name')}
                 className="mt-1.5 h-11 rounded-2xl border border-white/20 bg-white/10 text-white placeholder:text-white/40 focus:border-white/40"
-                placeholder="Seu nome"
+                placeholder={t('form.namePlaceholder')}
               />
               {errors.name && (
                 <p className="text-red-200 text-xs mt-1">{errors.name.message}</p>
@@ -271,7 +280,7 @@ const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
           
           <div>
             <Label htmlFor="email" className="text-white font-medium">
-              E-mail
+              {t('form.email')}
             </Label>
             <div className="relative mt-1.5">
               <Input
@@ -279,7 +288,7 @@ const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
                 type="email"
                 {...register('email')}
                 className="h-11 rounded-2xl border border-white/20 bg-white/10 text-white placeholder:text-white/40 focus:border-white/40 pl-11"
-                placeholder="seu@email.com"
+                placeholder={t('form.emailPlaceholder')}
               />
               <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-5 h-5 text-white/50" />
             </div>
@@ -290,7 +299,7 @@ const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
 
           <div>
             <Label htmlFor="password" className="text-white font-medium">
-              Senha
+              {t('form.password')}
             </Label>
             <div className="relative mt-1.5">
               <Input
@@ -298,7 +307,7 @@ const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
                 type={showPassword ? "text" : "password"}
                 {...register('password')}
                 className="h-11 rounded-2xl border border-white/20 bg-white/10 text-white placeholder:text-white/40 focus:border-white/40 pr-11"
-                placeholder="Sua senha"
+                placeholder={t('form.passwordPlaceholder')}
               />
               <Button
                 type="button"
@@ -322,24 +331,19 @@ const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
 
           <PurpleFormButton
             type="submit"
-            disabled={isLoading}
+            isLoading={isLoading}
+            loadingText={isLogin ? t('login.loading') : t('signup.loading')}
+            loadingVariant="glass"
             className="w-full h-11 flex items-center justify-center text-sm"
             data-attr={isLogin ? "email-login" : "email-signup"}
           >
-            {isLoading ? (
-              <div className="flex items-center gap-2">
-                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                {isLogin ? "Entrando..." : "Criando conta..."}
-              </div>
-            ) : (
-              isLogin ? "Entrar" : "Criar conta"
-            )}
+            {isLogin ? t('login.button') : t('signup.button')}
           </PurpleFormButton>
         </form>
 
         <div className="text-center mt-6 text-white/70 text-xs sm:text-sm">
           <p>
-            {isLogin ? "Não tem uma conta?" : "Já tem uma conta?"}
+            {isLogin ? t('login.noAccount') : t('signup.hasAccount')}
             <Button
               onClick={() => {
                 const newIsLogin = !isLogin;
@@ -355,7 +359,7 @@ const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
               variant="link"
               className="ml-1 text-white font-semibold p-0 h-auto hover:text-white/80"
             >
-              {isLogin ? "Criar conta" : "Entrar"}
+              {isLogin ? t('signup.button') : t('login.button')}
             </Button>
           </p>
           {isLogin && (
@@ -366,7 +370,7 @@ const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
                 className="text-white/80 hover:text-white font-medium p-0 h-auto"
                 onClick={handleForgotPassword}
               >
-                Esqueci minha senha
+                {t('forgotPassword.link')}
               </Button>
             </div>
           )}
@@ -380,36 +384,38 @@ const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
             <div className="w-14 h-14 rounded-full bg-white/15 flex items-center justify-center mb-5">
               <Mail className="w-8 h-8 text-white" />
             </div>
-            <h3 className="text-xl sm:text-2xl font-heading font-bold text-white mb-2">Confirme seu e-mail</h3>
+            <h3 className="text-xl sm:text-2xl font-heading font-bold text-white mb-2">{t('emailConfirmation.title')}</h3>
             <p className="text-white/70 max-w-sm text-sm mb-3">
-              Enviamos um link de ativação para:
+              {t('emailConfirmation.sentTo')}
             </p>
             <p className="text-white font-semibold text-sm mb-4">{userEmail}</p>
             <p className="text-xs sm:text-sm text-white/60 max-w-md mb-6">
-              Assim que você confirmar, carregaremos automaticamente sua conta para continuar criando sem interrupções.
+              {t('emailConfirmation.instructions')}
             </p>
 
             <div className="w-full max-w-sm space-y-2.5">
               <PurpleFormButton
                 onClick={handleResendEmail}
-                disabled={isLoading}
+                isLoading={isLoading}
+                loadingText={t('emailConfirmation.resending')}
+                loadingVariant="glass"
                 className="w-full h-10 flex items-center justify-center text-sm"
                 data-resend-button
               >
-                {isLoading ? 'Reenviando...' : 'Reenviar e-mail'}
+                {t('emailConfirmation.resendButton')}
               </PurpleFormButton>
               <Button
                 onClick={handleCloseModal}
                 variant="ghost"
                 className="w-full text-white/70 hover:text-white text-sm"
               >
-                Fechar
+                {t('modal.close')}
               </Button>
             </div>
 
             <div className="mt-4 flex items-center text-xs sm:text-sm text-white/60">
               <CheckCircle className="w-4 h-4 mr-2 text-memora-primary" />
-              Monitorando confirmação automaticamente...
+              {t('emailConfirmation.monitoring')}
             </div>
           </LiquidGlassCard>
         )}

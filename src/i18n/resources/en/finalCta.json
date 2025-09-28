@@ -1,0 +1,33 @@
+{
+  "header": {
+    "surprise": "Surprise",
+    "lovedOne": "your loved one",
+    "with": "with a",
+    "song": "song",
+    "madeFor": "made for",
+    "them": "them",
+    "subtitle": "Create unique memories that will last forever. Your personalized music is just a few clicks away."
+  },
+  "button": {
+    "createNow": "Create Music Now"
+  },
+  "features": {
+    "personalized": {
+      "title": "100% Personalized",
+      "description": "Each song is unique and created especially for your story"
+    },
+    "technology": {
+      "title": "AI Technology",
+      "description": "Advanced algorithms for professional compositions"
+    },
+    "quality": {
+      "title": "High Quality",
+      "description": "Professional music production in minutes"
+    }
+  },
+  "trust": {
+    "freeLaunch": "Free launch",
+    "noCommitment": "No commitment",
+    "quickResult": "Quick result"
+  }
+}

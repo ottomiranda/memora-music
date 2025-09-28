@@ -2,10 +2,13 @@ import { useState, useEffect, useCallback } from "react";
 import { Menu, X, Sparkles, LogOut } from "lucide-react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Button } from "../ui/button";
+import { ProfileDropdown } from "../ui/ProfileDropdown";
 import { useAuthStore } from "../../store/authStore";
 import { useUiStore } from "../../store/uiStore";
 import { useMusicStore } from "../../store/musicStore";
 import { NAVBAR_TOTAL_OFFSET } from "@/constants/layout";
+import { useTranslation } from '@/i18n/hooks/useTranslation';
+import { useLocalizedRoutes } from '@/hooks/useLocalizedRoutes';
 
 const Navbar = () => {
   const [isScrolled, setIsScrolled] = useState(false);
@@ -13,6 +16,8 @@ const Navbar = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const isAtTop = !isScrolled;
+  const { t } = useTranslation('common');
+  const { buildPath } = useLocalizedRoutes();
   
   // Auth state
   const { isLoggedIn, user, logout } = useAuthStore();
@@ -20,17 +25,18 @@ const Navbar = () => {
   const { startNewCreationFlow } = useMusicStore();
 
   const goToDashboard = () => {
+    const dashboardPath = buildPath('myMusic');
     if (isLoggedIn) {
-      navigate('/minhas-musicas');
+      navigate(dashboardPath);
     } else {
-      showAuthPopup(() => navigate('/minhas-musicas'));
+      showAuthPopup(() => navigate(dashboardPath));
     }
     setIsMobileMenuOpen(false);
   };
 
   const handleCreateMusicClick = async () => {
     const { token } = useAuthStore.getState();
-    navigate('/criar');
+    navigate(buildPath('create'));
     await startNewCreationFlow(navigate, token);
     setIsMobileMenuOpen(false);
   };
@@ -131,42 +137,42 @@ const Navbar = () => {
               variant="ghost"
               className={desktopNavItemClasses}
             >
-              Como Funciona
+              {t('navigation.howItWorks')}
             </Button>
             <Button
               onClick={() => scrollToSection("exemplos")}
               variant="ghost"
               className={desktopNavItemClasses}
             >
-              Exemplos
+              {t('navigation.examples')}
             </Button>
             <Button
               onClick={() => scrollToSection("artistas")}
               variant="ghost"
               className={desktopNavItemClasses}
             >
-              Artistas
+              {t('navigation.artists')}
             </Button>
             <Button
               onClick={() => scrollToSection("precos")}
               variant="ghost"
               className={desktopNavItemClasses}
             >
-              Preços
+              {t('navigation.pricing')}
             </Button>
             <Button
               onClick={() => scrollToSection("faq")}
               variant="ghost"
               className={desktopNavItemClasses}
             >
-              FAQ
+              {t('navigation.faq')}
             </Button>
             <Button
               onClick={() => goToDashboard()}
               variant="ghost"
               className={desktopNavItemClasses}
             >
-              Minhas Músicas
+              {t('navigation.myMusic')}
             </Button>
 
             {/* Auth Section */}
@@ -177,25 +183,23 @@ const Navbar = () => {
                 className="flex items-center gap-2"
               >
                 <Sparkles className="w-4 h-4" />
-                Crie sua Música
+                {t('navigation.createMusic')}
               </Button>
 
               {isLoggedIn && (
-                <>
-                  <span 
-                    className={`${isAtTop ? 'text-white' : 'text-[#08060D]'} font-medium transition-colors duration-300`}
-                  >
-                    Olá, {getFirstName(user?.name) || 'usuário'}!
-                  </span>
-                  <Button 
-                    variant="ghost"
-                    onClick={() => logout().catch(console.error)}
-                    className={`${desktopNavItemClasses} flex items-center gap-2`}
-                  >
-                    <LogOut className="w-4 h-4" />
-                    Sair
-                  </Button>
-                </>
+                <ProfileDropdown
+                  userName={user?.name || 'Usuário'}
+                  userEmail={user?.email}
+                  onProfileClick={() => {
+                    // TODO: Implementar navegação para perfil
+                    console.log('Navegar para perfil');
+                  }}
+                  onSettingsClick={() => {
+                    // TODO: Implementar navegação para configurações
+                    console.log('Navegar para configurações');
+                  }}
+                  onLogoutClick={() => logout().catch(console.error)}
+                />
               )}
             </div>
           </div>
@@ -227,49 +231,53 @@ const Navbar = () => {
                 variant="ghost"
                 className="block w-full text-left px-3 py-2 text-[#08060D] hover:text-memora-secondary hover:bg-gray-100/10 transition-colors duration-300 font-medium h-auto justify-start"
               >
-                Como Funciona
+                {t('navigation.howItWorks')}
               </Button>
               <Button
                 onClick={() => scrollToSection("exemplos")}
                 variant="ghost"
                 className="block w-full text-left px-3 py-2 text-[#08060D] hover:text-memora-secondary hover:bg-gray-100/10 transition-colors duration-300 font-medium h-auto justify-start"
               >
-                Exemplos
+                {t('navigation.examples')}
               </Button>
               <Button
                 onClick={() => scrollToSection("artistas")}
                 variant="ghost"
                 className="block w-full text-left px-3 py-2 text-[#08060D] hover:text-memora-secondary hover:bg-gray-100/10 transition-colors duration-300 font-medium h-auto justify-start"
               >
-                Artistas
+                {t('navigation.artists')}
               </Button>
               <Button
                 onClick={() => scrollToSection("precos")}
                 variant="ghost"
                 className="block w-full text-left px-3 py-2 text-[#08060D] hover:text-memora-secondary hover:bg-gray-100/10 transition-colors duration-300 font-medium h-auto justify-start"
               >
-                Preços
+                {t('navigation.pricing')}
               </Button>
               <Button
                 onClick={() => scrollToSection("faq")}
                 variant="ghost"
                 className="block w-full text-left px-3 py-2 text-[#08060D] hover:text-memora-secondary hover:bg-gray-100/10 transition-colors duration-300 font-medium h-auto justify-start"
               >
-                FAQ
+                {t('navigation.faq')}
               </Button>
               <Button
                 onClick={() => goToDashboard()}
                 variant="ghost"
                 className="block w-full text-left px-3 py-2 text-[#08060D] hover:text-memora-secondary hover:bg-gray-100/10 transition-colors duration-300 font-medium h-auto justify-start"
               >
-                Minhas Músicas
+                {t('navigation.myMusic')}
               </Button>
+
+              
               {/* Auth Section Mobile */}
               {isLoggedIn ? (
                 // --- Estado Logado Mobile ---
                 <div className="mt-2 space-y-2">
-                  <div className="px-3 py-2 font-medium text-[#08060D] transition-colors duration-300">
-                    Olá, {getFirstName(user?.name) || 'usuário'}!
+                  <div className="px-3 py-2">
+                    <span className="font-medium text-[#08060D] transition-colors duration-300">
+                      Olá, {getFirstName(user?.name) || 'Usuário'}!
+                    </span>
                   </div>
                   <Button
                     variant="glass"
@@ -280,7 +288,7 @@ const Navbar = () => {
                     className="w-full flex items-center justify-center gap-2"
                   >
                     <Sparkles className="w-4 h-4" />
-                    Crie sua Música
+                    {t('navigation.createMusic')}
                   </Button>
                   <Button
                     onClick={() => {
@@ -306,7 +314,7 @@ const Navbar = () => {
                     className="w-full flex items-center justify-center gap-2"
                   >
                     <Sparkles className="w-4 h-4" />
-                    Crie sua Música
+                    {t('navigation.createMusic')}
                   </Button>
                 </div>
               )}

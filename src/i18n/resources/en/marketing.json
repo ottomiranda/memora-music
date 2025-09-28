@@ -1,0 +1,237 @@
+{
+  "hero": {
+    "title": "Create unique music with AI",
+    "subtitle": "Transform your ideas into personalized melodies",
+    "cta": "Get started",
+    "watchDemo": "Watch demo"
+  },
+  "howItWorks": {
+    "title": "How it works?",
+    "subtitle": "Create your music in 3 simple steps",
+    "steps": {
+      "step1": {
+        "title": "1. Describe your music",
+        "description": "Tell us about the occasion, emotion and style you want"
+      },
+      "step2": {
+        "title": "2. AI composes for you",
+        "description": "Our artificial intelligence creates unique music based on your preferences"
+      },
+      "step3": {
+        "title": "3. Download and share",
+        "description": "Get your personalized music and share it with anyone"
+      }
+    }
+  },
+  "features": {
+    "title": "Amazing features",
+    "subtitle": "Everything you need to create music",
+    "aiComposer": {
+      "title": "AI Composer",
+      "description": "Advanced artificial intelligence for composition"
+    },
+    "customization": {
+      "title": "Customization",
+      "description": "Adjust every detail of your music"
+    },
+    "export": {
+      "title": "Export",
+      "description": "Download in various audio formats"
+    }
+  },
+  "plans": {
+    "title": "Choose your plan",
+    "subtitle": "Flexible plans for your needs",
+    "free": {
+      "name": "Free",
+      "price": "$0",
+      "period": "/month",
+      "description": "Perfect to get started",
+      "features": [
+        "3 songs per month",
+        "Up to 1 minute duration",
+        "Basic formats (MP3)",
+        "Email support"
+      ],
+      "cta": "Start free",
+      "popular": false
+    },
+    "pro": {
+      "name": "Pro",
+      "price": "$19",
+      "period": "/month",
+      "description": "For serious creators",
+      "features": [
+        "Unlimited songs",
+        "Up to 5 minutes duration",
+        "All formats (MP3, WAV, FLAC)",
+        "Advanced editing",
+        "Priority support",
+        "No watermark"
+      ],
+      "cta": "Subscribe Pro",
+      "popular": true
+    },
+    "enterprise": {
+      "name": "Enterprise",
+      "price": "Custom",
+      "period": "",
+      "description": "For companies and studios",
+      "features": [
+        "Everything in Pro",
+        "Custom API",
+        "DAW integration",
+        "Dedicated support",
+        "Guaranteed SLA"
+      ],
+      "cta": "Contact sales",
+      "popular": false
+    }
+  },
+  "testimonials": {
+    "title": "What our users say",
+    "subtitle": "Real stories from people who transformed their memories into music",
+    "items": [
+      {
+        "id": 1,
+        "author": "Maria Silva",
+        "text": "I created a song for my daughter's birthday and she was thrilled! The AI captured exactly the feeling I wanted to share.",
+        "age": 34,
+        "location": "São Paulo, Brazil",
+        "avatar": "https://i.pravatar.cc/120?img=47",
+        "rating": 5
+      },
+      {
+        "id": 2,
+        "author": "João Santos",
+        "text": "I used Memora Music to craft the soundtrack for my wedding. The result exceeded every expectation!",
+        "age": 29,
+        "location": "Rio de Janeiro, Brazil",
+        "avatar": "https://i.pravatar.cc/120?img=32",
+        "rating": 5
+      },
+      {
+        "id": 3,
+        "author": "Ana Costa",
+        "text": "As a musician, I was amazed by the quality of the compositions. It's an incredible tool for inspiration!",
+        "age": 41,
+        "location": "Curitiba, Brazil",
+        "avatar": "https://i.pravatar.cc/120?img=57",
+        "rating": 5
+      }
+    ]
+  },
+  "examples": {
+    "title": "Moments that deserve a song",
+    "subtitle": "There's something special about the power of music to bring people together and make moments even more meaningful",
+    "cards": {
+      "aniversario": {
+        "title": "Birthday",
+        "subtitle": "Turn special celebrations into unforgettable melodies"
+      },
+      "casamento": {
+        "title": "Wedding",
+        "subtitle": "Celebrate love with a one-of-a-kind song"
+      },
+      "amor": {
+        "title": "Love Song",
+        "subtitle": "Say I love you with a personalized melody"
+      },
+      "aniversario-casamento": {
+        "title": "Wedding Anniversary",
+        "subtitle": "Renew your vows with an exclusive soundtrack"
+      },
+      "so-porque": {
+        "title": "Just Because",
+        "subtitle": "Show how much you care without waiting for a date"
+      },
+      "proposta": {
+        "title": "Proposal",
+        "subtitle": "Make the big question unforgettable with the perfect song"
+      },
+      "graduacao": {
+        "title": "Graduation",
+        "subtitle": "Commemorate achievements with a unique anthem"
+      },
+      "melhores-amigos": {
+        "title": "Best Friends",
+        "subtitle": "Celebrate true friendship with a special tune"
+      },
+      "noivado": {
+        "title": "Engagement",
+        "subtitle": "Start the new journey with the song of your dreams"
+      },
+      "dia-pais": {
+        "title": "Father's Day",
+        "subtitle": "Surprise him with a song as unique as he is"
+      },
+      "dia-maes": {
+        "title": "Mother's Day",
+        "subtitle": "Honor the one you love most with a heartfelt song"
+      },
+      "natal": {
+        "title": "Christmas",
+        "subtitle": "Spread holiday magic with an unforgettable melody"
+      }
+    },
+    "cta": {
+      "meta": "45-second previews • Full songs up to 5 minutes",
+      "button": "Create your music now"
+    },
+    "cardCta": {
+      "loading": "Loading...",
+      "play": "Listen now",
+      "aria": {
+        "loading": "Loading example for {{title}}",
+        "play": "Play example for {{title}}",
+        "pause": "Pause example for {{title}}"
+      }
+    }
+  },
+  "artists": {
+    "title": "Varied styles that bring your memories to life",
+    "subtitle": "Listen to remarkable voices from our singers who transform feelings into eternal songs.",
+    "cta": {
+      "title": "Loved what you heard?",
+      "subtitle": "Create your own personalized song right now.",
+      "button": "Create your music now"
+    }
+  },
+  "cta": {
+    "title": "Ready to create your first song?",
+    "subtitle": "Join {{count}} people who have already created unforgettable songs",
+    "button": "Start now",
+    "guarantee": "{{days}}-day guarantee",
+    "testimonial": "{{count}} songs have been created with love"
+  },
+  "navigation": {
+    "home": "Home",
+    "features": "Features",
+    "pricing": "Pricing",
+    "about": "About",
+    "contact": "Contact",
+    "login": "Login",
+    "signup": "Sign Up",
+    "dashboard": "Dashboard"
+  },
+  "footer": {
+    "company": "Company",
+    "about": "About",
+    "careers": "Careers",
+    "press": "Press",
+    "blog": "Blog",
+    "product": "Product",
+    "features": "Features",
+    "pricing": "Pricing",
+    "api": "API",
+    "support": "Support",
+    "help": "Help",
+    "contact": "Contact",
+    "status": "Status",
+    "legal": "Legal",
+    "privacy": "Privacy",
+    "terms": "Terms",
+    "cookies": "Cookies",
+    "rights": "© 2024 Memora Music. All rights reserved."
+  }
+}

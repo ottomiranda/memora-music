@@ -1,52 +1,55 @@
 import { z } from 'zod';
+import { useTranslatedSchemas, getTranslatedValidationErrors } from './zodTranslations';
+import { useTranslation } from '@/i18n/hooks/useTranslation';
+import i18n from '@/i18n';
 
-// Schema para o Passo 1 - Briefing
+// Schema para o Passo 1 - Briefing (versão estática para compatibilidade)
 export const briefingSchema = z.object({
   occasion: z.string({
-    required_error: 'Por favor, selecione uma ocasião especial.',
-  }).min(1, 'A ocasião é obrigatória.'),
+    required_error: () => i18n.t('validations.briefing.occasion.required'),
+  }).min(1, () => i18n.t('validations.briefing.occasion.required')),
   
   recipientName: z.string({
-    required_error: 'Por favor, informe o nome da pessoa.',
-  }).min(1, 'O nome da pessoa é obrigatório.')
-    .max(50, 'O nome deve ter no máximo 50 caracteres.'),
+    required_error: () => i18n.t('validations.briefing.recipientName.required'),
+  }).min(1, () => i18n.t('validations.briefing.recipientName.required'))
+    .max(50, () => i18n.t('validations.briefing.recipientName.maxLength')),
   
   relationship: z.string({
-    required_error: 'Por favor, selecione o tipo de relação.',
-  }).min(1, 'A relação é obrigatória.'),
+    required_error: () => i18n.t('validations.briefing.relationship.required'),
+  }).min(1, () => i18n.t('validations.briefing.relationship.required')),
   
-  senderName: z.string().max(50, 'O nome deve ter no máximo 50 caracteres.').optional(),
+  senderName: z.string().max(50, () => i18n.t('validations.briefing.senderName.maxLength')).optional(),
   
-  hobbies: z.string().min(1, "Hobbies são obrigatórios").max(500, "Hobbies devem ter no máximo 500 caracteres"),
+  hobbies: z.string().min(1, () => i18n.t('validations.briefing.hobbies.required')).max(500, () => i18n.t('validations.briefing.hobbies.maxLength')),
   
-  qualities: z.string().min(1, "Qualidades são obrigatórias").max(500, "Qualidades devem ter no máximo 500 caracteres"),
+  qualities: z.string().min(1, () => i18n.t('validations.briefing.qualities.required')).max(500, () => i18n.t('validations.briefing.qualities.maxLength')),
   
-  uniqueTraits: z.string().min(1, "Características únicas são obrigatórias").max(500, "Características únicas devem ter no máximo 500 caracteres"),
+  uniqueTraits: z.string().min(1, () => i18n.t('validations.briefing.uniqueTraits.required')).max(500, () => i18n.t('validations.briefing.uniqueTraits.maxLength')),
   
-  memories: z.string().min(1, "Memórias são obrigatórias").max(1000, "Memórias devem ter no máximo 1000 caracteres"),
+  memories: z.string().min(1, () => i18n.t('validations.briefing.memories.required')).max(1000, () => i18n.t('validations.briefing.memories.maxLength')),
 });
 
-// Schema para o Passo 2 - Letra
+// Schema para o Passo 2 - Letra (versão estática para compatibilidade)
 export const lyricsSchema = z.object({
   lyrics: z.string({
-    required_error: 'A letra da música é obrigatória.',
-  }).min(10, 'A letra deve ter pelo menos 10 caracteres.')
-    .max(2000, 'A letra deve ter no máximo 2000 caracteres.'),
+    required_error: () => i18n.t('validations.lyrics.lyrics.required'),
+  }).min(10, () => i18n.t('validations.lyrics.lyrics.minLength'))
+    .max(2000, () => i18n.t('validations.lyrics.lyrics.maxLength')),
 });
 
-// Schema para o Passo 3 - Estilo
+// Schema para o Passo 3 - Estilo (versão estática para compatibilidade)
 export const styleSchema = z.object({
   genre: z.string({
-    required_error: 'Por favor, selecione um gênero musical.',
-  }).min(1, 'O gênero musical é obrigatório.'),
+    required_error: () => i18n.t('validations.style.genre.required'),
+  }).min(1, () => i18n.t('validations.style.genre.required')),
   
   emotion: z.string({
-    required_error: 'Por favor, selecione uma emoção.',
-  }).min(1, 'A emoção é obrigatória.'),
+    required_error: () => i18n.t('validations.style.emotion.required'),
+  }).min(1, () => i18n.t('validations.style.emotion.required')),
   
   vocalPreference: z.string({
-    required_error: 'Por favor, selecione uma preferência vocal.',
-  }).min(1, 'A preferência vocal é obrigatória.'),
+    required_error: () => i18n.t('validations.style.vocalPreference.required'),
+  }).min(1, () => i18n.t('validations.style.vocalPreference.required')),
 });
 
 // Schema completo para todos os passos
@@ -81,7 +84,7 @@ export const validateStep = (step: number, data: Record<string, unknown>) => {
   }
 };
 
-// Função para extrair mensagens de erro formatadas
+// Função para extrair mensagens de erro formatadas (mantida para compatibilidade)
 export function getValidationErrors(error: z.ZodError): Record<string, string> {
   const errors: Record<string, string> = {};
   
@@ -92,6 +95,16 @@ export function getValidationErrors(error: z.ZodError): Record<string, string> {
   });
   
   return errors;
+}
+
+// Nova função que usa traduções dinâmicas
+export function getTranslatedErrors(error: z.ZodError, namespace?: string): Record<string, string> {
+  return getTranslatedValidationErrors(error, namespace);
+}
+
+// Hook para obter esquemas traduzidos
+export function useValidationSchemas(namespace?: string) {
+  return useTranslatedSchemas(namespace);
 }
 
 // Função para verificar se um passo pode ser avançado
@@ -115,7 +128,8 @@ export function canAdvanceStep(step: number, formData: FormData): boolean {
   }
 }
 
-// Mensagens de erro personalizadas para campos específicos
+// Mensagens de erro personalizadas para campos específicos (DEPRECATED - use traduções dinâmicas)
+// @deprecated Use useTranslatedSchemas() ou getTranslatedValidationErrors() para traduções dinâmicas
 export const customErrorMessages = {
   occasion: 'Por favor, selecione uma ocasião',
   recipientName: 'Por favor, informe o nome da pessoa',
@@ -129,3 +143,22 @@ export const customErrorMessages = {
   emotion: 'Selecione a emoção que deseja transmitir.',
   vocalPreference: 'Por favor, selecione uma preferência vocal'
 };
+
+// Hook para obter mensagens de erro traduzidas dinamicamente
+export function useCustomErrorMessages(namespace: string = 'validations') {
+  const { t } = useTranslation(namespace);
+  
+  return {
+    occasion: t('customMessages.occasion'),
+    recipientName: t('customMessages.recipientName'),
+    relationship: t('customMessages.relationship'),
+    hobbies: t('customMessages.hobbies'),
+    qualities: t('customMessages.qualities'),
+    uniqueTraits: t('customMessages.uniqueTraits'),
+    memories: t('customMessages.memories'),
+    lyrics: t('customMessages.lyrics'),
+    genre: t('customMessages.genre'),
+    emotion: t('customMessages.emotion'),
+    vocalPreference: t('customMessages.vocalPreference')
+  };
+}

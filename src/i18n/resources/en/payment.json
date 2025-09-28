@@ -1,0 +1,69 @@
+{
+  "form": {
+    "securePayment": "Secure Payment",
+    "paymentMethod": "Payment Method"
+  },
+  "button": {
+    "processing": "Processing...",
+    "completed": "Payment Completed",
+    "pay": "Pay {{amount}}"
+  },
+  "status": {
+    "processing": "Payment is being processed. Please wait for confirmation."
+  },
+  "errors": {
+    "paymentError": "Payment error. Please try again.",
+    "invalidTaxId": "Invalid CPF/CNPJ. Please check the information provided.",
+    "notProcessed": "Payment was not processed. Please try again.",
+    "unexpected": "Unexpected error. Please try again."
+  },
+  "feedback": {
+    "errorTitle": "Payment Error",
+    "successTitle": "Payment Successful!",
+    "successMessage": "Your payment has been processed successfully."
+  },
+  "security": {
+    "stripeSecure": "Secure payment processed by Stripe"
+  },
+  "modal": {
+    "title": "Become Premium",
+    "close": "Close popup",
+    "limitReached": {
+      "title": "Free song limit reached",
+      "description": "You already created your free song. Upgrade to keep going!"
+    },
+    "price": {
+      "amount": "{{amount}}",
+      "note": "one-time payment"
+    },
+    "pending": {
+      "title": "Pending payment found",
+      "description": "Finish the boleto before continuing. You can open the voucher below and, after completing the payment, click to verify.",
+      "intentLabel": "Intent: {{id}}",
+      "openVoucher": "Open boleto",
+      "checkButton": "I already paid, check now"
+    },
+    "form": {
+      "title": "Complete payment",
+      "back": "← Back",
+      "loading": "Loading payment...",
+      "loadError": "An error occurred while loading the form. Please try again."
+    },
+    "actions": {
+      "upgrade": "Upgrade now",
+      "processing": "Processing...",
+      "simulatedMode": "Simulated mode",
+      "maybeLater": "Maybe later"
+    },
+    "toasts": {
+      "simulatedSuccess": "Simulated payment completed successfully!",
+      "stripeSuccess": "Payment approved! Unlocking creation...",
+      "pendingWaiting": "Still waiting for confirmation. Try again in a few seconds.",
+      "loadFormError": "Failed to load payment form",
+      "genericError": "Payment error: {{message}}"
+    },
+    "metadata": {
+      "description": "Premium music generation"
+    }
+  }
+}

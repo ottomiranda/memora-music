@@ -1,0 +1,98 @@
+{
+  "briefing": {
+    "occasion": {
+      "required": "Please select a special occasion.",
+      "min": "The occasion is required."
+    },
+    "recipientName": {
+      "required": "Please enter the person's name.",
+      "min": "The person's name is required.",
+      "max": "The name must be at most 50 characters."
+    },
+    "relationship": {
+      "required": "Please select the type of relationship.",
+      "min": "The relationship is required."
+    },
+    "senderName": {
+      "max": "The name must be at most 50 characters."
+    },
+    "hobbies": {
+      "min": "Hobbies are required",
+      "max": "Hobbies must be at most 500 characters"
+    },
+    "qualities": {
+      "min": "Qualities are required",
+      "max": "Qualities must be at most 500 characters"
+    },
+    "uniqueTraits": {
+      "min": "Unique traits are required",
+      "max": "Unique traits must be at most 500 characters"
+    },
+    "memories": {
+      "min": "Memories are required",
+      "max": "Memories must be at most 1000 characters"
+    }
+  },
+  "lyrics": {
+    "lyrics": {
+      "required": "The song lyrics are required.",
+      "min": "The lyrics must be at least 10 characters.",
+      "max": "The lyrics must be at most 2000 characters."
+    }
+  },
+  "style": {
+    "genre": {
+      "required": "Please select a musical genre.",
+      "min": "The musical genre is required."
+    },
+    "emotion": {
+      "required": "Please select an emotion.",
+      "min": "The emotion is required."
+    },
+    "vocalPreference": {
+      "required": "Please select a vocal preference.",
+      "min": "The vocal preference is required."
+    }
+  },
+  "auth": {
+    "email": {
+      "required": "Email is required.",
+      "invalid": "Please enter a valid email."
+    },
+    "password": {
+      "minLength": "Password must be at least 6 characters.",
+      "maxLength": "Password must be at most 100 characters."
+    },
+    "name": {
+      "minLength": "Name must be at least 2 characters.",
+      "maxLength": "Name must be at most 100 characters.",
+      "invalidFormat": "Name must contain only letters and spaces."
+    }
+  },
+  "errors": {
+    "invalidStep": "Invalid step: {{step}}",
+    "required": "This field is required.",
+    "tooShort": "Must be at least {{min}} characters.",
+    "tooLong": "Must be at most {{max}} characters.",
+    "invalidEmail": "Please enter a valid email.",
+    "invalidFormat": "Invalid format."
+  },
+  "customMessages": {
+    "occasion": "Please select an occasion",
+    "recipientName": "Please enter the person's name",
+    "relationship": "Please select the relationship",
+    "hobbies": "Please describe hobbies and interests (required)",
+    "qualities": "Please describe the person's qualities (required)",
+    "uniqueTraits": "Please describe unique characteristics (required)",
+    "memories": "Please share some special memories (required)",
+    "lyrics": "Please write the song lyrics",
+    "genre": "Please select a musical style",
+    "emotion": "Select the emotion you want to convey.",
+    "vocalPreference": "Please select a vocal preference"
+  },
+  "song": {
+    "userIdOrGuestIdRequired": "Either userId or guestId must be provided",
+    "guestIdRequired": "Guest ID is required",
+    "taskIdRequired": "Task ID is required"
+  }
+}

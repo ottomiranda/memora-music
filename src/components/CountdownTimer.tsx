@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 
 import { LiquidGlassCard } from '@/components/ui/LiquidGlassCard';
 import { cn } from '@/lib/utils';
+import { useTranslation } from '@/i18n/hooks/useTranslation';
 
 interface CountdownTimerProps {
   onComplete?: () => void;
@@ -13,6 +14,7 @@ export const CountdownTimer: React.FC<CountdownTimerProps> = ({
   className = '' 
 }) => {
   const [timeLeft, setTimeLeft] = useState(300000); // 5 minutos em milissegundos
+  const { t } = useTranslation('criar');
 
   useEffect(() => {
     if (timeLeft <= 0) {
@@ -52,7 +54,7 @@ export const CountdownTimer: React.FC<CountdownTimerProps> = ({
       )}
     >
       <span className="text-[10px] uppercase tracking-[0.32em] text-white/60">
-        Tempo estimado restante
+        {t('countdown.heading')}
       </span>
       <div className="relative">
         <div className="absolute inset-0 blur-3xl bg-secondary/25" aria-hidden />
@@ -61,7 +63,7 @@ export const CountdownTimer: React.FC<CountdownTimerProps> = ({
         </div>
       </div>
       <p className="text-xs text-white/70 max-w-[14rem]">
-        Segure firme – estamos finalizando os detalhes da sua canção exclusiva.
+        {t('countdown.message')}
       </p>
     </LiquidGlassCard>
   );

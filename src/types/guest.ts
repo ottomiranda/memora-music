@@ -77,4 +77,4 @@ export interface SignupData {
 
 // Constantes do sistema
 export const GUEST_ID_KEY = 'memora-guest-id';
-export const GUEST_ID_HEADER = 'X-Guest-ID';
+export const GUEST_ID_HEADER = 'x-guest-id';

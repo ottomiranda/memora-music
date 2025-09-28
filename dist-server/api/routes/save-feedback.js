@@ -32,7 +32,7 @@ function parsePriceWillingness(priceString) {
 function validateFeedbackData(data) {
     return (typeof data.difficulty === 'number' &&
         data.difficulty >= 1 &&
-        data.difficulty <= 5 &&
+        data.difficulty <= 10 &&
         typeof data.wouldRecommend === 'boolean' &&
         typeof data.priceWillingness === 'string' &&
         data.priceWillingness.length > 0);
@@ -57,6 +57,7 @@ router.post('/', async (req, res) => {
         }
         // Converter preço para número
         const priceAsNumber = parsePriceWillingness(feedbackData.priceWillingness);
+        const normalizedDifficulty = Math.min(Math.max(feedbackData.difficulty, 1), 5);
         // Salvar no Supabase
         let savedRecord = null;
         try {
@@ -64,7 +65,7 @@ router.post('/', async (req, res) => {
             const { data, error } = await supabase
                 .from('mvp_feedback')
                 .insert({
-                difficulty: feedbackData.difficulty,
+                difficulty: normalizedDifficulty,
                 would_recommend: feedbackData.wouldRecommend,
                 price_willingness: priceAsNumber
             })

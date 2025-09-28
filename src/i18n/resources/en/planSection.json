@@ -1,0 +1,43 @@
+{
+  "header": {
+    "gift": "The gift that",
+    "touches": "touches",
+    "the": "the",
+    "heart": "heart",
+    "subtitle": "Create a unique and personalized song that will be remembered forever"
+  },
+  "badge": {
+    "firstFree": "First song free"
+  },
+  "plan": {
+    "name": "Personalized Music",
+    "perSong": "per song",
+    "priceError": "Error loading price"
+  },
+  "benefits": {
+    "personalizedMusic": "100% personalized music for your story",
+    "variedStyles": "Various musical styles available",
+    "advancedVoice": "Advanced voice and instrument technology",
+    "fastDelivery": "Fast delivery in up to 5 minutes"
+  },
+  "button": {
+    "createNow": "Create Music Now"
+  },
+  "offer": {
+    "limited": "Limited time offer"
+  },
+  "features": {
+    "fastDelivery": {
+      "title": "Fast Delivery",
+      "description": "Your music is ready in up to 5 minutes"
+    },
+    "unique": {
+      "title": "100% Unique",
+      "description": "Each song is created especially for you"
+    },
+    "mp3Format": {
+      "title": "MP3 Format",
+      "description": "Direct download in high quality"
+    }
+  }
+}

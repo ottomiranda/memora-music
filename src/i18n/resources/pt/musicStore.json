@@ -1,0 +1,46 @@
+{
+  "errors": {
+    "requiredFieldsFirstStep": "Por favor, preencha todos os campos obrigatórios da primeira etapa antes de gerar a letra.",
+    "invalidApiResponse": "Resposta da API não contém letra ou título válidos",
+    "connectionError": "Erro de conexão. Verifique sua internet e tente novamente.",
+    "requiredFieldsPreview": "Por favor, preencha todos os campos obrigatórios antes de gerar a prévia.",
+    "unknownPreviewError": "Erro desconhecido ao gerar prévia",
+    "requiredFieldsMusic": "Por favor, preencha todos os campos de estilo antes de gerar a música.",
+    "invalidApiResponseMusic": "Resposta da API inválida",
+    "invalidStatusResponse": "Resposta de status inválida.",
+    "statusCheckError": "❌ Erro ao verificar status:",
+    "statusCheckPrefix": "Erro ao verificar status",
+    "unknownError": "Erro desconhecido",
+    "generateLyricsCatch": "Erro ao gerar letra (catch)",
+    "generatePreview": "Erro ao gerar prévia",
+    "generateMusicCatch": "Erro ao gerar música (catch)",
+    "statusCheckFailedAccessing": "Não foi possível verificar seu status agora. Acessando o criador mesmo assim.",
+    "paymentRequired": "Você já utilizou suas criações gratuitas. Faça upgrade para continuar criando novas músicas."
+  },
+  "success": {
+    "lyricsGenerated": "Letra e título gerados com sucesso!",
+    "musicGenerationStarted": "Geração de música iniciada! Aguarde enquanto processamos...",
+    "musicGenerated": "música(s) gerada(s) com sucesso!",
+    "allMusicGenerated": "Todas as músicas foram geradas com sucesso!"
+  },
+  "debug": {
+    "validationFailedStep1": "Validação falhou - Campos obrigatórios da primeira etapa faltando",
+    "validationFailed": "Validação falhou - Campos obrigatórios faltando",
+    "musicReceivedOldSystem": "Músicas recebidas com sucesso (sistema antigo): clipes",
+    "generationCompleted": "🎵 Geração concluída. Parando polling.",
+    "cannotStartPollingWithoutTaskId": "⚠️ Não é possível iniciar polling sem taskId",
+    "startingStatusPolling": "🔄 Iniciando polling de status...",
+    "mvpFlowCompleting": "[MVP] Completando fluxo MVP - desbloqueando funcionalidade completa",
+    "paywallAccessGranted": "[PAYWALL] Acesso permitido. Navegando para /criar.",
+    "paywallAccessDenied": "[PAYWALL] Acesso negado. Mostrando modal de pagamento.",
+    "paywallCheckFailed": "[PAYWALL] Falha ao verificar status. Permitindo acesso provisório ao fluxo.",
+    "musicStateReset": "[resetFlow] Estado da música sendo resetado.",
+    "storeReset": "[reset] Resetando store para estado inicial. currentStep será definido como 0."
+  },
+  "validation": {
+    "fillRequiredFieldsStep1": "Por favor, preencha todos os campos obrigatórios da primeira etapa antes de gerar a letra.",
+    "fillRequiredFields": "Por favor, preencha todos os campos obrigatórios antes de gerar a prévia.",
+    "fillStyleFields": "Por favor, preencha todos os campos de estilo antes de gerar a música.",
+    "unknownPreviewError": "Erro desconhecido ao gerar prévia"
+  }
+}

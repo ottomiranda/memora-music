@@ -1,0 +1,452 @@
+{
+  "page": {
+    "title": "Dê <span class=\"bg-gradient-to-r from-yellow-400 to-purple-600 bg-clip-text text-transparent\">vida</span> à sua <span class=\"bg-gradient-to-r from-yellow-400 to-purple-600 bg-clip-text text-transparent\">canção</span>",
+    "subtitle": "Compartilhe sentimentos, escolha o estilo e receba sua música final em minutos."
+  },
+  "navigation": {
+    "previous": "Anterior",
+    "next": "Próximo",
+    "approveAndContinue": "Aprovar e Continuar"
+  },
+  "countdown": {
+    "heading": "Tempo estimado restante",
+    "message": "Segure firme – estamos finalizando os detalhes da sua canção exclusiva."
+  },
+  "lyrics": {
+    "title": "Letra da sua música",
+    "description": "Vamos gerar a letra da sua música...",
+    "generating": "Gerando letra...",
+    "creating": "Criando sua letra personalizada...",
+    "analyzing": "Analisando suas informações...",
+    "generateButton": "Gerar Letra da Música",
+    "personalizedTitle": "Sua Letra Personalizada",
+    "editModeActive": "Modo de edição ativo",
+    "clickToEdit": "Clique em editar para personalizar",
+    "closeEdit": "Fechar Edição",
+    "editLyrics": "Editar Letra",
+    "searching": "Buscando",
+    "findTextLabel": "Buscar texto na letra",
+    "searchPlaceholder": "Digite o texto que deseja encontrar",
+    "clearSearch": "Limpar busca",
+    "restore": "Restaurar",
+    "saving": "Salvando...",
+    "saved": "Salvo",
+    "autoSave": "Auto-save",
+    "highlighting": "Destacando",
+    "generatingNew": "Gerando nova letra...",
+    "generateNew": "Gerar Nova Letra",
+    "tip": "Dica: Você pode gerar quantas versões quiser até ficar satisfeito"
+  },
+  "style": {
+    "title": "Escolha o estilo musical",
+    "emotion": {
+      "label": "Emoção *",
+      "placeholder": "Selecione a emoção"
+    },
+    "voice": {
+      "label": "Escolha o tipo de voz *",
+      "placeholder": "Selecione a preferência vocal",
+      "female": "Feminino",
+      "male": "Masculino",
+      "both": "Ambos"
+    },
+    "continueButton": "Continuar"
+  },
+  "briefing": {
+    "title": "Conte sua história",
+    "occasion": {
+      "title": "Ocasião",
+      "label": "Qual a ocasião especial?"
+    },
+    "person": {
+      "title": "Sobre a pessoa homenageada",
+      "recipientName": {
+        "label": "Qual o nome da pessoa para quem está a criar esta música?",
+        "placeholder": "Ex: Maria"
+      },
+      "relationship": {
+        "label": "Qual a vossa relação?",
+        "placeholder": "Selecione a relação"
+      },
+      "senderName": {
+        "label": "Qual o seu nome?",
+        "placeholder": "Ex: João"
+      }
+    },
+    "details": {
+      "title": "Detalhes e personalidade",
+      "hobbies": {
+      "label": "Conte-nos sobre os hobbies e interesses da pessoa homenageada",
+        "placeholder": "Ex: Adora cozinhar..."
+      },
+      "qualities": {
+        "label": "Quais as qualidades que você mais admira nessa pessoa?",
+        "placeholder": "Ex: É muito generosa..."
+      },
+      "uniqueTraits": {
+        "label": "Características únicas",
+        "placeholder": "Descreva o que torna esta pessoa especial..."
+      }
+    },
+    "memories": {
+      "title": "Memórias e histórias",
+      "label": "Partilhe as vossas histórias ou memórias favoritas que gostaria de incluir na música.",
+      "placeholder": "Uma é suficiente. Mais é melhor."
+    }
+  },
+  "steps": {
+    "story": {
+      "title": "Conte sua história",
+      "occasion": {
+        "label": "Qual a ocasião especial?",
+        "placeholder": "Selecione a ocasião"
+      },
+      "recipientName": {
+        "label": "Qual o nome da pessoa para quem está a criar esta música?",
+        "placeholder": "Ex: Maria"
+      },
+      "relationship": {
+        "label": "Qual a vossa relação?",
+        "placeholder": "Selecione a relação"
+      },
+      "yourName": {
+        "label": "Qual o seu nome?",
+        "placeholder": "Ex: João"
+      }
+    },
+    "details": {
+      "title": "A Ocasião",
+      "aboutPerson": "Sobre a(s) Pessoa(s)",
+      "detailsAndPersonality": "Detalhes e Personalidade",
+      "memoriesAndStories": "Memórias e Histórias",
+      "hobbies": {
+          "label": "Conte-nos sobre os hobbies e interesses da pessoa homenageada",
+        "placeholder": "Ex: Adora cozinhar..."
+      },
+      "qualities": {
+        "label": "Quais as qualidades que você mais admira nessa pessoa?",
+        "placeholder": "Ex: É muito generosa..."
+      },
+      "uniqueness": {
+        "label": "O que a torna única ou especial?",
+        "placeholder": "Ex: Sempre canta no chuveiro..."
+      },
+      "uniqueTraits": {
+        "label": "Características únicas",
+        "placeholder": "Descreva o que torna esta pessoa especial..."
+      },
+      "memories": {
+        "label": "Partilhe as vossas histórias ou memórias favoritas que gostaria de incluir na música.",
+        "placeholder": "Uma é suficiente. Mais é melhor."
+      }
+    },
+    "briefing": {
+      "details": {
+        "uniqueTraits": {
+          "label": "Características únicas",
+          "placeholder": "Descreva o que torna esta pessoa especial..."
+        }
+      },
+      "memories": {
+        "title": "Memórias e Histórias",
+        "label": "Partilhe as vossas histórias ou memórias favoritas que gostaria de incluir na música.",
+        "placeholder": "Uma é suficiente. Mais é melhor."
+      }
+    },
+    "lyrics": {
+       "title": "Letra da sua música",
+       "description": "Vamos gerar a letra da sua música...",
+       "generating": "Gerando letra...",
+       "creating": "Criando sua letra personalizada...",
+       "analyzing": "Analisando suas informações...",
+       "generateButton": "Gerar Letra da Música",
+       "personalizedTitle": "Sua Letra Personalizada",
+       "editModeActive": "Modo de edição ativo",
+       "clickToEdit": "Clique em editar para personalizar",
+       "closeEdit": "Fechar Edição",
+       "editLyrics": "Editar Letra",
+       "searching": "Buscando:",
+       "findTextLabel": "Buscar texto na letra",
+       "searchPlaceholder": "Digite o texto que deseja encontrar",
+       "clearSearch": "Limpar busca",
+       "restore": "Restaurar",
+       "saving": "Salvando...",
+       "saved": "Salvo",
+       "autoSave": "Auto-save",
+       "highlighting": "Destacando:",
+       "generatingNew": "Gerando nova letra...",
+       "generateNew": "Gerar Nova Letra",
+       "tip": "Dica: Você pode gerar quantas versões quiser até ficar satisfeito"
+     },
+    "style": {
+       "title": "Escolha o estilo musical",
+       "genre": {
+         "label": "Gênero Musical *",
+         "placeholder": "Selecione o gênero"
+       },
+       "emotion": {
+         "label": "Emoção *",
+         "placeholder": "Selecione a emoção"
+       },
+       "voice": {
+         "label": "Escolha o tipo de voz *",
+         "placeholder": "Selecione a preferência vocal"
+       }
+     }
+  },
+  "summary": {
+    "title": "Resumo da sua música",
+    "occasion": "Ocasião",
+    "for": "Para",
+    "relationship": "Relação",
+    "genre": "Gênero",
+    "emotion": "Emoção",
+    "vocal": "Vocal"
+  },
+  "generation": {
+    "connecting": "Conectando com o nosso estúdio digital...",
+    "starting": "Iniciando geração...",
+    "creating": "Criando sua música...",
+    "processing": "Processando...",
+    "preparing": "Preparando sua música personalizada...",
+    "generating": "Gerando música personalizada... ({{count}} de {{total}})",
+    "finalizing": "Finalizando os últimos detalhes...",
+    "progress": "Progresso",
+    "songsReady": "{{completed}}/{{total}} músicas prontas",
+    "beingGenerated": "Sua música está sendo gerada...",
+    "musicFor": "Música para {{name}}",
+    "specialPerson": "Pessoa Especial",
+    "versionsReady_one": "{{count}} versão pronta",
+    "versionsReady_other": "{{count}} versões prontas",
+    "generationProgress": "Progresso da geração",
+    "personalizedSongs": "Suas músicas personalizadas",
+    "listenAndChoose": "Ouça, compare e escolha a melhor versão para compartilhar.",
+    "option": "Opção {{number}}",
+    "estimatedDuration": "Duração prevista",
+    "playerWillAppear": "O player aparecerá aqui assim que a versão estiver pronta.",
+    "waitingGeneration": "Aguardando geração...",
+    "noPreviewAvailable": "Nenhuma prévia disponível",
+    "tryGenerateAgain": "Tente gerar a música novamente.",
+    "createNewMusic": "Criar Nova Música",
+    "waitingTracks": "Aguardando músicas...",
+    "tracksWillAppear": "Suas músicas aparecerão aqui quando estiverem prontas",
+    "trackPosition": "Faixa {{current}} de {{total}}",
+    "chooseOption": "Escolha uma opção:",
+    "defaultTrackTitle": "Música personalizada",
+    "downloadOption": "Baixar opção {{number}}",
+    "listenToUnlock": "Ouça a prévia completa para desbloquear o download"
+  },
+  "preview": {
+    "title": "Sua música está sendo gerada...",
+    "summaryTitle": "Resumo da sua música",
+    "summaryLabels": {
+      "occasion": "Ocasião",
+      "recipient": "Para",
+      "relationship": "Relação",
+      "genre": "Gênero",
+      "emotion": "Emoção",
+      "vocal": "Vocal"
+    },
+    "connecting": "Conectando com o nosso estúdio digital...",
+    "initiating": "Iniciando geração...",
+    "creating": "Criando sua música...",
+    "processing": "Processando...",
+    "preparingMessage": "Estamos preparando tudo para transformar sua história em canção personalizada.",
+    "generatingVersions": "Gerando {{count}} versões exclusivas para você.",
+    "finalizingMessage": "Estamos finalizando os últimos detalhes antes de liberar sua música.",
+    "progress": "Progresso",
+    "progressGeneration": "Progresso da geração",
+    "songsReady_one": "{{count}} música pronta",
+    "songsReady_other": "{{count}} músicas prontas",
+    "musicFor": "Música para {{name}}",
+    "defaultRecipient": "Pessoa Especial",
+    "versionsReady_one": "✓ {{count}} versão pronta",
+    "versionsReady_other": "✓ {{count}} versões prontas",
+    "personalizedMusic": "Suas músicas personalizadas",
+    "personalizedMusicDesc": "Ouça, compare e escolha a melhor versão para compartilhar.",
+    "option": "Opção {{number}}",
+    "generating": "Gerando...",
+    "waitingMessage": "Aguarde, estamos preparando esta versão com carinho.",
+    "expectedDuration": "Duração prevista",
+    "playerPlaceholder": "O player aparecerá aqui assim que a versão estiver pronta.",
+    "waitingGeneration": "Aguardando geração...",
+    "noPreview": "Nenhuma prévia disponível",
+    "tryAgain": "Tente gerar a música novamente.",
+    "createNew": "Criar Nova Música"
+  },
+  "validation": {
+    "required": "Este campo é obrigatório",
+    "minLength": "Mínimo de {{min}} caracteres",
+    "maxLength": "Máximo de {{max}} caracteres"
+  },
+  "options": {
+    "occasions": {
+      "romantic": {
+        "category": "Amor",
+        "anniversary": "Aniversário de namoro",
+        "valentine": "Dia dos Namorados",
+        "proposal": "Pedido de casamento",
+        "wedding": "Casamento",
+        "engagement": "Noivado",
+        "dateNight": "Noite romântica",
+        "apology": "Pedido de desculpas",
+        "longDistance": "Relacionamento à distância",
+        "items": {
+          "cancao_de_amor": "Canção de amor",
+          "aniversario_de_namoro": "Aniversário de namoro",
+          "aniversario_de_casamento": "Aniversário de casamento",
+          "pedido_de_casamento": "Pedido de casamento",
+          "dia_dos_namorados": "Dia dos Namorados"
+        }
+      },
+      "celebration": {
+        "category": "Família",
+        "birthday": "Aniversário",
+        "graduation": "Graduação",
+        "newJob": "Novo emprego",
+        "promotion": "Promoção",
+        "retirement": "Aposentadoria",
+        "newHome": "Casa nova",
+        "achievement": "Conquista",
+        "success": "Sucesso",
+        "items": {
+          "aniversario": "Aniversário",
+          "dia_dos_pais": "Dia dos Pais",
+          "dia_das_maes": "Dia das Mães",
+          "nascimento_de_crianca": "Nascimento de criança",
+          "cha_de_bebe": "Chá de bebê",
+          "natal": "Natal",
+          "ano_novo": "Ano Novo"
+        }
+      },
+      "friendship": {
+        "category": "Amizade",
+        "friendship": "Amizade",
+        "support": "Apoio",
+        "encouragement": "Encorajamento",
+        "reunion": "Reencontro",
+        "farewell": "Despedida",
+        "thankYou": "Agradecimento",
+        "justBecause": "Sem motivo específico",
+        "missYou": "Saudades",
+        "items": {
+          "melhores_amigos": "Melhores amigos",
+          "agradecimento": "Agradecimento",
+          "despedida": "Despedida",
+          "saudade": "Saudade"
+        }
+      },
+      "achievements": {
+        "category": "Conquistas",
+        "competition": "Competição",
+        "award": "Prémio",
+        "recognition": "Reconhecimento",
+        "milestone": "Marco especial",
+        "goal": "Meta alcançada",
+        "victory": "Vitória",
+        "accomplishment": "Realização",
+        "breakthrough": "Grande avanço",
+        "items": {
+          "graduacao": "Graduação",
+          "formatura": "Formatura",
+          "reconhecimento": "Reconhecimento"
+        }
+      },
+      "memorial": {
+        "category": "Memória",
+        "memorial": "Memorial",
+        "tribute": "Tributo",
+        "remembrance": "Recordação",
+        "honor": "Homenagem",
+        "legacy": "Legado",
+        "celebration_of_life": "Celebração da vida",
+        "memory": "Memória",
+        "farewell_tribute": "Tributo de despedida",
+        "items": {
+          "memorial": "Memorial",
+          "homenagem_a_quem_partiu": "Homenagem a quem partiu"
+        }
+      }
+    },
+    "relationships": {
+      "family": {
+        "category": "Família",
+        "mother": "Mãe",
+        "father": "Pai",
+        "son": "Filho",
+        "daughter": "Filha",
+        "brother": "Irmão",
+        "sister": "Irmã",
+        "grandmother": "Avó",
+        "grandfather": "Avô",
+        "aunt": "Tia",
+        "uncle": "Tio",
+        "cousin": "Primo ou Prima",
+        "nephew": "Sobrinho",
+        "niece": "Sobrinha",
+        "pai_ou_mae": "Pai ou Mãe",
+        "filho_ou_filha": "Filho ou Filha",
+        "irmao_ou_irma": "Irmão ou Irmã",
+        "avo_ou_avo": "Avô ou Avó",
+        "primo_ou_prima": "Primo ou Prima",
+        "tio_ou_tia": "Tio ou Tia",
+        "sobrinho_ou_sobrinha": "Sobrinho ou Sobrinha",
+        "padrasto_ou_madrasta": "Padrasto ou Madrasta",
+        "enteado_ou_enteada": "Enteado ou Enteada"
+      },
+      "romantic": {
+        "category": "Amor",
+        "wife": "Esposa",
+        "husband": "Marido",
+        "girlfriend": "Namorada",
+        "boyfriend": "Namorado",
+        "fiancee": "Noiva",
+        "partner": "Parceiro ou Parceira",
+        "soulmate": "Alma gémea",
+        "crush": "Paixonite",
+        "namorado_ou_namorada": "Namorado ou Namorada",
+        "marido_ou_esposa": "Marido ou Esposa",
+        "noivo_ou_noiva": "Noivo ou Noiva",
+        "ex_parceiro": "Ex-parceiro"
+      },
+      "friendship": {
+        "category": "Amigos & Outros",
+        "best_friend": "Melhor amigo",
+        "friend": "Amigo",
+        "colleague": "Colega",
+        "mentor": "Mentor",
+        "teacher": "Professor",
+        "student": "Aluno",
+        "neighbor": "Vizinho",
+        "acquaintance": "Conhecido",
+        "melhores_amigos": "Melhores amigos",
+        "colega_de_trabalho": "Colega de trabalho",
+        "vizinho_ou_vizinha": "Vizinho ou Vizinha",
+        "mentor_ou_mentora": "Mentor ou Mentora",
+        "cliente_especial": "Cliente especial"
+      }
+    },
+    "emotions": {
+      "happy": "Feliz",
+      "romantic": "Romântico",
+      "nostalgic": "Nostálgico",
+      "energetic": "Energético",
+      "peaceful": "Pacífico",
+      "emotional": "Emocional",
+      "inspiring": "Inspirador",
+      "playful": "Brincalhão",
+      "melancholic": "Melancólico",
+      "triumphant": "Triunfante",
+      "grateful": "Grato",
+      "hopeful": "Esperançoso",
+      "celebratory": "Comemorativo",
+      "tender": "Terno",
+      "uplifting": "Edificante",
+      "sentimental": "Sentimental",
+      "joyful": "Alegre",
+      "passionate": "Apaixonado",
+      "serene": "Sereno",
+      "motivational": "Motivacional"
+    }
+  }
+}

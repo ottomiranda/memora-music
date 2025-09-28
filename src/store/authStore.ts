@@ -4,6 +4,8 @@ import { migrationApi } from '../config/api';
 import getSupabaseBrowserClient from '@/lib/supabase-browser';
 import { getCurrentGuestId, clearGuestId } from '../utils/guest';
 import { LoginResponse, SignupResponse, SignupData, MigrationResult } from '../types/guest';
+import i18n from '../i18n';
+import { useUiStore } from './uiStore';
 
 /**
  * Função para migrar dados do convidado para o usuário logado
@@ -11,22 +13,22 @@ import { LoginResponse, SignupResponse, SignupData, MigrationResult } from '../t
  */
 const migrateGuestData = async (guestId: string): Promise<MigrationResult | null> => {
   try {
-    console.log('[AuthStore] Iniciando migração de dados do convidado:', guestId);
+    console.log(i18n.t('migration.startingGuestData', { ns: 'authStore' }), guestId);
     
     // Obter deviceId do localStorage
     const deviceId = localStorage.getItem('deviceId');
     console.log('[AuthStore] DeviceId encontrado:', deviceId);
     
     if (!deviceId) {
-      console.warn('[AuthStore] DeviceId não encontrado. Migração pode não funcionar corretamente.');
+      console.warn(i18n.t('migration.deviceIdNotFound', { ns: 'authStore' }));
     }
     
     const result = await migrationApi.migrateGuestData(guestId);
     
-    console.log('[AuthStore] Migração concluída com sucesso:', result);
+    console.log(i18n.t('migration.completedSuccessfully', { ns: 'authStore' }), result);
     return result;
   } catch (error) {
-    console.error('[AuthStore] Erro ao migrar dados do convidado:', error);
+    console.error(i18n.t('migration.errorMigratingData', { ns: 'authStore' }), error);
     // Não falha o login/cadastro por causa da migração
     return null;
   }
@@ -71,7 +73,7 @@ export const useAuthStore = create<AuthState>()(
         
         try {
           const supabase = await getSupabaseBrowserClient();
-          if (!supabase) throw new Error('Falha ao inicializar Supabase');
+          if (!supabase) throw new Error(i18n.t('auth.supabaseInitFailed', { ns: 'authStore' }));
 
           const { data, error } = await supabase.auth.signInWithPassword({
             email: credentials.email,
@@ -85,7 +87,7 @@ export const useAuthStore = create<AuthState>()(
             email: data.user.email || credentials.email,
             name: (data.user.user_metadata && (data.user.user_metadata as any).name) || undefined
           } : null;
-          if (!accessToken || !user) throw new Error('Sessão inválida');
+          if (!accessToken || !user) throw new Error(i18n.t('auth.invalidSession', { ns: 'authStore' }));
 
           localStorage.setItem('authToken', accessToken);
           set({ user, token: accessToken, isLoggedIn: true, error: null });
@@ -100,13 +102,13 @@ export const useAuthStore = create<AuthState>()(
                 console.log('[AuthStore] Migração concluída:', migrationResult);
                 if (guestId) {
                   clearGuestId();
-                  console.log('[AuthStore] GuestId removido do localStorage');
+                  console.log(i18n.t('migration.guestIdRemoved', { ns: 'authStore' }));
                 }
               } else {
-                console.warn('[AuthStore] Migração não concluída. GuestId será mantido para nova tentativa.');
+                console.warn(i18n.t('migration.notCompleted', { ns: 'authStore' }));
               }
             } catch (e) {
-              console.warn('[AuthStore] Migração falhou. GuestId será mantido:', e);
+              console.warn(i18n.t('migration.failed', { ns: 'authStore' }), e);
             }
           }
           
@@ -114,7 +116,7 @@ export const useAuthStore = create<AuthState>()(
         } catch (error: unknown) {
           console.error('[AuthStore] Erro no login:', error);
           
-          const errorMessage = error instanceof Error ? error.message : 'Email ou senha inválidos.';
+          const errorMessage = error instanceof Error ? error.message : i18n.t('auth.invalidCredentials', { ns: 'authStore' });
           set({ error: errorMessage });
           
           // Re-lançar o erro para que o componente UI também possa reagir
@@ -185,7 +187,7 @@ export const useAuthStore = create<AuthState>()(
         } catch (error: unknown) {
           console.error('[AuthStore] Erro no signup:', error);
           
-          const errorMessage = error instanceof Error ? error.message : 'Erro desconhecido ao criar conta.';
+          const errorMessage = error instanceof Error ? error.message : i18n.t('auth.unknownSignupError', { ns: 'authStore' });
           set({ error: errorMessage });
           
           // Re-lançar o erro para que o componente UI também possa reagir
@@ -198,6 +200,9 @@ export const useAuthStore = create<AuthState>()(
 
       logout: async () => {
         try {
+          const { suppressAuthPopup, hideAuthPopup } = useUiStore.getState();
+          suppressAuthPopup();
+          hideAuthPopup();
           // Limpar completamente o localStorage
           localStorage.removeItem('authToken');
           localStorage.removeItem('guestId');
@@ -214,13 +219,16 @@ export const useAuthStore = create<AuthState>()(
           // Limpar o storage persistido do Zustand
           useAuthStore.persist.clearStorage();
           
-          console.log('[AuthStore] Logout completo realizado');
+          console.log(i18n.t('auth.logoutCompleted', { ns: 'authStore' }));
           
           // Redirecionar para a página inicial após logout
           window.location.href = '/';
         } catch (error) {
-          console.error('[AuthStore] Erro durante logout:', error);
+          console.error(i18n.t('auth.logoutError', { ns: 'authStore' }), error);
           // Mesmo com erro, limpar dados locais e redirecionar
+          const { suppressAuthPopup, hideAuthPopup } = useUiStore.getState();
+          suppressAuthPopup();
+          hideAuthPopup();
           localStorage.removeItem('authToken');
           localStorage.removeItem('guestId');
           set({ user: null, token: null, isLoggedIn: false, error: null });
@@ -327,23 +335,23 @@ export const useAuthStore = create<AuthState>()(
 );
 
 // Lógica de hidratação inicial para garantir que isLoggedIn esteja correto no carregamento
-console.log('[AuthStore] Configurando hidratação...');
+console.log(i18n.t('hydration.configuring', { ns: 'authStore' }));
 useAuthStore.persist.onFinishHydration(async (state) => {
-  console.log('[AuthStore] *** HIDRATAÇÃO INICIADA ***', { persistedToken: state.token });
+  console.log(i18n.t('hydration.started', { ns: 'authStore' }), { persistedToken: state.token });
   
   try {
     // Verificar token no localStorage também
     const localStorageToken = localStorage.getItem('authToken');
     const tokenToUse = state.token || localStorageToken;
     
-    console.log('[AuthStore] Tokens encontrados:', { persisted: state.token, localStorage: localStorageToken });
+    console.log(i18n.t('hydration.tokensFound', { ns: 'authStore' }), { persisted: state.token, localStorage: localStorageToken });
     
     if (tokenToUse) {
       try {
         // Verificar se a sessão ainda é válida no Supabase
         const supabase = await getSupabaseBrowserClient();
         if (supabase) {
-          console.log('[AuthStore] Cliente Supabase inicializado, verificando sessão...');
+          console.log(i18n.t('hydration.supabaseInitialized', { ns: 'authStore' }));
           const { data: sessionData, error } = await supabase.auth.getSession();
           
           if (!error && sessionData.session) {
@@ -363,21 +371,21 @@ useAuthStore.persist.onFinishHydration(async (state) => {
               error: null
             });
             
-            console.log('[AuthStore] Hidratação completa - usuário autenticado:', userData);
+            console.log(i18n.t('hydration.completedAuthenticated', { ns: 'authStore' }), userData);
             return;
           } else {
-            console.log('[AuthStore] Sessão inválida ou erro:', error);
+            console.log(i18n.t('hydration.invalidSession', { ns: 'authStore' }), error);
           }
         } else {
-          console.error('[AuthStore] Falha ao inicializar cliente Supabase durante hidratação');
+          console.error(i18n.t('hydration.supabaseInitFailed', { ns: 'authStore' }));
         }
       } catch (error) {
-        console.error('[AuthStore] Erro ao verificar sessão durante hidratação:', error);
+        console.error(i18n.t('hydration.sessionCheckError', { ns: 'authStore' }), error);
       }
       
       // Se chegou aqui, o token é inválido - limpar tudo
       localStorage.removeItem('authToken');
-      console.log('[AuthStore] Token inválido removido durante hidratação');
+      console.log(i18n.t('hydration.invalidTokenRemoved', { ns: 'authStore' }));
     }
     
     // Finalizar hidratação como não logado
@@ -389,16 +397,16 @@ useAuthStore.persist.onFinishHydration(async (state) => {
       error: null
     });
     
-    console.log('[AuthStore] Hidratação completa - usuário não autenticado');
+    console.log(i18n.t('hydration.completedUnauthenticated', { ns: 'authStore' }));
   } catch (error) {
-    console.error('[AuthStore] Erro crítico durante hidratação:', error);
+    console.error(i18n.t('hydration.criticalError', { ns: 'authStore' }), error);
     // Garantir que isLoading seja sempre false, mesmo em caso de erro
     useAuthStore.setState({ 
       user: null,
       token: null,
       isLoggedIn: false,
       isLoading: false,
-      error: 'Erro durante inicialização'
+      error: i18n.t('hydration.initializationError', { ns: 'authStore' })
     });
   }
 });

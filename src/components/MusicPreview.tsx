@@ -3,7 +3,7 @@ import { Download } from 'lucide-react';
 import { useMusicStore } from '@/store/musicStore';
 import { useAuthStore } from '@/store/authStore';
 import { useUiStore } from '@/store/uiStore';
-import { triggerDownload } from '@/utils/download';
+import { triggerDownload, ensureMp3Extension } from '@/utils/download';
 import { API_BASE_URL } from '@/config/api';
 import { AudioClip } from '@/store/musicStore';
 
@@ -82,7 +82,8 @@ const MusicPreview: React.FC<MusicPreviewProps> = ({ clip, index }) => {
   }, [isMvpFlowComplete]);
 
   const getFileName = () => {
-    return clip.title || `Musica_Personalizada_${index + 1}.mp3`;
+    const baseName = clip.title || `Musica_Personalizada_${index + 1}`;
+    return ensureMp3Extension(baseName);
   };
 
   const handleDownloadClick = (e: React.MouseEvent) => {

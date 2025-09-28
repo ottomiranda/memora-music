@@ -1,0 +1,21 @@
+{
+  "headline": {
+    "part1": "The music that transforms",
+    "feelings": "feelings",
+    "part2": "into",
+    "gift": "gifts"
+  },
+  "subheadline": {
+    "part1": "In up to 5 minutes, Memora creates two professional",
+    "part2": " and unique versions of your song for you to choose and touch the hearts of those you love."
+  },
+  "cta": {
+    "title": "Let's get started?",
+    "button": "Create your music now",
+    "freeMessage": "✨ Free on first creation - No card required"
+  },
+  "form": {
+    "placeholder": "Enter the name here",
+    "ariaDescription": "Enter the name of the person you want to create music for"
+  }
+}

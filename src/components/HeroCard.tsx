@@ -149,9 +149,13 @@ export function GlassButtonGroup({ children, className }: { children: React.Reac
 export function GlassButton({ 
   children, 
   active = false, 
+  variant = 'primary',
   className, 
   ...props 
-}: React.ButtonHTMLAttributes<HTMLButtonElement> & { active?: boolean }) {
+}: React.ButtonHTMLAttributes<HTMLButtonElement> & { 
+  active?: boolean;
+  variant?: 'primary' | 'secondary';
+}) {
   // Verificar se é um botão secundário (Memorial ou Homenagem a quem partiu)
   const isMemorialButton = typeof children === 'string' && 
     (children === 'Memorial' || children === 'Homenagem a quem partiu');
@@ -162,40 +166,81 @@ export function GlassButton({
   // Determinar se deve usar o estilo gold sólido
   const shouldUseGoldSolid = isMemorialButton || isOccasionSecondaryButton;
   
+  // Estilos base para variantes
+  const baseStyles = variant === 'secondary' ? [
+    "px-3 py-2 rounded-lg", // Tamanho menor
+    "text-xs font-normal", // Texto menor e peso normal
+  ] : [
+    "px-4 py-2.5 rounded-xl",
+    "text-sm font-medium",
+  ];
+  
+  // Estilos de borda para variantes
+  const borderStyles = variant === 'secondary' ? [
+    "border border-dashed border-white/15", // Borda pontilhada mais sutil
+  ] : [
+    "border",
+  ];
+  
+  // Estilos de hover para variantes
+  const hoverStyles = variant === 'secondary' ? [
+    "hover:scale-[1.01]", // Hover mais sutil
+    "hover:bg-white/8 hover:border-white/20", // Background mais sutil
+  ] : [
+    "hover:scale-[1.02]",
+    "hover:bg-white/15 hover:border-white/30 hover:shadow-white/10",
+  ];
+  
   return (
     <button
       {...props}
       className={cn(
-        "px-4 py-2.5 rounded-xl",
-        "backdrop-blur-md border",
-        "text-sm font-medium",
+        ...baseStyles,
+        "backdrop-blur-md",
+        ...borderStyles,
         "transition-all duration-500 ease-out",
         "shadow-lg shadow-black/5",
         "hover:shadow-xl hover:shadow-black/10",
-        "hover:scale-[1.02]",
         "active:scale-[0.98]",
         active ? [
           // Aplicar estilo gold sólido para botões secundários
           shouldUseGoldSolid ? [
             "liquid-glass-button--gold-solid",
-            "!px-4 !py-2.5 !rounded-xl", // Override dos estilos
+            variant === 'secondary' ? "!px-3 !py-2 !rounded-lg" : "!px-4 !py-2.5 !rounded-xl",
             "shadow-xl shadow-black/20"
           ] : [
             // Aplicar o mesmo estilo do botão 'Crie sua Música' da navbar para outros botões
             "liquid-glass-button bg-transparent text-white",
-            "!px-4 !py-2.5 !rounded-xl", // Override dos estilos do liquid-glass-button
+            variant === 'secondary' ? "!px-3 !py-2 !rounded-lg" : "!px-4 !py-2.5 !rounded-xl",
             "shadow-xl shadow-black/20 glow-effect"
           ]
         ] : [
-          "bg-white/10 border-white/20",
+          variant === 'secondary' ? "bg-white/5 border-white/15" : "bg-white/10 border-white/20",
           "text-white/80 hover:text-white",
-          "hover:bg-white/15 hover:border-white/30 hover:shadow-white/10"
+          ...hoverStyles
         ],
         className
       )}
     >
       {children}
     </button>
+  );
+}
+
+// Separador visual glassmorphism
+export function GlassSeparator({ className }: { className?: string }) {
+  return (
+    <div className={cn(
+      "relative my-4 h-px overflow-hidden",
+      className
+    )}>
+      {/* Linha principal com gradiente sutil */}
+      <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent" />
+      {/* Efeito de brilho sutil */}
+      <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent blur-sm" />
+      {/* Partículas de luz */}
+      <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-2 h-2 bg-white/30 rounded-full blur-sm animate-pulse" />
+    </div>
   );
 }
 

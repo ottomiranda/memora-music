@@ -7,12 +7,30 @@ import { LiquidGlassCard } from '@/components/ui/LiquidGlassCard';
 import { PurpleFormButton } from '@/components/ui/PurpleFormButton';
 import { LiquidGlassButtonSmall } from '@/components/ui/LiquidGlassButtonSmall';
 
+export interface FeedbackSubmissionPayload {
+  difficulty: number;
+  difficultyRaw: string;
+  wouldRecommend: boolean;
+  recommendationRaw: string;
+  priceRaw: string;
+  priceNumeric: number;
+}
+
 interface FeedbackPopupProps {
   isOpen: boolean;
   onClose: () => void;
+  disableClose?: boolean;
+  submitFeedback?: (payload: FeedbackSubmissionPayload) => Promise<void>;
+  onSubmitSuccess?: () => void;
 }
 
-const FeedbackPopup = ({ isOpen, onClose }: FeedbackPopupProps) => {
+const FeedbackPopup = ({
+  isOpen,
+  onClose,
+  disableClose = false,
+  submitFeedback,
+  onSubmitSuccess,
+}: FeedbackPopupProps) => {
   const [formData, setFormData] = useState({
     difficulty: '',
     would_recommend: '',
@@ -35,30 +53,46 @@ const FeedbackPopup = ({ isOpen, onClose }: FeedbackPopupProps) => {
       return;
     }
 
+    const difficulty = parseInt(formData.difficulty, 10);
+    const priceNumeric = parseFloat(formData.price_willingness);
+    const payload: FeedbackSubmissionPayload = {
+      difficulty: Number.isNaN(difficulty) ? 0 : difficulty,
+      difficultyRaw: formData.difficulty,
+      wouldRecommend: formData.would_recommend === 'sim',
+      recommendationRaw: formData.would_recommend,
+      priceRaw: formData.price_willingness,
+      priceNumeric: Number.isNaN(priceNumeric) ? 0 : priceNumeric,
+    };
+
     setIsSubmitting(true);
 
     try {
-      const url = `${API_BASE_URL}/api/mvp-feedback`;
-      console.log('[MVP] Enviando feedback para:', url);
-      
-      const response = await fetch(url, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          difficulty: parseInt(formData.difficulty),
-          would_recommend: formData.would_recommend === 'sim',
-          price_willingness: parseFloat(formData.price_willingness)
-        }),
-      });
-
-      if (response.ok) {
-        setIsSubmitted(true);
-        toast.success('Obrigado pelo seu feedback! Suas respostas são muito importantes para nós.');
+      if (submitFeedback) {
+        await submitFeedback(payload);
       } else {
-        throw new Error('Erro ao enviar feedback');
+        const url = `${API_BASE_URL}/api/mvp-feedback`;
+        console.log('[MVP] Enviando feedback para:', url);
+        
+        const response = await fetch(url, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            difficulty: payload.difficulty,
+            would_recommend: payload.wouldRecommend,
+            price_willingness: payload.priceNumeric
+          }),
+        });
+
+        if (!response.ok) {
+          throw new Error('Erro ao enviar feedback');
+        }
       }
+
+      setIsSubmitted(true);
+      toast.success('Obrigado pelo seu feedback! Suas respostas são muito importantes para nós.');
+      onSubmitSuccess?.();
     } catch (error) {
       toast.error('Erro ao enviar feedback. Tente novamente.');
     } finally {
@@ -67,18 +101,25 @@ const FeedbackPopup = ({ isOpen, onClose }: FeedbackPopupProps) => {
   };
 
   const handleClose = () => {
-    if (!isSubmitting) {
-      onClose();
-      // Reset form after closing
-      setTimeout(() => {
-        setFormData({
-          difficulty: '',
-          would_recommend: '',
-          price_willingness: ''
-        });
-        setIsSubmitted(false);
-      }, 300);
+    if (isSubmitting) {
+      return;
     }
+
+    if (disableClose && !isSubmitted) {
+      return;
+    }
+
+    onClose();
+
+    // Reset form after closing
+    setTimeout(() => {
+      setFormData({
+        difficulty: '',
+        would_recommend: '',
+        price_willingness: ''
+      });
+      setIsSubmitted(false);
+    }, 300);
   };
 
   if (!isOpen) return null;
@@ -88,7 +129,7 @@ const FeedbackPopup = ({ isOpen, onClose }: FeedbackPopupProps) => {
       {/* Overlay */}
       <div 
         className="absolute inset-0 bg-black/50 backdrop-blur-sm"
-        onClick={handleClose}
+        onClick={!disableClose || isSubmitted ? handleClose : undefined}
       />
       
       {/* Modal */}
@@ -97,16 +138,18 @@ const FeedbackPopup = ({ isOpen, onClose }: FeedbackPopupProps) => {
         className={`relative w-full ${isSubmitted ? 'max-w-md sm:max-w-lg px-6 sm:px-7 py-6 sm:py-7' : 'max-w-3xl px-8 sm:px-12 py-6 sm:py-8'} border-white/25`}
       >
         {/* Close Button */}
-        <Button
-          onClick={handleClose}
-          disabled={isSubmitting}
-          variant="ghost"
-          size="sm"
-          className="absolute top-4 right-4 p-2 rounded-full hover:bg-white/10 text-white transition-colors duration-200 disabled:opacity-50 h-auto"
-          aria-label="Fechar popup"
-        >
-          <X className="w-6 h-6" />
-        </Button>
+        {(!disableClose || isSubmitted) && (
+          <Button
+            onClick={handleClose}
+            disabled={isSubmitting}
+            variant="ghost"
+            size="sm"
+            className="absolute top-4 right-4 p-2 rounded-full hover:bg-white/10 text-white transition-colors duration-200 disabled:opacity-50 h-auto"
+            aria-label="Fechar popup"
+          >
+            <X className="w-6 h-6" />
+          </Button>
+        )}
 
         {/* Content */}
         <div className="text-white space-y-6">
@@ -147,36 +190,41 @@ const FeedbackPopup = ({ isOpen, onClose }: FeedbackPopupProps) => {
                 <label className="block text-xs sm:text-[15px] font-heading text-white/85 mb-2">
                   De 1 a 10, qual foi o nível de dificuldade para gerar sua música?
                 </label>
-                <div className="grid grid-cols-5 sm:grid-cols-10 gap-2">
-                  {[...Array(10)].map((_, i) => {
-                    const value = (i + 1).toString();
-                    const isSelected = formData.difficulty === value;
-                    return (
-                      <label key={i} className="relative">
-                        <input
-                          type="radio"
-                          name="difficulty"
-                          value={value}
-                          checked={isSelected}
-                          onChange={(e) => setFormData({ ...formData, difficulty: e.target.value })}
-                          className="sr-only"
-                        />
-                        {isSelected ? (
-                          <PurpleFormButton className="pointer-events-none w-full h-10 sm:h-11 flex items-center justify-center text-xs sm:text-sm font-heading">
-                            {i + 1}
-                          </PurpleFormButton>
-                        ) : (
-                          <div className="p-2.5 sm:p-3 rounded-2xl border border-white/20 bg-white/8 text-white/70 hover:border-white/35 text-xs sm:text-sm text-center cursor-pointer transition-all duration-200 backdrop-blur font-heading">
-                            {i + 1}
-                          </div>
-                        )}
-                      </label>
-                    );
-                  })}
-                </div>
-                <div className="flex justify-between text-[10px] text-white/50 mt-1">
-                  <span>Muito fácil</span>
-                  <span>Muito difícil</span>
+                <div className="space-y-1">
+                  <div className="grid grid-cols-5 sm:grid-cols-10 gap-2">
+                    {[...Array(10)].map((_, i) => {
+                      const value = (i + 1).toString();
+                      const isSelected = formData.difficulty === value;
+                      return (
+                        <label key={i} className="relative">
+                          <input
+                            type="radio"
+                            name="difficulty"
+                            value={value}
+                            checked={isSelected}
+                            onChange={(e) => setFormData({ ...formData, difficulty: e.target.value })}
+                            className="sr-only"
+                          />
+                          {isSelected ? (
+                            <PurpleFormButton className="pointer-events-none w-full h-10 sm:h-11 flex items-center justify-center text-xs sm:text-sm font-heading">
+                              {i + 1}
+                            </PurpleFormButton>
+                          ) : (
+                            <div className="p-2.5 sm:p-3 rounded-2xl border border-white/20 bg-white/8 text-white/70 hover:border-white/35 text-xs sm:text-sm text-center cursor-pointer transition-all duration-200 backdrop-blur font-heading">
+                              {i + 1}
+                            </div>
+                          )}
+                        </label>
+                      );
+                    })}
+                  </div>
+                  <div className="relative h-4">
+                    <div className="absolute inset-0 flex justify-between text-[10px] text-white/50">
+                      <span>Muito fácil</span>
+                      <span>Muito difícil</span>
+                    </div>
+                    <span className="absolute left-1/2 -translate-x-1/2 text-[10px] text-white/60">Neutro</span>
+                  </div>
                 </div>
               </div>
 

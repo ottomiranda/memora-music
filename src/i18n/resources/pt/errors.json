@@ -1,0 +1,62 @@
+{
+  "general": {
+    "unknown": "Erro desconhecido",
+    "network": "Erro de rede",
+    "server": "Erro do servidor",
+    "timeout": "Tempo limite excedido",
+    "unauthorized": "Não autorizado",
+    "forbidden": "Acesso negado",
+    "notFound": "Não encontrado",
+    "badRequest": "Solicitação inválida",
+    "conflict": "Conflito",
+    "tooManyRequests": "Muitas solicitações",
+    "internalServerError": "Erro interno do servidor",
+    "serviceUnavailable": "Serviço indisponível",
+    "tryAgain": "Tente novamente",
+    "somethingWentWrong": "Algo deu errado"
+  },
+  "validation": {
+    "required": "Este campo é obrigatório",
+    "invalidEmail": "E-mail inválido",
+    "minLength": "Deve ter pelo menos {{min}} caracteres",
+    "maxLength": "Deve ter no máximo {{max}} caracteres",
+    "invalidFormat": "Formato inválido",
+    "fieldRequired": "O campo {{field}} é obrigatório",
+    "invalidRange": "Deve estar entre {{min}} e {{max}}"
+  },
+  "auth": {
+    "loginFailed": "Falha no login",
+    "invalidCredentials": "Credenciais inválidas",
+    "accountLocked": "Conta bloqueada",
+    "accountNotVerified": "Conta não verificada",
+    "sessionExpired": "Sessão expirada",
+    "accessDenied": "Acesso negado",
+    "tokenInvalid": "Token inválido",
+    "tokenExpired": "Token expirado",
+    "emailNotVerified": "Email não verificado",
+    "userNotFound": "Usuário não encontrado",
+    "emailAlreadyExists": "Email já existe",
+    "registrationFailed": "Falha no cadastro"
+  },
+  "file": {
+    "uploadFailed": "Falha no upload do arquivo",
+    "invalidType": "Tipo de arquivo não suportado. Use {{types}}",
+    "tooLarge": "Arquivo muito grande. Máximo {{size}}MB",
+    "notFound": "Arquivo não encontrado",
+    "processingFailed": "Erro ao processar arquivo {{filename}}"
+  },
+  "songCreation": {
+    "generationFailed": "Falha na geração da música",
+    "timeout": "Tempo limite excedido após {{minutes}} minutos",
+    "invalidParameters": "Parâmetros inválidos",
+    "quotaExceeded": "Cota de {{limit}} músicas excedida",
+    "processingError": "Erro ao processar música para {{name}}"
+  },
+  "payment": {
+    "failed": "Falha no pagamento",
+    "cardDeclined": "Cartão recusado",
+    "insufficientFunds": "Fundos insuficientes",
+    "invalidCard": "Cartão inválido",
+    "processingError": "Erro no processamento do pagamento"
+  }
+}

@@ -1,0 +1,28 @@
+{
+  "header": {
+    "title": "Como a",
+    "magic": "mágica",
+    "happens": "acontece",
+    "subtitle": "Transforme suas memórias em música personalizada em apenas 3 passos simples"
+  },
+  "steps": {
+    "step1": {
+      "title": "Compartilhe sua História",
+      "description": "Conte-nos sobre a pessoa especial, momento ou memória que você quer eternizar em música.",
+      "details": "Nossa IA analisa cada detalhe da sua história para capturar a essência emocional e criar uma base musical única."
+    },
+    "step2": {
+      "title": "IA Compõe sua Música",
+      "description": "Nossa inteligência artificial cria uma composição única baseada na sua história e preferências musicais.",
+      "details": "Utilizamos algoritmos avançados para gerar melodias, harmonias e arranjos que refletem perfeitamente sua memória."
+    },
+    "step3": {
+      "title": "Receba e Compartilhe",
+      "description": "Sua música personalizada fica pronta em minutos. Baixe, compartilhe ou presenteie quem você ama.",
+      "details": "Disponível em alta qualidade para download, streaming ou como presente digital especial para momentos únicos."
+    }
+  },
+  "cta": {
+    "automated": "Processo 100% automatizado e personalizado"
+  }
+}

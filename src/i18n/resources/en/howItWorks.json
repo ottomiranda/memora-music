@@ -1,0 +1,28 @@
+{
+  "header": {
+    "title": "How the",
+    "magic": "magic",
+    "happens": "happens",
+    "subtitle": "Transform your memories into personalized music in just 3 simple steps"
+  },
+  "steps": {
+    "step1": {
+      "title": "Share Your Story",
+      "description": "Tell us about the special person, moment, or memory you want to immortalize in music.",
+      "details": "Our AI analyzes every detail of your story to capture the emotional essence and create a unique musical foundation."
+    },
+    "step2": {
+      "title": "AI Composes Your Music",
+      "description": "Our artificial intelligence creates a unique composition based on your story and musical preferences.",
+      "details": "We use advanced algorithms to generate melodies, harmonies, and arrangements that perfectly reflect your memory."
+    },
+    "step3": {
+      "title": "Receive and Share",
+      "description": "Your personalized music is ready in minutes. Download, share, or gift it to someone you love.",
+      "details": "Available in high quality for download, streaming, or as a special digital gift for unique moments."
+    }
+  },
+  "cta": {
+    "automated": "100% automated and personalized process"
+  }
+}

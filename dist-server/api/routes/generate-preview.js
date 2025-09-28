@@ -5,6 +5,7 @@ import fetch from 'node-fetch';
 import multer from 'multer';
 import { SongService } from '../../src/lib/services/songService.js';
 import { getSupabaseServiceClient } from '../../src/lib/supabase-client.js';
+import { PromptAdapter } from '../../src/lib/services/promptAdapter.js';
 // Função para obter cliente Supabase (compatibilidade)
 function getSupabaseClient() {
     return getSupabaseServiceClient();
@@ -30,6 +31,8 @@ const generatePreviewSchema = z.object({
     mood: z.string().optional(),
     tempo: z.string().optional(),
     duration: z.string().default("3:00"), // Definimos um padrão
+    // Parâmetro de idioma para internacionalização
+    language: z.string().optional().default('pt-BR'),
     // Flag de controle
     lyricsOnly: z.boolean().optional(),
     // Campos adicionais que podem existir
@@ -383,23 +386,27 @@ async function pollCoverUntilReady(coverTaskId, originalTaskId, timeoutMs = 2 * 
 }
 // Função auxiliar para criar prompt da Etapa 1 (apenas letra e título)
 function createLyricsAndTitlePrompt(data) {
-    return `
-Você é um compositor. Baseado no briefing a seguir, crie um título e a letra para uma música.
-Responda EXATAMENTE no seguinte formato, sem explicações:
-[TÍTULO]: Título da Música Aqui
-[LETRA]:
-(Verso 1)
-...
-(Refrão)
-...
-
-Briefing:
-- Ocasião: ${data.occasion}
-- Para: ${data.recipientName} (Relação: ${data.relationship})
-- De: ${data.senderName}
-- Detalhes: Hobbies (${data.hobbies}), Qualidades (${data.qualities}), Traços únicos (${data.uniqueTraits}).
-- Memória principal: ${data.memories}
-`;
+    const language = data.language || 'pt-BR';
+    const promptAdapter = new PromptAdapter();
+    const request = {
+        occasion: data.occasion,
+        recipientName: data.recipientName,
+        relationship: data.relationship,
+        senderName: data.senderName,
+        hobbies: data.hobbies || '',
+        qualities: data.qualities || '',
+        uniqueTraits: data.uniqueTraits || '',
+        memories: data.memories || '',
+        songTitle: data.songTitle,
+        emotionalTone: data.emotionalTone,
+        genre: data.genre,
+        mood: data.mood,
+        tempo: data.tempo,
+        duration: data.duration,
+        personalMessage: data.personalMessage,
+        instruments: data.instruments
+    };
+    return promptAdapter.adaptPrompt('generateLyrics', language, request);
 }
 // Função auxiliar para extrair título e letra da resposta da IA
 function parseAIResponse(responseText) {
@@ -413,40 +420,27 @@ function parseAIResponse(responseText) {
 }
 // Função para gerar prompt detalhado para o ChatGPT (mantida para compatibilidade)
 function createLyricsPrompt(data) {
-    return `Você é um compositor experiente da "Memora.music", especializado em criar letras de música personalizadas e emocionantes.
-
-Crie uma letra de música única e tocante com base nas seguintes informações:
-
-**INFORMAÇÕES PESSOAIS:**
-- Título da música: ${data.songTitle || 'A definir'}
-- Destinatário: ${data.recipientName}
-- Ocasião: ${data.occasion}
-- Relacionamento: ${data.relationship}
-- Tom emocional desejado: ${data.emotionalTone || 'Emotivo'}
-- Memórias especiais: ${data.specialMemories || data.memories || 'Não especificado'}
-- Mensagem pessoal: ${data.personalMessage || 'Não especificado'}
-- Remetente: ${data.senderName || 'Não especificado'}
-- Hobbies: ${data.hobbies || 'Não especificado'}
-- Qualidades: ${data.qualities || 'Não especificado'}
-- Traços únicos: ${data.uniqueTraits || 'Não especificado'}
-
-**ESTILO MUSICAL:**
-- Gênero: ${data.genre || 'Pop'}
-- Humor/Atmosfera: ${data.mood || 'Alegre'}
-- Tempo: ${data.tempo || 'Moderado'}
-- Duração aproximada: ${data.duration}
-- Instrumentos: ${data.instruments?.join(', ') || 'Não especificado'}
-
-**INSTRUÇÕES:**
-1. Crie uma letra original, emotiva e personalizada
-2. Use o tom emocional ${data.emotionalTone || 'emotivo'} como guia principal
-3. Incorpore as memórias e mensagens pessoais de forma natural
-4. Adapte o estilo de escrita ao gênero ${data.genre || 'pop'}
-5. A letra deve ser adequada para a ocasião: ${data.occasion}
-6. Mantenha o foco no relacionamento ${data.relationship}
-
-**FORMATO DE RESPOSTA:**
-Retorne APENAS a letra da música, sem comentários adicionais, explicações ou formatação extra. A letra deve estar pronta para ser cantada.`;
+    const language = data.language || 'pt-BR';
+    const promptAdapter = new PromptAdapter();
+    const request = {
+        occasion: data.occasion,
+        recipientName: data.recipientName,
+        relationship: data.relationship,
+        senderName: data.senderName,
+        hobbies: data.hobbies || '',
+        qualities: data.qualities || '',
+        uniqueTraits: data.uniqueTraits || '',
+        memories: data.memories || '',
+        songTitle: data.songTitle,
+        emotionalTone: data.emotionalTone,
+        genre: data.genre,
+        mood: data.mood,
+        tempo: data.tempo,
+        duration: data.duration,
+        personalMessage: data.personalMessage,
+        instruments: data.instruments
+    };
+    return promptAdapter.adaptPrompt('generateLyrics', language, request);
 }
 // Função para criar prompt para geração de música na Suno API
 function createSunoMusicPrompt(data, lyrics) {

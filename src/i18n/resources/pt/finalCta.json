@@ -1,0 +1,33 @@
+{
+  "header": {
+    "surprise": "Surpreenda",
+    "lovedOne": "quem você ama",
+    "with": "com uma",
+    "song": "música",
+    "madeFor": "feita para",
+    "them": "eles",
+    "subtitle": "Crie memórias únicas que durarão para sempre. Sua música personalizada está a apenas alguns cliques de distância."
+  },
+  "button": {
+    "createNow": "Criar Música Agora"
+  },
+  "features": {
+    "personalized": {
+      "title": "100% Personalizada",
+      "description": "Cada música é única e criada especialmente para sua história"
+    },
+    "technology": {
+      "title": "Tecnologia IA",
+      "description": "Algoritmos avançados para composições profissionais"
+    },
+    "quality": {
+      "title": "Alta Qualidade",
+      "description": "Produção musical profissional em minutos"
+    }
+  },
+  "trust": {
+    "freeLaunch": "Lançamento gratuito",
+    "noCommitment": "Sem compromisso",
+    "quickResult": "Resultado rápido"
+  }
+}

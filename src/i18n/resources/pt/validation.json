@@ -1,0 +1,99 @@
+{
+  "header": {
+    "title": "Ajude-nos a melhorar!",
+    "subtitle": "Suas respostas são fundamentais para aprimorarmos nossa plataforma e oferecer a melhor experiência possível."
+  },
+  "questions": {
+    "difficulty": {
+      "label": "Como você avalia a dificuldade de usar nossa plataforma?",
+      "veryEasy": "Muito fácil",
+      "veryHard": "Muito difícil"
+    },
+    "recommendation": {
+      "label": "Você indicaria nossa plataforma para um amigo?",
+      "yes": "Sim, com certeza!",
+      "maybe": "Talvez, precisa melhorar",
+      "no": "Não, não recomendaria"
+    },
+    "price": {
+      "label": "Quanto você pagaria por uma música personalizada?"
+    }
+  },
+  "button": {
+    "submit": "Enviar Feedback",
+    "sending": "Enviando..."
+  },
+  "footer": {
+    "thankYou": "Obrigado por nos ajudar a melhorar! 💜"
+  },
+  "errors": {
+    "submitError": "Erro ao enviar feedback. Tente novamente.",
+    "required": "Este campo é obrigatório",
+    "tooShort": "Deve ter pelo menos {{min}} caracteres",
+    "tooLong": "Deve ter no máximo {{max}} caracteres",
+    "invalidEmail": "E-mail inválido",
+    "invalidFormat": "Formato inválido"
+  },
+  "briefing": {
+    "occasion": {
+      "required": "Por favor, selecione uma ocasião especial"
+    },
+    "recipientName": {
+      "required": "Por favor, informe o nome da pessoa",
+      "maxLength": "O nome deve ter no máximo 50 caracteres"
+    },
+    "relationship": {
+      "required": "Por favor, selecione o tipo de relação"
+    },
+    "senderName": {
+      "maxLength": "Seu nome deve ter no máximo 50 caracteres"
+    },
+    "hobbies": {
+      "required": "Por favor, descreva os hobbies",
+      "maxLength": "Deve ter no máximo 500 caracteres"
+    },
+    "qualities": {
+      "required": "Por favor, descreva as qualidades",
+      "maxLength": "Deve ter no máximo 500 caracteres"
+    },
+    "uniqueTraits": {
+      "required": "Por favor, descreva as características únicas",
+      "maxLength": "Deve ter no máximo 500 caracteres"
+    },
+    "memories": {
+      "required": "Por favor, compartilhe algumas memórias",
+      "maxLength": "Deve ter no máximo 1000 caracteres"
+    }
+  },
+  "lyrics": {
+    "required": "A letra da música é obrigatória",
+    "minLength": "A letra deve ter pelo menos 10 caracteres",
+    "maxLength": "A letra deve ter no máximo 2000 caracteres"
+  },
+  "style": {
+    "genre": {
+      "required": "Por favor, selecione um gênero musical"
+    },
+    "emotion": {
+      "required": "Por favor, selecione uma emoção"
+    },
+    "vocalPreference": {
+      "required": "Por favor, selecione uma preferência vocal"
+    }
+  },
+  "auth": {
+    "email": {
+      "required": "E-mail é obrigatório",
+      "invalid": "E-mail inválido"
+    },
+    "password": {
+      "minLength": "A senha deve ter pelo menos 6 caracteres",
+      "maxLength": "A senha deve ter no máximo 100 caracteres"
+    },
+    "name": {
+      "minLength": "O nome deve ter pelo menos 2 caracteres",
+      "maxLength": "O nome deve ter no máximo 100 caracteres",
+      "invalidFormat": "O nome deve conter apenas letras e espaços"
+    }
+  }
+}

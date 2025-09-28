@@ -1,0 +1,258 @@
+{
+  "hero": {
+    "title": "Crie músicas únicas com IA",
+    "subtitle": "Transforme suas ideias em melodias personalizadas",
+    "cta": "Começar agora",
+    "watchDemo": "Ver demonstração"
+  },
+  "howItWorks": {
+    "title": "Como funciona?",
+    "subtitle": "Crie sua música em 3 passos simples",
+    "steps": {
+      "step1": {
+        "title": "1. Descreva sua música",
+        "description": "Conte-nos sobre a ocasião, emoção e estilo que você deseja"
+      },
+      "step2": {
+        "title": "2. IA compõe para você",
+        "description": "Nossa inteligência artificial cria uma música única baseada nas suas preferências"
+      },
+      "step3": {
+        "title": "3. Baixe e compartilhe",
+        "description": "Receba sua música personalizada e compartilhe com quem quiser"
+      }
+    }
+  },
+  "features": {
+    "title": "Recursos incríveis",
+    "subtitle": "Tudo que você precisa para criar música",
+    "aiComposer": {
+      "title": "Compositor IA",
+      "description": "Inteligência artificial avançada para composição"
+    },
+    "customization": {
+      "title": "Personalização",
+      "description": "Ajuste cada detalhe da sua música"
+    },
+    "export": {
+      "title": "Exportação",
+      "description": "Baixe em diversos formatos de áudio"
+    }
+  },
+  "benefits": {
+    "title": "Por que escolher Memora Music?",
+    "unique": {
+      "title": "Músicas únicas",
+      "description": "Cada composição é única e criada especialmente para você"
+    },
+    "fast": {
+      "title": "Rápido e fácil",
+      "description": "Sua música fica pronta em poucos minutos"
+    },
+    "quality": {
+      "title": "Alta qualidade",
+      "description": "Tecnologia de ponta para resultados profissionais"
+    },
+    "emotional": {
+      "title": "Conexão emocional",
+      "description": "Música que toca o coração e desperta emoções"
+    }
+  },
+  "plans": {
+    "title": "Escolha seu plano",
+    "subtitle": "Planos flexíveis para suas necessidades",
+    "free": {
+      "name": "Gratuito",
+      "price": "R$ 0",
+      "period": "/mês",
+      "description": "Perfeito para começar",
+      "features": [
+        "3 músicas por mês",
+        "Duração até 1 minuto",
+        "Formatos básicos (MP3)",
+        "Suporte por email"
+      ],
+      "cta": "Começar grátis",
+      "popular": false
+    },
+    "pro": {
+      "name": "Pro",
+      "price": "R$ 29",
+      "period": "/mês",
+      "description": "Para criadores sérios",
+      "features": [
+        "Músicas ilimitadas",
+        "Duração até 5 minutos",
+        "Todos os formatos (MP3, WAV, FLAC)",
+        "Edição avançada",
+        "Suporte prioritário",
+        "Sem marca d'água"
+      ],
+      "cta": "Assinar Pro",
+      "popular": true
+    },
+    "enterprise": {
+      "name": "Enterprise",
+      "price": "Personalizado",
+      "period": "",
+      "description": "Para empresas e estúdios",
+      "features": [
+        "Tudo do Pro",
+        "API personalizada",
+        "Integração com DAWs",
+        "Suporte dedicado",
+        "SLA garantido"
+      ],
+      "cta": "Falar com vendas",
+      "popular": false
+    }
+  },
+  "testimonials": {
+    "title": "O que nossos usuários dizem",
+    "subtitle": "Histórias reais de pessoas que transformaram suas memórias em música",
+    "items": [
+      {
+        "id": 1,
+        "author": "Maria Silva",
+        "text": "Criei uma música para o aniversário da minha filha e ela ficou emocionada! A IA conseguiu capturar exatamente o sentimento que eu queria transmitir.",
+        "age": 34,
+        "location": "São Paulo, SP",
+        "avatar": "https://i.pravatar.cc/120?img=47",
+        "rating": 5
+      },
+      {
+        "id": 2,
+        "author": "João Santos",
+        "text": "Usei o Memora Music para criar a trilha sonora do meu casamento. O resultado superou todas as expectativas!",
+        "age": 29,
+        "location": "Rio de Janeiro, RJ",
+        "avatar": "https://i.pravatar.cc/120?img=32",
+        "rating": 5
+      },
+      {
+        "id": 3,
+        "author": "Ana Costa",
+        "text": "Como musicista, fiquei impressionada com a qualidade das composições. É uma ferramenta incrível para inspiração!",
+        "age": 41,
+        "location": "Curitiba, PR",
+        "avatar": "https://i.pravatar.cc/120?img=57",
+        "rating": 5
+      }
+    ]
+  },
+  "examples": {
+    "title": "Momentos que merecem uma música",
+    "subtitle": "Há algo especial no poder das músicas de unir as pessoas e tornar momentos ainda mais significativos",
+    "cards": {
+      "aniversario": {
+        "title": "Aniversário",
+        "subtitle": "Transforme momentos especiais em melodias inesquecíveis"
+      },
+      "casamento": {
+        "title": "Casamento",
+        "subtitle": "Celebre o amor com uma canção única"
+      },
+      "amor": {
+        "title": "Canção de Amor",
+        "subtitle": "Declare seu amor com uma melodia personalizada"
+      },
+      "aniversario-casamento": {
+        "title": "Aniversário de Casamento",
+        "subtitle": "Renove os votos de amor com uma canção exclusiva"
+      },
+      "so-porque": {
+        "title": "Só porque…",
+        "subtitle": "Demonstre carinho sem precisar de uma data especial"
+      },
+      "proposta": {
+        "title": "Proposta",
+        "subtitle": "Torne o pedido inesquecível com a canção perfeita"
+      },
+      "graduacao": {
+        "title": "Graduação",
+        "subtitle": "Marque sua conquista com uma trilha sonora única"
+      },
+      "melhores-amigos": {
+        "title": "Melhores Amigos",
+        "subtitle": "Celebre a amizade verdadeira com uma canção especial"
+      },
+      "noivado": {
+        "title": "Noivado",
+        "subtitle": "Comece a nova jornada com a música dos sonhos"
+      },
+      "dia-pais": {
+        "title": "Dia dos Pais",
+        "subtitle": "Surpreenda com uma música tão única quanto ele"
+      },
+      "dia-maes": {
+        "title": "Dia das Mães",
+        "subtitle": "Homenageie quem mais ama com uma canção emocionante"
+      },
+      "natal": {
+        "title": "Natal",
+        "subtitle": "Espalhe a magia natalina através de uma melodia inesquecível"
+      }
+    },
+    "cta": {
+      "meta": "Prévias de 45 segundos • Músicas completas de até 5 minutos",
+      "button": "Crie sua música agora"
+    },
+    "cardCta": {
+      "loading": "Carregando...",
+      "play": "Ouça agora",
+      "aria": {
+        "loading": "Carregando exemplo de {{title}}",
+        "play": "Reproduzir exemplo de {{title}}",
+        "pause": "Pausar exemplo de {{title}}"
+      }
+    }
+  },
+  "artists": {
+    "title": "Estilos variados que dão vida às suas memórias",
+    "subtitle": "Escute vozes marcantes de nossos cantores que transformam sentimentos em canções eternas.",
+    "cta": {
+      "title": "Gostou do que ouviu?",
+      "subtitle": "Crie sua própria música personalizada agora mesmo.",
+      "button": "Crie sua música agora"
+    }
+  },
+  "cta": {
+    "title": "Pronto para criar sua primeira música?",
+    "subtitle": "Junte-se a {{count}} pessoas que já criaram músicas inesquecíveis",
+    "button": "Começar agora",
+    "guarantee": "Garantia de {{days}} dias",
+    "testimonial": "{{count}} músicas já foram criadas com amor"
+  },
+  "footer": {
+    "company": "Memora Music",
+    "description": "Transformando memórias em música desde 2024",
+    "links": {
+      "product": "Produto",
+      "pricing": "Preços",
+      "about": "Sobre",
+      "contact": "Contato",
+      "help": "Ajuda",
+      "privacy": "Privacidade",
+      "terms": "Termos",
+      "blog": "Blog"
+    },
+    "social": {
+      "follow": "Siga-nos",
+      "facebook": "Facebook",
+      "twitter": "Twitter",
+      "instagram": "Instagram",
+      "youtube": "YouTube"
+    },
+    "copyright": "© 2024 Memora Music. Todos os direitos reservados."
+  },
+  "navigation": {
+    "home": "Início",
+    "features": "Recursos",
+    "pricing": "Preços",
+    "about": "Sobre",
+    "contact": "Contato",
+    "login": "Entrar",
+    "signup": "Cadastrar",
+    "dashboard": "Painel"
+  }
+}

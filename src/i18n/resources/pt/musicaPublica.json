@@ -1,0 +1,53 @@
+{
+  "loading": {
+    "message": "Carregando música..."
+  },
+  "error": {
+    "notFound": "Música não encontrada.",
+    "loadFailed": "Não foi possível carregar a música.",
+    "audioLoadFailed": "Não foi possível carregar o áudio desta música.",
+    "playbackFailed": "Falha ao reproduzir esta música. Tente novamente.",
+    "downloadFailed": "Não foi possível localizar o arquivo para download.",
+    "button": "Voltar"
+  },
+  "navigation": {
+    "back": "Voltar"
+  },
+  "song": {
+    "createdOn": "Criada em",
+    "myMusic": "Minha música"
+  },
+  "info": {
+    "createdAt": "Criada em",
+    "playing": "Reproduzindo",
+    "selectVersion": "Selecione outra versão abaixo",
+    "unavailable": "Indisponível"
+  },
+  "sections": {
+    "lyrics": "Letra",
+    "progress": "Progresso"
+  },
+  "actions": {
+    "share": "Compartilhar",
+    "download": "Baixar",
+    "play": "Reproduzir",
+    "pause": "Pausar"
+  },
+  "versions": {
+    "playing": "Reproduzindo {{version}}",
+    "selectOther": "Selecione outra versão abaixo",
+    "versionA": "Versão A",
+    "versionB": "Versão B",
+    "versionSuno": "Versão Suno",
+    "unavailable": "Indisponível"
+  },
+  "progress": {
+    "title": "Progresso"
+  },
+  "lyrics": {
+    "title": "Letra"
+  },
+  "toast": {
+    "linkCopied": "Link copiado para a área de transferência"
+  }
+}

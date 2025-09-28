@@ -1,4 +1,5 @@
 import { useEffect, useState, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useAuthStore } from '@/store/authStore';
 import { getCurrentGuestId, clearGuestId, getGuestIdInfo } from '@/lib/utils/guestUtils';
 
@@ -30,6 +31,7 @@ interface MigrationResponse {
  * quando o usuário faz login ou se cadastra
  */
 export function useAutoMigration() {
+  const { t } = useTranslation('useAutoMigration');
   const { user, isAuthenticated } = useAuthStore();
   const [migrationState, setMigrationState] = useState<MigrationState>({
     isChecking: false,
@@ -46,7 +48,7 @@ export function useAutoMigration() {
     try {
       setMigrationState(prev => ({ ...prev, isMigrating: true, error: null }));
       
-      console.log(`🔄 Iniciando migração automática: ${guestId} → ${userId}`);
+      console.log(t('migration.starting'));
       
       const response = await fetch('/api/migrate-guest-data', {
         method: 'POST',
@@ -69,7 +71,7 @@ export function useAutoMigration() {
         throw new Error(result.message || 'Erro desconhecido na migração');
       }
 
-      console.log(`✅ Migração concluída: ${result.data.migratedCount} músicas migradas`);
+      console.log(t('migration.completed'));
       
       setMigrationState(prev => ({
         ...prev,
@@ -83,7 +85,7 @@ export function useAutoMigration() {
       
       return true;
     } catch (error) {
-      console.error('❌ Erro na migração automática:', error);
+      console.error(t('errors.migrationFailed'), error);
       
       const errorMessage = error instanceof Error ? error.message : 'Erro desconhecido';
       
@@ -107,18 +109,18 @@ export function useAutoMigration() {
       const response = await fetch(`/api/songs?guestId=${encodeURIComponent(guestId)}&limit=1`);
       
       if (!response.ok) {
-        console.log('ℹ️ Não foi possível verificar músicas do convidado');
+        console.log(t('guestData.checkFailed'));
         return false;
       }
       
       const result = await response.json();
       const hasGuestSongs = result.success && result.data.songs.length > 0;
       
-      console.log(`🔍 Verificação de migração: ${hasGuestSongs ? 'Dados encontrados' : 'Nenhum dado'}`);
+      console.log(`🔍 Verificação de migração: ${hasGuestSongs ? t('guestData.found') : t('guestData.none')}`);
       
       return hasGuestSongs;
     } catch (error) {
-      console.error('❌ Erro ao verificar dados para migração:', error);
+      console.error(t('errors.checkDataFailed'), error);
       return false;
     } finally {
       setMigrationState(prev => ({ ...prev, isChecking: false }));
@@ -135,20 +137,20 @@ export function useAutoMigration() {
 
     const guestId = getCurrentGuestId();
     if (!guestId) {
-      console.log('ℹ️ Nenhum Guest ID encontrado para migração');
+      console.log(t('guestId.notFound'));
       return;
     }
 
-    console.log(`🔍 Verificando migração para usuário ${user.id}`);
+    console.log(t('migration.checkingForUser'), user.id);
     
     // Verificar se há dados para migrar
     const hasDataToMigrate = await checkForMigration(guestId);
     
     if (hasDataToMigrate) {
-      console.log('📦 Dados encontrados, iniciando migração...');
+      console.log(t('guestData.foundStartingMigration'));
       await executeMigration(guestId, user.id);
     } else {
-      console.log('ℹ️ Nenhum dado para migrar, limpando Guest ID');
+      console.log(t('guestData.noneFoundCleaningId'));
       clearGuestId();
     }
   }, [isAuthenticated, user?.id, checkForMigration, executeMigration]);

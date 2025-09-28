@@ -1,0 +1,406 @@
+{
+  "page": {
+    "title": "Bring your <span class=\"bg-gradient-to-r from-yellow-400 to-purple-600 bg-clip-text text-transparent\">song</span> to <span class=\"bg-gradient-to-r from-yellow-400 to-purple-600 bg-clip-text text-transparent\">life</span>",
+    "subtitle": "Share feelings, choose the style and receive your final song in minutes."
+  },
+  "navigation": {
+    "previous": "Previous",
+    "next": "Next",
+    "approveAndContinue": "Approve and Continue"
+  },
+  "countdown": {
+    "heading": "Estimated time remaining",
+    "message": "Hang tight—we're polishing the final notes of your exclusive song."
+  },
+  "lyrics": {
+    "title": "Your song lyrics",
+    "description": "Let's generate your song lyrics...",
+    "generating": "Generating lyrics...",
+    "creating": "Creating your personalized lyrics...",
+    "analyzing": "Analyzing your information...",
+    "generateButton": "Generate Song Lyrics",
+    "personalizedTitle": "Your Personalized Lyrics",
+    "editModeActive": "Edit mode active",
+    "clickToEdit": "Click edit to customize",
+    "closeEdit": "Close Edit",
+    "editLyrics": "Edit Lyrics",
+    "searching": "Searching",
+    "findTextLabel": "Search text in lyrics",
+    "searchPlaceholder": "Type the text you want to find",
+    "clearSearch": "Clear search",
+    "restore": "Restore",
+    "saving": "Saving...",
+    "saved": "Saved",
+    "autoSave": "Auto-save",
+    "highlighting": "Highlighting",
+    "generatingNew": "Generating new lyrics...",
+    "generateNew": "Generate New Lyrics",
+    "tip": "Tip: You can generate as many versions as you want until you're satisfied"
+  },
+  "style": {
+    "title": "Choose the musical style",
+    "emotion": {
+      "label": "Emotion *",
+      "placeholder": "Select the emotion"
+    },
+    "voice": {
+      "label": "Choose voice type *",
+      "placeholder": "Select vocal preference",
+      "female": "Female",
+      "male": "Male",
+      "both": "Both"
+    },
+    "continueButton": "Continue"
+  },
+  "briefing": {
+    "title": "Tell your story",
+    "occasion": {
+      "title": "The Occasion",
+      "label": "What's the special occasion?"
+    },
+    "person": {
+      "title": "About the honoree",
+      "recipientName": {
+        "label": "What's the name of the person you're creating this song for?",
+        "placeholder": "Ex: Maria"
+      },
+      "relationship": {
+        "label": "What's your relationship?",
+        "placeholder": "Select the relationship"
+      },
+      "senderName": {
+        "label": "What's your name?",
+        "placeholder": "Ex: John"
+      }
+    },
+    "details": {
+      "title": "Details and personality",
+      "hobbies": {
+        "label": "Tell us about their hobbies and interests!",
+        "placeholder": "Ex: Loves to cook..."
+      },
+      "qualities": {
+        "label": "What qualities do you most admire in this person?",
+        "placeholder": "Ex: Very generous..."
+      },
+      "uniqueTraits": {
+        "label": "Unique characteristics",
+        "placeholder": "Describe what makes this person special..."
+      }
+    },
+    "memories": {
+      "title": "Memories and stories",
+      "label": "Share your favorite stories or memories you'd like to include in the song.",
+      "placeholder": "One is enough. More is better."
+    }
+  },
+  "steps": {
+    "story": {
+      "title": "Tell your story",
+      "occasion": {
+        "label": "What's the special occasion?",
+        "placeholder": "Select the occasion"
+      },
+      "recipientName": {
+        "label": "What's the name of the person you're creating this song for?",
+        "placeholder": "Ex: Maria"
+      },
+      "relationship": {
+        "label": "What's your relationship?",
+        "placeholder": "Select the relationship"
+      },
+      "yourName": {
+        "label": "What's your name?",
+        "placeholder": "Ex: John"
+      }
+    },
+    "details": {
+      "title": "The Occasion",
+      "aboutPerson": "About the Person(s)",
+      "detailsAndPersonality": "Details and Personality",
+      "memoriesAndStories": "Memories and Stories",
+      "hobbies": {
+        "label": "Tell us about their hobbies and interests!",
+        "placeholder": "Ex: Loves to cook..."
+      },
+      "qualities": {
+        "label": "What qualities do you most admire in this person?",
+        "placeholder": "Ex: Very generous..."
+      },
+      "uniqueness": {
+        "label": "What makes them unique or special?",
+        "placeholder": "Ex: Always sings in the shower..."
+      },
+      "uniqueTraits": {
+        "label": "Unique characteristics",
+        "placeholder": "Describe what makes this person special..."
+      },
+      "memories": {
+        "label": "Share your favorite stories or memories you'd like to include in the song.",
+        "placeholder": "One is enough. More is better."
+      }
+    },
+    "briefing": {
+      "details": {
+        "uniqueTraits": {
+          "label": "Unique characteristics",
+          "placeholder": "Describe what makes this person special..."
+        }
+      },
+      "memories": {
+        "title": "Memories and Stories",
+        "label": "Share your favorite stories or memories you'd like to include in the song.",
+        "placeholder": "One is enough. More is better."
+      }
+    },
+    "lyrics": {
+       "title": "Your song lyrics",
+       "description": "Let's generate your song lyrics...",
+       "generating": "Generating lyrics...",
+       "creating": "Creating your personalized lyrics...",
+       "analyzing": "Analyzing your information...",
+       "generateButton": "Generate Song Lyrics",
+       "personalizedTitle": "Your Personalized Lyrics",
+       "editModeActive": "Edit mode active",
+       "clickToEdit": "Click edit to customize",
+       "closeEdit": "Close Edit",
+       "editLyrics": "Edit Lyrics",
+       "searching": "Searching:",
+       "findTextLabel": "Search text in lyrics",
+       "searchPlaceholder": "Type the text you want to find",
+       "clearSearch": "Clear search",
+       "restore": "Restore",
+       "saving": "Saving...",
+       "saved": "Saved",
+       "autoSave": "Auto-save",
+       "highlighting": "Highlighting:",
+       "generatingNew": "Generating new lyrics...",
+       "generateNew": "Generate New Lyrics",
+       "tip": "Tip: You can generate as many versions as you want until you're satisfied"
+     },
+    "style": {
+       "title": "Choose the musical style",
+       "genre": {
+         "label": "Musical Genre *",
+         "placeholder": "Select the genre"
+       },
+       "emotion": {
+         "label": "Emotion *",
+         "placeholder": "Select the emotion"
+       },
+       "voice": {
+        "label": "Choose voice type *",
+        "placeholder": "Select vocal preference",
+        "female": "Female",
+        "male": "Male",
+        "both": "Both"
+      }
+     }
+  },
+  "summary": {
+    "title": "Your song summary",
+    "occasion": "Occasion",
+    "for": "For",
+    "relationship": "Relationship",
+    "genre": "Genre",
+    "emotion": "Emotion",
+    "vocal": "Vocal"
+  },
+  "generation": {
+    "connecting": "Connecting to our digital studio...",
+    "starting": "Starting generation...",
+    "creating": "Creating your song...",
+    "processing": "Processing...",
+    "preparing": "Preparing your personalized song...",
+    "generating": "Generating personalized music... ({{count}} of {{total}})",
+    "finalizing": "Finalizing the last details...",
+    "progress": "Progress",
+    "songsReady": "{{completed}}/{{total}} songs ready",
+    "beingGenerated": "Your song is being generated...",
+    "musicFor": "Music for {{name}}",
+    "specialPerson": "Special Person",
+    "versionsReady_one": "{{count}} version ready",
+    "versionsReady_other": "{{count}} versions ready",
+    "generationProgress": "Generation progress",
+    "personalizedSongs": "Your personalized songs",
+    "listenAndChoose": "Listen, compare and choose the best version to share.",
+    "option": "Option {{number}}",
+    "estimatedDuration": "Expected duration",
+    "playerWillAppear": "The player will appear here as soon as the version is ready.",
+    "waitingGeneration": "Waiting for generation...",
+    "noPreviewAvailable": "No preview available",
+    "tryGenerateAgain": "Try generating the song again.",
+    "createNewMusic": "Create New Song",
+    "waitingTracks": "Waiting for songs...",
+    "tracksWillAppear": "Your songs will appear here once they're ready",
+    "trackPosition": "Track {{current}} of {{total}}",
+    "chooseOption": "Choose an option:",
+    "defaultTrackTitle": "Personalized song",
+    "downloadOption": "Download option {{number}}",
+    "listenToUnlock": "Listen to the full preview to unlock the download"
+  },
+  "preview": {
+    "title": "Your song is being generated...",
+    "summaryTitle": "Your song summary",
+    "summaryLabels": {
+      "occasion": "Occasion",
+      "recipient": "For",
+      "relationship": "Relationship",
+      "genre": "Genre",
+      "emotion": "Emotion",
+      "vocal": "Vocal"
+    },
+    "connecting": "Connecting to our digital studio...",
+    "initiating": "Starting generation...",
+    "creating": "Creating your song...",
+    "processing": "Processing...",
+    "preparingMessage": "We're preparing everything to transform your story into a personalized song.",
+    "generatingVersions": "Generating {{count}} exclusive versions for you.",
+    "finalizingMessage": "We're finalizing the last details before releasing your song.",
+    "progress": "Progress",
+    "progressGeneration": "Generation progress",
+    "songsReady_one": "{{count}} song ready",
+    "songsReady_other": "{{count}} songs ready",
+    "musicFor": "Music for {{name}}",
+    "defaultRecipient": "Special Person",
+    "versionsReady_one": "✓ {{count}} version ready",
+    "versionsReady_other": "✓ {{count}} versions ready",
+    "personalizedMusic": "Your personalized songs",
+    "personalizedMusicDesc": "Listen, compare and choose the best version to share.",
+    "option": "Option {{number}}",
+    "generating": "Generating...",
+    "waitingMessage": "Please wait, we're preparing this version with care.",
+    "expectedDuration": "Expected duration",
+    "playerPlaceholder": "The player will appear here as soon as the version is ready.",
+    "waitingGeneration": "Waiting for generation...",
+    "noPreview": "No preview available",
+    "tryAgain": "Try generating the song again.",
+    "createNew": "Create New Song"
+  },
+  "validation": {
+    "required": "This field is required",
+    "minLength": "Minimum {{min}} characters",
+    "maxLength": "Maximum {{max}} characters"
+  },
+  "options": {
+    "occasions": {
+      "romantic": {
+        "category": "Love",
+        "anniversary": "Anniversary",
+        "valentine": "Valentine's Day",
+        "proposal": "Marriage Proposal",
+        "wedding": "Wedding",
+        "engagement": "Engagement",
+        "dateNight": "Date Night",
+        "apology": "Apology",
+        "longDistance": "Long Distance Relationship"
+      },
+      "celebration": {
+        "category": "Family",
+        "birthday": "Birthday",
+        "graduation": "Graduation",
+        "newJob": "New Job",
+        "promotion": "Promotion",
+        "retirement": "Retirement",
+        "newHome": "New Home",
+        "achievement": "Achievement",
+        "success": "Success"
+      },
+      "friendship": {
+        "category": "Friends & Others",
+        "friendship": "Friendship",
+        "support": "Support",
+        "encouragement": "Encouragement",
+        "reunion": "Reunion",
+        "farewell": "Farewell",
+        "thankYou": "Thank You",
+        "justBecause": "Just Because",
+        "missYou": "Miss You"
+      },
+      "achievements": {
+        "category": "Achievements",
+        "competition": "Competition",
+        "award": "Award",
+        "recognition": "Recognition",
+        "milestone": "Milestone",
+        "goal": "Goal Achievement",
+        "victory": "Victory",
+        "accomplishment": "Accomplishment",
+        "breakthrough": "Breakthrough"
+      },
+      "memorial": {
+        "category": "Memory",
+        "memorial": "Memorial",
+        "tribute": "Tribute",
+        "remembrance": "Remembrance",
+        "honor": "Honor",
+        "legacy": "Legacy",
+        "celebration_of_life": "Celebration of Life",
+        "memory": "Memory",
+        "farewell_tribute": "Farewell Tribute"
+      }
+    },
+    "relationships": {
+      "family": {
+        "category": "Family",
+        "mother": "Mother",
+        "father": "Father",
+        "son": "Son",
+        "daughter": "Daughter",
+        "brother": "Brother",
+        "sister": "Sister",
+        "grandmother": "Grandmother",
+        "grandfather": "Grandfather",
+        "aunt": "Aunt",
+        "uncle": "Uncle",
+        "cousin": "Cousin",
+        "nephew": "Nephew",
+        "niece": "Niece"
+      },
+      "romantic": {
+        "category": "Love",
+        "wife": "Wife",
+        "husband": "Husband",
+        "girlfriend": "Girlfriend",
+        "boyfriend": "Boyfriend",
+        "fiancee": "Fiancée",
+        "partner": "Partner",
+        "soulmate": "Soulmate",
+        "crush": "Crush"
+      },
+      "friendship": {
+        "category": "Friends & Others",
+        "best_friend": "Best Friend",
+        "friend": "Friend",
+        "colleague": "Colleague",
+        "mentor": "Mentor",
+        "teacher": "Teacher",
+        "student": "Student",
+        "neighbor": "Neighbor",
+        "acquaintance": "Acquaintance"
+      }
+    },
+    "emotions": {
+      "happy": "Happy",
+      "romantic": "Romantic",
+      "nostalgic": "Nostalgic",
+      "energetic": "Energetic",
+      "peaceful": "Peaceful",
+      "emotional": "Emotional",
+      "inspiring": "Inspiring",
+      "playful": "Playful",
+      "melancholic": "Melancholic",
+      "triumphant": "Triumphant",
+      "grateful": "Grateful",
+      "hopeful": "Hopeful",
+      "celebratory": "Celebratory",
+      "tender": "Tender",
+      "uplifting": "Uplifting",
+      "sentimental": "Sentimental",
+      "joyful": "Joyful",
+      "passionate": "Passionate",
+      "serene": "Serene",
+      "motivational": "Motivational"
+    }
+  }
+}

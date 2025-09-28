@@ -1,0 +1,53 @@
+{
+  "loading": {
+    "message": "Loading song..."
+  },
+  "error": {
+    "notFound": "Song not found.",
+    "loadFailed": "Could not load the song.",
+    "audioLoadFailed": "Could not load the audio for this song.",
+    "playbackFailed": "Failed to play this song. Please try again.",
+    "downloadFailed": "Could not locate the file for download.",
+    "button": "Go back"
+  },
+  "navigation": {
+    "back": "Back"
+  },
+  "song": {
+    "createdOn": "Created on",
+    "myMusic": "My music"
+  },
+  "info": {
+    "createdAt": "Created on",
+    "playing": "Playing",
+    "selectVersion": "Select another version below",
+    "unavailable": "Unavailable"
+  },
+  "sections": {
+    "lyrics": "Lyrics",
+    "progress": "Progress"
+  },
+  "actions": {
+    "share": "Share",
+    "download": "Download",
+    "play": "Play",
+    "pause": "Pause"
+  },
+  "versions": {
+    "playing": "Playing {{version}}",
+    "selectOther": "Select another version below",
+    "versionA": "Version A",
+    "versionB": "Version B",
+    "versionSuno": "Suno Version",
+    "unavailable": "Unavailable"
+  },
+  "progress": {
+    "title": "Progress"
+  },
+  "lyrics": {
+    "title": "Lyrics"
+  },
+  "toast": {
+    "linkCopied": "Link copied to clipboard"
+  }
+}

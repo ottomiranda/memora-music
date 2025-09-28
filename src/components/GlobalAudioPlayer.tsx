@@ -12,14 +12,31 @@ function formatTime(t: number) {
 const GlobalAudioPlayer: React.FC = () => {
   const { currentId, currentUrl, currentTitle, currentVersionLabel, isPlaying, currentTime, duration, seek, play, pause, stop, volume, setVolume } = useAudioPlayerStore();
 
-  const visible = useMemo(() => !!currentId && !!currentUrl, [currentId, currentUrl]);
+  const visible = currentId && currentUrl;
 
-  if (!visible) return null;
+  console.log('[GlobalAudioPlayer] Estado completo:');
+  console.log('- currentId:', currentId);
+  console.log('- currentUrl:', currentUrl);
+  console.log('- visible:', visible);
+  console.log('- isPlaying:', isPlaying);
+  console.log('- currentTime:', currentTime);
+  console.log('- duration:', duration);
+  console.log('- currentTitle:', currentTitle);
+  console.log('- currentVersionLabel:', currentVersionLabel);
+
+  console.log('[GlobalAudioPlayer] Renderizando?', visible ? 'SIM' : 'NÃO');
+
+  if (!visible) {
+    console.log('[GlobalAudioPlayer] Não renderizando - currentId ou currentUrl ausentes');
+    return null;
+  }
+
+  console.log('[GlobalAudioPlayer] RENDERIZANDO PLAYER FLUTUANTE');
 
   const progress = duration > 0 ? (currentTime / duration) * 100 : 0;
 
   return (
-    <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-40 max-w-3xl w-[92%] sm:w-[640px]">
+    <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-[100] max-w-3xl w-[92%] sm:w-[640px]">
       <div className="rounded-xl border p-3 backdrop-blur-md bg-white/90 border-gray-200 shadow-[0_10px_30px_rgba(0,0,0,0.3)]">
         <div className="flex items-center gap-3">
           {/* Play/Pause */}

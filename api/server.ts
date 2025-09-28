@@ -34,6 +34,7 @@ if (!hasLoadedEnv) {
 
 // Importar rotas
 import generatePreviewRoute from './routes/generate-preview.js';
+import generatePreviewEnglishTestRoute from './routes/generate-preview-english-test.js';
 import authRoute from './routes/auth.js';
 import checkMusicStatusRoute from './routes/check-music-status.js';
 import saveFeedbackRoute from './routes/save-feedback.js';
@@ -150,6 +151,7 @@ app.use(express.static(staticFilesPath));
 // Configurar rotas
 app.use('/api/health', healthRoute);
 app.use('/api/generate-preview', generatePreviewRoute);
+app.use('/api/generate-preview', generatePreviewEnglishTestRoute);
 app.use('/api/auth', authRoute);
 app.use('/api/check-music-status', checkMusicStatusRoute);
 app.use('/api/save-feedback', saveFeedbackRoute);
@@ -167,6 +169,7 @@ app.use('/api/suno', sunoMusicRoute);
 console.log('📋 Rotas registradas:');
 console.log('  - /api/health');
 console.log('  - /api/generate-preview');
+console.log('  - /api/generate-preview/test-english (TESTE)');
 console.log('  - /api/auth');
 console.log('  - /api/check-music-status');
 console.log('  - /api/save-feedback');

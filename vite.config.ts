@@ -42,6 +42,12 @@ export default defineConfig({
             'zustand',
             '@tanstack/react-query'
           ],
+          // Separar bibliotecas de internacionalização
+          'i18n-vendor': [
+            'react-i18next',
+            'i18next',
+            'i18next-browser-languagedetector'
+          ],
           // Separar componentes de UI
           'ui-vendor': [
             'lucide-react',
@@ -53,7 +59,10 @@ export default defineConfig({
         }
       }
     },
-    chunkSizeWarningLimit: 1000
+    chunkSizeWarningLimit: 1000,
+    // Otimizações específicas para i18n
+    assetsInlineLimit: 4096, // Inline small translation files
+    sourcemap: false // Disable sourcemaps in production for better performance
   },
   server: {
     port: 5173,

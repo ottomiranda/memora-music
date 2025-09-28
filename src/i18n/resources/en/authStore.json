@@ -1,0 +1,36 @@
+{
+  "migration": {
+    "starting": "Starting guest data migration",
+    "deviceIdNotFound": "DeviceId not found",
+    "completed": "Migration completed successfully",
+    "failed": "Error migrating guest data",
+    "notCompleted": "Migration not completed",
+    "migrationFailed": "Migration failed",
+    "guestIdRemoved": "GuestId removed from localStorage"
+  },
+  "auth": {
+    "supabaseInitFailed": "Failed to initialize Supabase",
+    "invalidSession": "Invalid session",
+    "invalidCredentials": "Invalid email or password",
+    "unknownCreateError": "Unknown error creating account",
+    "logoutComplete": "Complete logout performed",
+    "logoutError": "Error during logout",
+    "passwordRecoveryError": "Error requesting password recovery",
+    "resendEmailError": "Error resending confirmation email",
+    "sessionSynced": "Session synchronized",
+    "sessionSyncError": "Error synchronizing session"
+  },
+  "hydration": {
+    "configuring": "Configuring hydration...",
+    "started": "HYDRATION STARTED",
+    "tokensFound": "Tokens found",
+    "clientInitialized": "Supabase client initialized, checking session...",
+    "invalidSessionOrError": "Invalid session or error",
+    "initFailedDuringHydration": "Failed to initialize Supabase client during hydration",
+    "sessionCheckError": "Error checking session during hydration",
+    "invalidTokenRemoved": "Invalid token removed during hydration",
+    "completeNotAuthenticated": "Hydration complete - user not authenticated",
+    "criticalError": "Critical error during hydration",
+    "initializationError": "Error during initialization"
+  }
+}

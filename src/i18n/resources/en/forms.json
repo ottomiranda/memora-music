@@ -1,0 +1,121 @@
+{
+  "songCreation": {
+    "title": "Create New Song",
+    "subtitle": "Fill in the details to create your personalized song",
+    "forPerson": "Creating a song for {{name}}",
+    "progress": {
+      "step": "Step {{current}} of {{total}}",
+      "completing": "Finalizing your personalized song..."
+    },
+    "occasion": {
+      "label": "Occasion",
+      "placeholder": "Select an occasion",
+      "options": {
+        "aniversario": "Birthday",
+        "casamento": "Wedding",
+        "formatura": "Graduation",
+        "dia_dos_namorados": "Valentine's Day",
+        "dia_das_maes": "Mother's Day",
+        "dia_dos_pais": "Father's Day",
+        "natal": "Christmas",
+        "ano_novo": "New Year",
+        "aposentadoria": "Retirement",
+        "nascimento": "Birth",
+        "outro": "Other"
+      }
+    },
+    "relationship": {
+      "label": "Relationship",
+      "placeholder": "Select a relationship",
+      "options": {
+        "mae": "Mother",
+        "pai": "Father",
+        "filho": "Son/Daughter",
+        "esposo": "Spouse",
+        "namorado": "Boyfriend/Girlfriend",
+        "amigo": "Friend",
+        "irmao": "Brother/Sister",
+        "avo": "Grandfather/Grandmother",
+        "tio": "Uncle/Aunt",
+        "primo": "Cousin",
+        "colega": "Colleague",
+        "chefe": "Boss",
+        "professor": "Teacher",
+        "outro": "Other"
+      }
+    },
+    "emotion": {
+      "label": "Emotion",
+      "placeholder": "Select an emotion",
+      "options": {
+        "alegria": "Joy",
+        "amor": "Love",
+        "gratidao": "Gratitude",
+        "saudade": "Longing",
+        "esperanca": "Hope",
+        "orgulho": "Pride",
+        "carinho": "Affection",
+        "admiracao": "Admiration",
+        "felicidade": "Happiness",
+        "ternura": "Tenderness",
+        "outro": "Other"
+      }
+    },
+    "vocalPreference": {
+      "label": "Vocal Preference",
+      "placeholder": "Select a preference",
+      "options": {
+        "masculina": "Male Voice",
+        "feminina": "Female Voice",
+        "sem_preferencia": "No Preference"
+      }
+    },
+    "personName": {
+      "label": "Person's Name",
+      "placeholder": "Enter the person's name"
+    },
+    "additionalInfo": {
+      "label": "Additional Information",
+      "placeholder": "Tell us more about the person or occasion (optional)"
+    },
+    "submitButton": "Create Song",
+    "loadingText": "Creating your song..."
+  },
+  "validation": {
+    "required": "This field is required",
+    "emailInvalid": "Invalid email",
+    "passwordTooShort": "Password must be at least 8 characters",
+    "passwordsDoNotMatch": "Passwords do not match",
+    "nameRequired": "Name is required",
+    "phoneInvalid": "Invalid phone number",
+    "occasionRequired": "Select an occasion",
+    "relationshipRequired": "Select a relationship",
+    "emotionRequired": "Select an emotion",
+    "personNameRequired": "Enter the person's name",
+    "minLength": "Must be at least {{min}} characters",
+    "maxLength": "Must be at most {{max}} characters",
+    "fieldRequired": "The {{field}} field is required"
+  },
+  "placeholders": {
+    "email": "Enter your email",
+    "password": "Enter your password",
+    "name": "Enter your name",
+    "phone": "Enter your phone",
+    "message": "Enter your message"
+  },
+  "buttons": {
+    "submit": "Submit",
+    "cancel": "Cancel",
+    "save": "Save",
+    "edit": "Edit",
+    "delete": "Delete",
+    "confirm": "Confirm",
+    "back": "Back",
+    "next": "Next",
+    "finish": "Finish",
+    "generate": "Generate Song",
+    "regenerate": "Generate Again",
+    "generateFor": "Generate song for {{name}}",
+    "estimatedTime": "Estimated time: {{time}} minutes"
+  }
+}

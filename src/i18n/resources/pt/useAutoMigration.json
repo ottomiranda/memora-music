@@ -1,0 +1,18 @@
+{
+  "migration": {
+    "starting": "Iniciando migração automática",
+    "completed": "Migração concluída",
+    "error": "Erro na migração",
+    "unknownError": "Erro desconhecido na migração",
+    "autoMigrationError": "Erro na migração automática",
+    "unknownAutoError": "Erro desconhecido",
+    "cannotVerifyGuest": "Não foi possível verificar músicas do convidado",
+    "dataFound": "Dados encontrados",
+    "noData": "Nenhum dado",
+    "noGuestId": "Nenhum Guest ID encontrado para migração",
+    "dataFoundStarting": "Dados encontrados, iniciando migração...",
+    "checkDataError": "Erro ao verificar dados para migração",
+    "checkingMigration": "Verificando migração para usuário",
+    "noDataToMigrate": "Nenhum dado para migrar, limpando Guest ID"
+  }
+}

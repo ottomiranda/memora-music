@@ -16,6 +16,7 @@ import { LiquidGlassButton } from "@/components/ui/LiquidGlassButton";
 import { useMusicStore } from "@/store/musicStore";
 import { useNavigate } from "react-router-dom";
 import { useAuthStore } from "@/store/authStore";
+import { useTranslation } from "@/i18n/hooks/useTranslation";
 
 
 const ExamplesGrid = () => {
@@ -23,6 +24,7 @@ const ExamplesGrid = () => {
   const [linked, setLinked] = useState<Record<string, Song | null>>({});
   const { startNewCreationFlow } = useMusicStore();
   const navigate = useNavigate();
+  const { t: tMarketing } = useTranslation('marketing');
   
   const THEME_KEYWORDS: Record<string, string[]> = {
     'aniversario': ['aniversário', 'birthday', 'bday'],
@@ -127,104 +129,86 @@ const ExamplesGrid = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const examples = [
+  const examplesBase: Array<{ id: string; image: string; icon: any; color: string; }> = [
     {
       id: "aniversario",
-      title: "Aniversário",
-      subtitle: "Transforme momentos especiais em melodias inesquecíveis",
       image: "https://trae-api-us.mchost.guru/api/ide/v1/text_to_image?prompt=birthday%20celebration%20brazilian%20diverse%20family%20colorful%20balloons%20cake%20warm%20lighting%20joyful%20atmosphere%20mixed%20ethnicity&image_size=square",
       icon: Gift,
       color: "memora-primary"
     },
     {
       id: "casamento",
-      title: "Casamento",
-      subtitle: "Celebre o amor com uma canção única",
       image: "https://trae-api-us.mchost.guru/api/ide/v1/text_to_image?prompt=elegant%20wedding%20ceremony%20brazilian%20couple%20diverse%20ethnicity%20flowers%20rings%20romantic%20atmosphere%20soft%20lighting%20cultural%20diversity&image_size=square",
       icon: Heart,
       color: "memora-coral"
     },
     {
       id: "amor",
-      title: "Canção de Amor",
-      subtitle: "Declare seu amor com uma melodia personalizada",
       image: "https://trae-api-us.mchost.guru/api/ide/v1/text_to_image?prompt=romantic%20brazilian%20couple%20mixed%20ethnicity%20holding%20hands%20walking%20together%20sunset%20golden%20hour%20love%20intimate%20moment%20cultural%20diversity&image_size=square",
       icon: Heart,
       color: "memora-coral"
     },
     {
       id: "aniversario-casamento",
-      title: "Aniversário de Casamento",
-      subtitle: "Renove os votos de amor com uma canção personalizada",
       image: "https://trae-api-us.mchost.guru/api/ide/v1/text_to_image?prompt=wedding%20anniversary%20celebration%20mature%20couple%20diverse%20ethnicity%20golden%20rings%20flowers%20elegant%20romantic%20dinner%20candlelight%20intimate%20setting&image_size=square",
       icon: Calendar,
       color: "memora-secondary"
     },
     {
       id: "so-porque",
-      title: "Só porque…",
-      subtitle: "Demonstre carinho sem motivo especial com música",
       image: "https://trae-api-us.mchost.guru/api/ide/v1/text_to_image?prompt=spontaneous%20gesture%20love%20couple%20diverse%20ethnicity%20surprise%20gift%20warm%20colors%20heartfelt%20moment%20romantic%20atmosphere&image_size=square",
       icon: Heart,
       color: "memora-turquoise"
     },
     {
       id: "proposta",
-      title: "Proposta",
-      subtitle: "Torne o pedido inesquecível com a canção perfeita",
       image: "https://trae-api-us.mchost.guru/api/ide/v1/text_to_image?prompt=romantic%20marriage%20proposal%20scene%20in%20cozy%20living%20room%20with%20warm%20lighting%20man%20kneeling%20with%20ring%20woman%20surprised%20elegant%20home%20decor%20soft%20romantic%20atmosphere%20beautiful%20couple%20intimate%20moment%20television%20showing%20memories%20photos%20on%20wall%20rose%20petals%20on%20floor&image_size=square",
       icon: Gift,
       color: "memora-accent"
     },
     {
       id: "graduacao",
-      title: "Graduação",
-      subtitle: "Marque sua conquista com uma música personalizada",
       image: "https://trae-api-us.mchost.guru/api/ide/v1/text_to_image?prompt=graduation%20ceremony%20happy%20student%20cap%20gown%20university%20celebration%20diploma%20academic%20achievement%20diverse%20ethnicity%20joyful%20moment%20campus%20background%20festive%20atmosphere&image_size=square",
       icon: Users,
       color: "memora-secondary"
     },
     {
       id: "melhores-amigos",
-      title: "Melhores Amigos",
-      subtitle: "Celebre a amizade verdadeira com uma canção especial",
       image: "https://trae-api-us.mchost.guru/api/ide/v1/text_to_image?prompt=group%20friends%20diverse%20ethnicities%20laughing%20together%20outdoor%20picnic%20friendship%20celebration%20joyful%20bonding%20sunset%20park%20casual%20clothes&image_size=square",
       icon: Users,
       color: "memora-turquoise"
     },
     {
       id: "noivado",
-      title: "Noivado",
-      subtitle: "Marque o início de uma nova jornada com música",
       image: "https://trae-api-us.mchost.guru/api/ide/v1/text_to_image?prompt=engagement%20celebration%20happy%20couple%20mixed%20ethnicity%20champagne%20rings%20joyful%20atmosphere%20romantic%20dinner&image_size=square",
       icon: Users,
       color: "memora-primary"
     },
     {
       id: "dia-pais",
-      title: "Dia dos Pais",
-      subtitle: "Expresse gratidão através de uma música única",
       image: "https://trae-api-us.mchost.guru/api/ide/v1/text_to_image?prompt=brazilian%20father%20diverse%20ethnicity%20playing%20with%20child%20outdoor%20park%20paternal%20bond%20family%20joy%20father%20day%20celebration%20cultural%20diversity&image_size=square",
       icon: Heart,
       color: "memora-primary"
     },
     {
       id: "dia-maes",
-      title: "Dia das Mães",
-      subtitle: "Homenageie quem mais ama com uma canção especial",
       image: "https://trae-api-us.mchost.guru/api/ide/v1/text_to_image?prompt=mother%20diverse%20ethnicity%20hugging%20child%20garden%20flowers%20maternal%20love%20mother%20day%20warm%20sunlight%20tender%20moment&image_size=square",
       icon: Heart,
       color: "memora-coral"
     },
     {
       id: "natal",
-      title: "Natal",
-      subtitle: "Espalhe a magia natalina através de uma melodia única",
       image: "https://trae-api-us.mchost.guru/api/ide/v1/text_to_image?prompt=christmas%20celebration%20family%20diverse%20ethnicities%20decorated%20tree%20lights%20gifts%20cozy%20living%20room%20festive%20warm%20atmosphere%20holiday%20gathering&image_size=square",
       icon: Gift,
       color: "memora-secondary"
     }
   ];
+
+  const examples = examplesBase.map((item) => ({
+    ...item,
+    title: tMarketing(`examples.cards.${item.id}.title`),
+    subtitle: tMarketing(`examples.cards.${item.id}.subtitle`),
+  }));
 
   const handlePlayPause = (id: string) => {
     if (playingId === id) {
@@ -244,9 +228,15 @@ const ExamplesGrid = () => {
         {/* Header */}
         <div className="text-center mb-16">
           <SectionTitle>
-            Momentos que <span className="bg-gradient-to-r from-yellow-500 to-purple-600 bg-clip-text text-transparent">merecem</span> uma <span className="bg-gradient-to-r from-yellow-500 to-purple-600 bg-clip-text text-transparent">música</span>
+            {tMarketing('examples.title').split(' ').map((word, index, array) => 
+              index === array.length - 1 ? (
+                <span key={index} className="bg-gradient-to-r from-yellow-500 to-purple-600 bg-clip-text text-transparent">{word}</span>
+              ) : (
+                <span key={index}>{word} </span>
+              )
+            )}
           </SectionTitle>
-          <SectionSubtitle>Há algo especial no poder das músicas de unir as pessoas e tornar momentos ainda mais significativos.</SectionSubtitle>
+          <SectionSubtitle>{tMarketing('examples.subtitle')}</SectionSubtitle>
         </div>
 
         {/* Examples Slider (Swiper Coverflow) */}
@@ -263,7 +253,7 @@ const ExamplesGrid = () => {
             <div className="flex items-center space-x-2 text-white/50">
               <Music className="w-5 h-5" />
               <span className="font-medium">
-                Prévias de 45 segundos • Músicas completas de até 5 minutos
+                {tMarketing('examples.cta.meta')}
               </span>
             </div>
             <LiquidGlassButton
@@ -272,7 +262,7 @@ const ExamplesGrid = () => {
               className="w-full sm:w-auto font-heading font-bold"
             >
               <Sparkles className="mr-3 h-5 w-5" />
-              Crie sua música agora
+              {tMarketing('examples.cta.button')}
             </LiquidGlassButton>
           </div>
         </div>
@@ -305,6 +295,7 @@ function ExamplesSwiper({
   const { play, pause, currentId, isPlaying } = useAudioPlayerStore();
   const [loadingSongId, setLoadingSongId] = useState<string | null>(null);
   const audioCache = useRef(new Map<string, { playbackUrl: string; downloadUrl?: string | null }>());
+  const { t: tMarketing } = useTranslation('marketing');
 
   const resolveAudioForSong = async (song: Song) => {
     const cached = audioCache.current.get(song.id);
@@ -425,9 +416,18 @@ function ExamplesSwiper({
                           ? "bg-white text-neutral-900"
                           : "bg-white/20 hover:bg-white/30 text-white border border-white/40 backdrop-blur"
                       } ${isLoading ? 'opacity-70 cursor-wait' : ''}`}
-                      aria-label={`${isLoading ? 'Carregando' : (isCardPlaying || simulatedPlaying) ? 'Pausar' : 'Reproduzir'} exemplo de ${example.title}`}
+                      aria-label={isLoading
+                        ? tMarketing('examples.cardCta.aria.loading', { title: example.title })
+                        : (isCardPlaying || simulatedPlaying)
+                          ? tMarketing('examples.cardCta.aria.pause', { title: example.title })
+                          : tMarketing('examples.cardCta.aria.play', { title: example.title })
+                      }
                     >
-                      <span className="tracking-wide">{isLoading ? 'Carregando...' : 'Ouça agora'}</span>
+                      <span className="tracking-wide">
+                        {isLoading
+                          ? tMarketing('examples.cardCta.loading')
+                          : tMarketing('examples.cardCta.play')}
+                      </span>
                       <span className={`ml-1 inline-flex h-5 w-5 items-center justify-center rounded-full ${
                         (isCardPlaying || simulatedPlaying) ? "bg-neutral-900 text-white" : "bg-yellow-400 text-neutral-900"
                       }`}>

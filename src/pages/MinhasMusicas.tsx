@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { API_BASE_URL, songsApi } from '../config/api';
 import { SongCard } from '../components/SongCard';
 import { useMusicStore } from '../store/musicStore';
@@ -8,10 +9,11 @@ import { Loader2, Music, Download, Share2, Edit3, Trash2, Search, Link as LinkIc
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
-import { triggerDownload } from '@/utils/download';
+import { triggerDownload, ensureMp3Extension } from '@/utils/download';
 import { useAudioPlayerStore } from '@/store/audioPlayerStore';
 import { toast } from 'sonner';
 import { getSunoAudioLinks } from '@/lib/sunoAudio';
+import { useLocalizedRoutes } from '@/hooks/useLocalizedRoutes';
 
 interface Song {
   id: string;
@@ -32,6 +34,8 @@ interface Song {
 
 const MinhasMusicas: React.FC = () => {
   const navigate = useNavigate();
+  const { t } = useTranslation();
+  const { buildPath } = useLocalizedRoutes();
   const { reset, startNewCreationFlow } = useMusicStore();
   const [songs, setSongs] = useState<Song[]>([]);
   const [loading, setLoading] = useState(true);
@@ -63,7 +67,7 @@ const MinhasMusicas: React.FC = () => {
           const option2 = s.audioUrlOption2 || s.audio_url_option2 || '';
           return {
             id: s.id,
-            title: s.title || 'Sem título',
+            title: s.title || t('minhasMusicas:messages.noTitle'),
             lyrics: s.lyrics || undefined,
             audioUrlOption1: option1 || undefined,
             audioUrlOption2: option2 || undefined,
@@ -86,7 +90,7 @@ const MinhasMusicas: React.FC = () => {
         setSongs(normalized);
       } catch (err) {
         console.error('Erro ao carregar músicas:', err);
-        setError('Erro ao carregar suas músicas. Tente novamente.');
+        setError(t('minhasMusicas:messages.loadError'));
       } finally {
         setLoading(false);
       }
@@ -140,14 +144,14 @@ const MinhasMusicas: React.FC = () => {
       }
 
       if (!playbackUrl) {
-        toast.error('Não foi possível carregar o áudio desta música.');
+        toast.error(t('minhasMusicas:messages.audioLoadError'));
         return;
       }
 
       playGlobal(song.id, playbackUrl, { title: song.title, versionLabel });
     } catch (error) {
       console.error('Erro ao reproduzir música:', error);
-      toast.error('Falha ao iniciar a reprodução. Tente novamente.');
+      toast.error(t('minhasMusicas:messages.playbackError'));
     } finally {
       setLoadingSongId((current) => (current === song.id ? null : current));
     }
@@ -162,7 +166,7 @@ const MinhasMusicas: React.FC = () => {
       // Pré-carregar dados mínimos no formulário e navegar
       const { updateFormData } = useMusicStore.getState();
       updateFormData({ songTitle: song.title, lyrics: song.lyrics || '' });
-      navigate('/criar');
+      navigate(buildPath('create'));
     } catch (e) {
       console.error('Erro ao preparar edição:', e);
     }
@@ -181,7 +185,7 @@ const MinhasMusicas: React.FC = () => {
       setSongs((prev) => prev.filter((s) => s.id !== song.id));
     } catch (e) {
       console.error('Erro ao excluir música:', e);
-      alert('Não foi possível excluir a música.');
+      alert(t('minhasMusicas:messages.deleteError'));
     } finally {
       setConfirmOpen(false);
       setSongPendingDelete(null);
@@ -189,11 +193,12 @@ const MinhasMusicas: React.FC = () => {
   };
 
   const handleShare = async (song: Song) => {
-    const publicUrl = `${window.location.origin}/musica/${song.id}`;
+    const publicPath = buildPath('publicMusic', { id: song.id });
+    const publicUrl = `${window.location.origin}${publicPath}`;
     const url = publicUrl;
     const shareData = {
       title: song.title,
-      text: 'Ouça minha música no Memora Music',
+      text: t('minhasMusicas:messages.shareText'),
       url,
     };
     try {
@@ -201,7 +206,7 @@ const MinhasMusicas: React.FC = () => {
         await navigator.share(shareData as any);
       } else {
         await navigator.clipboard.writeText(url);
-        toast.success('Link copiado para a área de transferência');
+        toast.success(t('minhasMusicas:toast.linkCopied'));
       }
     } catch {}
   };
@@ -214,11 +219,13 @@ const MinhasMusicas: React.FC = () => {
     }
 
     if (!downloadUrl) {
-      toast.error('Não foi possível localizar o arquivo para download.');
+      toast.error(t('minhasMusicas:toast.downloadError'));
       return;
     }
 
-    const friendly = `${song.title || 'minha-musica'}${filenameSuffix ? `_${filenameSuffix}` : ''}.mp3`;
+    const baseName = `${song.title || t('minhasMusicas:messages.defaultFilename')}${filenameSuffix ? `_${filenameSuffix}` : ''}`;
+    const friendly = ensureMp3Extension(baseName);
+    
     try {
       const proxyUrl = `${API_BASE_URL}/api/download?url=${encodeURIComponent(downloadUrl)}&filename=${encodeURIComponent(friendly)}`;
       await triggerDownload(proxyUrl, friendly);
@@ -233,7 +240,7 @@ const MinhasMusicas: React.FC = () => {
       <div className="min-h-screen bg-gradient-to-br from-[#4D2699] via-[#231733] to-[#160D27] flex items-center justify-center">
         <div className="text-center">
           <Loader2 className="h-12 w-12 animate-spin text-white mx-auto mb-4" />
-          <p className="text-white text-lg">Carregando suas músicas...</p>
+          <p className="text-white text-lg">{t('minhasMusicas:loading.message')}</p>
         </div>
       </div>
     );
@@ -249,7 +256,7 @@ const MinhasMusicas: React.FC = () => {
               onClick={() => window.location.reload()}
               className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg transition-colors"
             >
-              Tentar Novamente
+              {t('minhasMusicas:error.tryAgain')}
             </button>
           </div>
         </div>
@@ -259,20 +266,21 @@ const MinhasMusicas: React.FC = () => {
 
   return (
     <div className="min-h-screen">
-      <div className="container mx-auto px-4 pb-8 pt-0">
+      <div className="container mx-auto px-4 pb-8 pt-40">
         <div className="text-center mb-8">
           <h1 className="text-4xl font-bold text-white mb-4 flex items-center justify-center gap-3">
             <Music className="h-10 w-10" />
-            Minhas Músicas
+            {t('minhasMusicas:header.title')}
           </h1>
           <div className="flex items-center justify-center gap-4">
-            <p className="text-blue-200 text-lg">Suas criações musicais personalizadas</p>
+            <p className="text-blue-200 text-lg">{t('minhasMusicas:header.subtitle')}</p>
             <button
               onClick={handleCreateFirstSong}
               className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white px-4 py-2 rounded-lg font-medium transition-all duration-200 transform hover:scale-105"
             >
-              Criar Nova Música
+              {t('minhasMusicas:header.createNew')}
             </button>
+
           </div>
         </div>
 
@@ -284,7 +292,7 @@ const MinhasMusicas: React.FC = () => {
               <div className="relative">
                 <Search className="w-4 h-4 text-blue-200 absolute left-3 top-1/2 -translate-y-1/2" />
                 <Input
-                  placeholder="Buscar por título..."
+                  placeholder={t('minhasMusicas:search.placeholder')}
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
                   className="pl-9 bg-white/10 border-white/20 text-white placeholder:text-blue-200/70"
@@ -296,23 +304,23 @@ const MinhasMusicas: React.FC = () => {
             <div className="flex items-center gap-3 w-full sm:w-auto">
               <Select value={sortBy} onValueChange={(v: any) => setSortBy(v)}>
                 <SelectTrigger className="bg-white/10 border-white/20 text-white w-full sm:w-[140px]">
-                  <SelectValue placeholder="Ordenar" />
+                  <SelectValue placeholder={t('minhasMusicas:sort.placeholder')} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="recent">Mais recentes</SelectItem>
-                  <SelectItem value="oldest">Mais antigas</SelectItem>
-                  <SelectItem value="title">Título A-Z</SelectItem>
+                  <SelectItem value="recent">{t('minhasMusicas:sort.recent')}</SelectItem>
+                  <SelectItem value="oldest">{t('minhasMusicas:sort.oldest')}</SelectItem>
+                  <SelectItem value="title">{t('minhasMusicas:sort.title')}</SelectItem>
                 </SelectContent>
               </Select>
               <Select value={statusFilter} onValueChange={(v: any) => setStatusFilter(v)}>
                 <SelectTrigger className="bg-white/10 border-white/20 text-white w-full sm:w-[120px]">
-                  <SelectValue placeholder="Status" />
+                  <SelectValue placeholder={t('minhasMusicas:status.placeholder')} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">Todos</SelectItem>
-                  <SelectItem value="completed">Concluídas</SelectItem>
-                  <SelectItem value="processing">Processando</SelectItem>
-                  <SelectItem value="failed">Falhas</SelectItem>
+                  <SelectItem value="all">{t('minhasMusicas:status.all')}</SelectItem>
+                  <SelectItem value="completed">{t('minhasMusicas:status.completed')}</SelectItem>
+                  <SelectItem value="processing">{t('minhasMusicas:status.processing')}</SelectItem>
+                  <SelectItem value="failed">{t('minhasMusicas:status.failed')}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -324,16 +332,16 @@ const MinhasMusicas: React.FC = () => {
             <div className="bg-white/10 backdrop-blur-sm border border-white/20 rounded-xl p-8 max-w-md mx-auto">
               <Music className="h-16 w-16 text-white/50 mx-auto mb-4" />
               <h3 className="text-xl font-semibold text-white mb-2">
-                Nenhuma música encontrada
+                {t('minhasMusicas:empty.title')}
               </h3>
               <p className="text-blue-200 mb-4">
-                Você ainda não criou nenhuma música. Que tal começar agora?
+                {t('minhasMusicas:empty.subtitle')}
               </p>
               <button
                 onClick={handleCreateFirstSong}
                 className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white px-6 py-3 rounded-lg font-medium transition-all duration-200 transform hover:scale-105"
               >
-                Criar Primeira Música
+                {t('minhasMusicas:empty.createFirst')}
               </button>
             </div>
           </div>
@@ -376,26 +384,26 @@ const MinhasMusicas: React.FC = () => {
                 <div className="flex items-center gap-2">
                   <button
                     onClick={() => {
-                      const link = `${window.location.origin}/musica/${song.id}`;
+                      const link = `${window.location.origin}${buildPath('publicMusic', { id: song.id })}`;
                       navigator.clipboard.writeText(link).then(() => {
-                        // optional toast if available
+                        toast.success(t('minhasMusicas:toast.linkCopiedSuccess'));
                       }).catch(() => {});
                     }}
                     className="flex-1 py-2 bg-white/10 hover:bg-white/20 text-white rounded-md text-sm flex items-center justify-center gap-2"
                   >
-                    <LinkIcon className="w-4 h-4" /> Copiar Link
+                    <LinkIcon className="w-4 h-4" /> {t('minhasMusicas:actions.copyLink')}
                   </button>
                   <button
                     onClick={() => handleShare(song)}
                     className="flex-1 py-2 bg-white/10 hover:bg-white/20 text-white rounded-md text-sm flex items-center justify-center gap-2"
                   >
-                    <Share2 className="w-4 h-4" /> Compartilhar
+                    <Share2 className="w-4 h-4" /> {t('minhasMusicas:actions.share')}
                   </button>
                   <button
                     onClick={() => handleDelete(song)}
                     className="flex-1 py-2 bg-red-500/20 hover:bg-red-500/30 text-red-100 rounded-md text-sm flex items-center justify-center gap-2"
                   >
-                    <Trash2 className="w-4 h-4" /> Excluir
+                    <Trash2 className="w-4 h-4" /> {t('minhasMusicas:actions.delete')}
                   </button>
                 </div>
               </div>
@@ -408,15 +416,15 @@ const MinhasMusicas: React.FC = () => {
       <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
         <AlertDialogContent className="bg-white">
           <AlertDialogHeader>
-            <AlertDialogTitle>Excluir música?</AlertDialogTitle>
+            <AlertDialogTitle>{t('minhasMusicas:deleteModal.title')}</AlertDialogTitle>
             <AlertDialogDescription>
-              Esta ação não pode ser desfeita. A música "{songPendingDelete?.title}" será removida permanentemente.
+              {t('minhasMusicas:deleteModal.description', { title: songPendingDelete?.title })}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogCancel>{t('minhasMusicas:deleteModal.cancel')}</AlertDialogCancel>
             <AlertDialogAction onClick={confirmDelete} className="bg-red-600 hover:bg-red-700">
-              Excluir
+              {t('minhasMusicas:deleteModal.confirm')}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

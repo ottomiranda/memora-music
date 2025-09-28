@@ -1,40 +1,19 @@
 import { Check, Heart, Mic, Headphones, Play } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useTranslation } from "react-i18next";
 
 interface StepIndicatorProps {
   steps: string[];
   currentStep: number;
 }
 
-// Mapeamento dos novos textos e ícones para cada etapa
-const stepConfig = [
-  {
-    label: "História",
-    icon: Heart,
-    description: "Compartilhe a ocasião e os sentimentos que quer transformar em música.",
-    microcopy: "Conte sua história"
-  },
-  {
-    label: "Canção",
-    icon: Mic,
-    description: "Veja a letra criada pela IA com base na sua história.",
-    microcopy: "Sua letra está pronta"
-  },
-  {
-    label: "Estilo",
-    icon: Headphones,
-    description: "Escolha o gênero musical e a voz que combinam com o momento.",
-    microcopy: "Defina o som perfeito"
-  },
-  {
-    label: "Sua música",
-    icon: Play,
-    description: "Ouça a prévia e receba a versão final da sua canção.",
-    microcopy: "Sua música está sendo criada"
-  }
-];
+// Mapeamento dos ícones para cada etapa
+const stepIcons = [Heart, Mic, Headphones, Play];
+const stepKeys = ['story', 'lyrics', 'style', 'music'];
 
 export default function StepIndicator({ steps, currentStep }: StepIndicatorProps) {
+  const { t } = useTranslation('common');
+  
   return (
     <div className="w-full max-w-4xl mx-auto mb-12">
       {/* Container principal com efeito de vidro */}
@@ -52,8 +31,8 @@ export default function StepIndicator({ steps, currentStep }: StepIndicatorProps
         {/* Steps */}
         <div className="flex items-center justify-between relative z-10">
           {steps.map((step, index) => {
-            const config = stepConfig[index];
-            const Icon = config.icon;
+            const Icon = stepIcons[index];
+            const stepKey = stepKeys[index];
             const isCompleted = index < currentStep;
             const isCurrent = index === currentStep;
             const isFuture = index > currentStep;
@@ -69,7 +48,7 @@ export default function StepIndicator({ steps, currentStep }: StepIndicatorProps
                       isCurrent && "bg-[#7B3FE4] border-[#7B3FE4] shadow-lg shadow-[#7B3FE4]/40 scale-110",
                       isFuture && "bg-white/10 border-[#7A7A7A] backdrop-blur-md"
                     )}
-                    title={config.description}
+                    title={t(`steps.${stepKey}.description`)}
                   >
                     {/* Número do step */}
                     <span 
@@ -108,13 +87,13 @@ export default function StepIndicator({ steps, currentStep }: StepIndicatorProps
                        isFuture && "text-[#7A7A7A]"
                      )}
                    >
-                    {config.label}
+                    {t(`steps.${stepKey}.label`)}
                   </p>
                   
                   {/* Microcopy dinâmica para etapa ativa */}
                   {isCurrent && (
                     <p className="text-xs text-white/80 mt-1 animate-pulse">
-                      {config.microcopy}
+                      {t(`steps.${stepKey}.microcopy`)}
                     </p>
                   )}
                 </div>

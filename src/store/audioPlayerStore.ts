@@ -45,6 +45,7 @@ export const useAudioPlayerStore = create<AudioPlayerState>((set, get) => ({
   duration: 0,
   volume: initialVolume,
   play: (id: string, url: string, meta?: AudioMeta) => {
+    console.log('[AudioPlayerStore] play called with:', { id, url, meta });
     try {
       set({ isLoading: true });
       if (!audioEl) {
@@ -71,13 +72,15 @@ export const useAudioPlayerStore = create<AudioPlayerState>((set, get) => ({
       audioEl.currentTime = 0;
       audioEl.volume = get().volume;
       void audioEl.play();
-      set({ 
+      const newState = { 
         currentId: id, 
         currentUrl: url, 
         isPlaying: true,
         currentTitle: meta?.title || null,
         currentVersionLabel: meta?.versionLabel || null
-      });
+      };
+      console.log('[AudioPlayerStore] Setting state:', newState);
+      set(newState);
     } catch (e) {
       console.error('[AudioPlayer] play error', e);
     }

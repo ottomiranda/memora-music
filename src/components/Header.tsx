@@ -1,7 +1,9 @@
 import { Music, Heart } from "lucide-react";
 import { Link } from "react-router-dom";
+import { useLocalizedRoutes } from '@/hooks/useLocalizedRoutes';
 
 export default function Header() {
+  const { buildPath } = useLocalizedRoutes();
   return (
     <header className="fixed top-0 left-0 right-0 z-50 bg-card/80 backdrop-blur-md border-b border-border">
       <div className="container mx-auto px-4 h-16 flex items-center justify-between">
@@ -22,7 +24,7 @@ export default function Header() {
           <a href="#exemplos" className="text-muted-foreground hover:text-foreground transition-smooth">
             Exemplos
           </a>
-          <Link to="/criar" className="text-muted-foreground hover:text-foreground transition-smooth">
+          <Link to={buildPath('create')} className="text-muted-foreground hover:text-foreground transition-smooth">
             Criar Música
           </Link>
         </nav>

@@ -1,34 +1,26 @@
 import { useState } from "react";
 import { ChevronDown } from "lucide-react";
+import { useTranslation } from 'react-i18next';
 import SectionTitle from '../ui/SectionTitle';
 import SectionSubtitle from '../ui/SectionSubtitle';
 import { LiquidGlassCard } from "@/components/ui/LiquidGlassCard";
 
 const FAQSection = () => {
+  const { t } = useTranslation('common');
   const [openFAQ, setOpenFAQ] = useState<number | null>(null);
 
-  const faqs = [
-    {
-      question: "Como a música é criada?",
-      answer: "A partir do briefing que você envia (ocasião e sentimentos), nossa inteligência artificial gera a letra e a melodia em menos de 5 minutos. Você recebe duas versões exclusivas para escolher a que mais emociona."
-    },
-    {
-      question: "Quais estilos musicais estão disponíveis?",
-      answer: "Oferecemos uma variedade de estilos, desde baladas românticas até pop, MPB, Rock, sertanejo e outros 50 mais. Assim você pode escolher o gênero que melhor combina com o momento."
-    },
-    {
-      question: "Preciso pagar para criar minha música?",
-      answer: "A primeira criação é totalmente grátis. Depois, novas músicas poderão ser adquiridas por R$149,00 cada."
-    },
-    {
-      question: "Quanto tempo leva para receber minha música final?",
-      answer: "Em menos de 5 minutos sua música já estará pronta para ouvir e baixar em MP3."
-    },
-    {
-      question: "Posso compartilhar a música nas redes sociais?",
-      answer: "Sim! Você pode baixar a versão final em MP3 e compartilhar livremente em qualquer rede social ou enviar diretamente para a pessoa homenageada."
-    }
+  const faqKeys = [
+    'howMusicIsCreated',
+    'availableStyles', 
+    'pricing',
+    'deliveryTime',
+    'sharing'
   ];
+
+  const faqs = faqKeys.map(key => ({
+    question: t(`faq.questions.${key}.question`),
+    answer: t(`faq.questions.${key}.answer`)
+  }));
 
   // Feedback form migrated to modal triggered from footer
 
@@ -43,9 +35,9 @@ const FAQSection = () => {
         <div className="mb-20">
           <div className="text-center mb-12">
             <SectionTitle>
-              Perguntas Frequentes
+              {t('faq.title')}
             </SectionTitle>
-            <SectionSubtitle>Tire suas dúvidas sobre como criar sua música personalizada</SectionSubtitle>
+            <SectionSubtitle>{t('faq.subtitle')}</SectionSubtitle>
           </div>
 
           <div className="space-y-6">

@@ -13,6 +13,8 @@ import { LiquidGlassButton } from '@/components/ui/LiquidGlassButton';
 import { LiquidGlassButtonWhite } from '@/components/ui/LiquidGlassButtonWhite';
 import { LiquidGlassButtonWhiteSmall } from '@/components/ui/LiquidGlassButtonWhiteSmall';
 import { Button } from '@/components/ui/button';
+import { useTranslation } from '@/i18n/hooks/useTranslation';
+import { useLocalizedRoutes } from '@/hooks/useLocalizedRoutes';
 
 // Removido carregamento estático para evitar loadStripe('') quando a env não está presente
 
@@ -38,6 +40,15 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({ isOpen, onClose, onC
   const [isLoadingPayment, setIsLoadingPayment] = useState(false);
   const [pending, setPending] = useState<Array<{ payment_intent_id: string; amount: number; currency: string; voucher_url?: string | null }>>([]);
   const pollingRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const { t, formatCurrency, i18n } = useTranslation('payment');
+  const { buildPath } = useLocalizedRoutes();
+  const createPath = buildPath('create');
+  const isPortuguese = i18n.language?.startsWith('pt');
+  const amountCents = isPortuguese ? 14900 : 3000; // R$149,00 ou US$30.00
+  const currency = isPortuguese ? 'BRL' : 'USD';
+  const priceDisplay = formatCurrency(amountCents / 100, currency);
+  const stripeLocale = isPortuguese ? 'pt-BR' : 'en';
+  const paymentMethodOrder = isPortuguese ? ['pix', 'card', 'boleto'] : ['card'];
 
   // Verificação robusta da configuração do Stripe
   const envPublishable = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY;
@@ -96,13 +107,13 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({ isOpen, onClose, onC
         method: 'POST',
         headers,
         body: JSON.stringify({
-          amount: 1490, // R$ 14,90 em centavos
-          currency: 'brl',
+          amount: amountCents,
+          currency: currency.toLowerCase(),
           metadata: {
             userId: user?.id || undefined,
             deviceId: localStorage.getItem('deviceId') || undefined,
             productType: 'music_generation',
-            description: 'Geração de música premium'
+            description: t('modal.metadata.description')
           }
         })
       });
@@ -117,9 +128,10 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({ isOpen, onClose, onC
       console.debug('[PAYMENT_MODAL] ClientSecret obtido com sucesso');
     } catch (error) {
       console.error('[PAYMENT_MODAL] Erro ao buscar clientSecret:', error);
-      const errorMsg = error instanceof Error ? error.message : 'Erro ao carregar formulário de pagamento';
-      setErrorMessage(errorMsg);
-      toast.error(errorMsg);
+      const fallbackMessage = error instanceof Error && error.message
+        ? t('modal.toasts.genericError', { message: error.message })
+        : t('modal.toasts.loadFormError');
+      setErrorMessage(fallbackMessage);
     } finally {
       setIsLoadingPayment(false);
     }
@@ -179,7 +191,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({ isOpen, onClose, onC
             unblockCreationFlow();
             hidePaymentPopup();
             onConfirm();
-            navigate('/criar');
+            navigate(createPath);
           }
         } catch {}
       }, 3000);
@@ -191,7 +203,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({ isOpen, onClose, onC
         pollingRef.current = null;
       }
     };
-  }, [isOpen, pending.length, showPaymentForm, token, unblockCreationFlow, hidePaymentPopup, navigate, onConfirm]);
+  }, [createPath, hidePaymentPopup, isOpen, navigate, onConfirm, pending.length, showPaymentForm, token, unblockCreationFlow]);
   
   const handleUpgradeClick = async () => {
     if (isStripeConfigured && stripePromise) {
@@ -209,13 +221,13 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({ isOpen, onClose, onC
     // Simula processamento de pagamento
     setTimeout(() => {
       setIsProcessing(false);
-      toast.success('Pagamento simulado realizado com sucesso!');
+      toast.success(t('modal.toasts.simulatedSuccess'));
       onConfirm();
     }, 2000);
   };
   
   const handleStripeSuccess = async (paymentIntentId: string) => {
-    toast.success('Pagamento aprovado! Liberando criação...');
+    toast.success(t('modal.toasts.stripeSuccess'));
 
     try {
       // Desbloquear imediatamente o fluxo na UI
@@ -251,7 +263,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({ isOpen, onClose, onC
       const isFree = data?.isFree ?? data?.data?.isFree;
 
       if (isFree === true) {
-        navigate('/criar');
+        navigate(createPath);
       } else {
         // Tentar novamente após pequena espera (propagação do webhook)
         setTimeout(async () => {
@@ -263,7 +275,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({ isOpen, onClose, onC
             const retryData = await retry.json().catch(() => ({}));
             const retryFree = retryData?.isFree ?? retryData?.data?.isFree;
             if (retryFree === true) {
-              navigate('/criar');
+              navigate(createPath);
             }
           } catch {}
         }, 1500);
@@ -277,7 +289,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({ isOpen, onClose, onC
   };
   
   const handleStripeError = (error: string) => {
-    setErrorMessage(`Erro no pagamento: ${error}`);
+    setErrorMessage(t('modal.toasts.genericError', { message: error }));
     setShowPaymentForm(false);
   };
 
@@ -319,7 +331,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({ isOpen, onClose, onC
           variant="ghost"
           size="icon"
           className="absolute top-4 right-4 text-white/80 hover:text-white transition-colors"
-          aria-label="Fechar popup"
+          aria-label={t('modal.close')}
         >
           <X className="h-6 w-6" />
         </Button>
@@ -329,14 +341,14 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({ isOpen, onClose, onC
           <div className="absolute -top-16 -right-16 h-40 w-40 rounded-full bg-white/20 blur-3xl" />
           <div className="relative px-5 py-6 sm:px-6 sm:py-6 text-white">
             <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-              <div className="flex items-center gap-3">
-                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white/25 backdrop-blur-sm">
-                  <Star className="h-6 w-6 text-yellow-200" />
+                <div className="flex items-center gap-3">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white/25 backdrop-blur-sm">
+                    <Star className="h-6 w-6 text-yellow-200" />
+                  </div>
+                  <div>
+                  <h2 className="text-xl font-heading font-semibold sm:text-2xl">{t('modal.title')}</h2>
+                  </div>
                 </div>
-                <div>
-                  <h2 className="text-xl font-heading font-semibold sm:text-2xl">Seja Premium</h2>
-                </div>
-              </div>
             </div>
           </div>
         </div>
@@ -348,16 +360,16 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({ isOpen, onClose, onC
               <div className="rounded-2xl border border-white/20 bg-white/10 p-4 text-center shadow-lg shadow-purple-900/20">
                 <p className="flex items-center justify-center gap-2 text-sm font-medium text-white">
                   <span role="img" aria-hidden="true">🔒</span>
-                  Limite de músicas gratuitas atingido
+                  {t('modal.limitReached.title')}
                 </p>
                 <p className="mt-2 text-xs text-white/80 sm:text-sm">
-                  Você já criou sua música gratuita. Faça upgrade para continuar!
+                  {t('modal.limitReached.description')}
                 </p>
               </div>
 
               <div className="rounded-2xl border border-white/20 bg-white/10 p-5 text-center">
-                <p className="text-2xl font-heading font-semibold text-white sm:text-3xl">R$ 14,90</p>
-                <p className="mt-1 text-xs text-white/70 sm:text-sm">pagamento único</p>
+                <p className="text-2xl font-heading font-semibold text-white sm:text-3xl">{t('modal.price.amount', { amount: priceDisplay })}</p>
+                <p className="mt-1 text-xs text-white/70 sm:text-sm">{t('modal.price.note')}</p>
               </div>
             </div>
           )}
@@ -365,13 +377,13 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({ isOpen, onClose, onC
           {/* Pagamentos pendentes (exibe antes do formulário) */}
           {!showPaymentForm && isOpen && pending && pending.length > 0 && (
             <div className="space-y-2 rounded-2xl border border-amber-200/60 bg-amber-500/15 p-4 text-amber-50">
-              <p className="text-sm font-semibold sm:text-base">Pagamento pendente encontrado</p>
+              <p className="text-sm font-semibold sm:text-base">{t('modal.pending.title')}</p>
               <p className="text-xs text-amber-100/90 sm:text-sm">
-                Finalize o boleto antes de continuar. Você pode abrir o comprovante abaixo e, após concluir o pagamento, clicar em verificar.
+                {t('modal.pending.description')}
               </p>
               {pending.map((p) => (
                 <div key={p.payment_intent_id} className="rounded-xl border border-white/10 bg-black/10 p-3 text-[11px] sm:text-xs">
-                  <div className="font-mono tracking-tight text-white/90">Intent: {p.payment_intent_id}</div>
+                  <div className="font-mono tracking-tight text-white/90">{t('modal.pending.intentLabel', { id: p.payment_intent_id })}</div>
                   {p.voucher_url && (
                     <a
                       href={p.voucher_url}
@@ -379,7 +391,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({ isOpen, onClose, onC
                       rel="noopener noreferrer"
                       className="mt-2 inline-flex items-center text-white underline-offset-4 hover:underline"
                     >
-                      Abrir boleto
+                      {t('modal.pending.openVoucher')}
                     </a>
                   )}
                 </div>
@@ -396,15 +408,15 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({ isOpen, onClose, onC
                       unblockCreationFlow();
                       hidePaymentPopup();
                       onConfirm();
-                      navigate('/criar');
+                      navigate(createPath);
                     } else {
-                      toast.info('Ainda aguardando confirmação. Tente novamente em alguns segundos.');
+                      toast.info(t('modal.toasts.pendingWaiting'));
                     }
                   } catch {}
                 }}
                 className="w-full justify-center text-[11px] font-semibold uppercase tracking-wide text-slate-900"
               >
-                Já paguei, verificar agora
+                {t('modal.pending.checkButton')}
               </LiquidGlassButtonWhiteSmall>
             </div>
           )}
@@ -413,25 +425,25 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({ isOpen, onClose, onC
           {showPaymentForm && isStripeConfigured && stripePromise ? (
             <div className="space-y-4">
               <div className="flex items-center justify-between text-white">
-                <h3 className="text-xl font-heading font-semibold tracking-tight">Finalizar Pagamento</h3>
+                <h3 className="text-xl font-heading font-semibold tracking-tight">{t('modal.form.title')}</h3>
                 <button
                   onClick={handleBackToPlans}
                   className="text-sm font-medium text-white/70 transition-colors hover:text-white"
                 >
-                  ← Voltar
+                  {t('modal.form.back')}
                 </button>
               </div>
 
               {isLoadingPayment && (
                 <div className="flex items-center justify-center gap-3 rounded-2xl border border-white/15 bg-white/10 py-6 text-white/80">
                   <div className="h-8 w-8 animate-spin rounded-full border-b-2 border-white" />
-                  <span>Carregando pagamento...</span>
+                  <span>{t('modal.form.loading')}</span>
                 </div>
               )}
 
               {!isLoadingPayment && !clientSecret && errorMessage && (
                 <div className="rounded-2xl border border-red-300/70 bg-red-500/20 p-4 text-sm text-red-50">
-                  Ocorreu um erro ao carregar o formulário. Tente novamente.
+                  {t('modal.form.loadError')}
                 </div>
               )}
 
@@ -441,7 +453,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({ isOpen, onClose, onC
                     stripe={stripePromise}
                     options={{
                       clientSecret,
-                      paymentMethodOrder: ['pix', 'card', 'boleto'],
+                      paymentMethodOrder,
                       appearance: {
                         theme: 'stripe' as const,
                         variables: {
@@ -454,11 +466,12 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({ isOpen, onClose, onC
                           borderRadius: '8px',
                         },
                       },
-                      locale: 'pt-BR',
+                      locale: stripeLocale,
                     }}
                   >
                     <StripePaymentForm
-                      amount={1490}
+                      amount={amountCents}
+                      currency={currency}
                       onSuccess={handleStripeSuccess}
                       onError={handleStripeError}
                       disabled={isProcessing}
@@ -474,9 +487,9 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({ isOpen, onClose, onC
                 disabled={isProcessing}
                 className="w-full h-12 flex-col gap-0.5 text-center disabled:opacity-60"
               >
-                <span>{isProcessing ? 'Processando...' : 'Fazer Upgrade Agora'}</span>
+                <span>{isProcessing ? t('modal.actions.processing') : t('modal.actions.upgrade')}</span>
                 {!isStripeConfigured && (
-                  <span className="text-xs font-normal text-white/80">Modo simulado</span>
+                  <span className="text-xs font-normal text-white/80">{t('modal.actions.simulatedMode')}</span>
                 )}
               </LiquidGlassButton>
               <LiquidGlassButtonWhite
@@ -484,7 +497,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({ isOpen, onClose, onC
                 disabled={isProcessing}
                 className="w-full h-12 text-sm font-semibold disabled:opacity-60"
               >
-                Talvez mais tarde
+                {t('modal.actions.maybeLater')}
               </LiquidGlassButtonWhite>
             </div>
           )}

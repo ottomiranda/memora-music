@@ -3,8 +3,10 @@ import { LiquidGlassButton } from "@/components/ui/LiquidGlassButton";
 import { useMusicStore } from "@/store/musicStore";
 import { useAuthStore } from "@/store/authStore";
 import { useNavigate } from "react-router-dom";
+import { useTranslation } from '@/i18n/hooks/useTranslation';
 
 const FinalCTA = ({ onOpenAuth }: { onOpenAuth: () => void }) => {
+  const { t } = useTranslation('finalCta');
   const { startNewCreationFlow } = useMusicStore();
   const { token } = useAuthStore();
   const navigate = useNavigate();
@@ -34,10 +36,10 @@ const FinalCTA = ({ onOpenAuth }: { onOpenAuth: () => void }) => {
         {/* Main Content */}
         <div className="mb-12">
           <h2 className="text-3xl sm:text-4xl lg:text-6xl font-heading font-bold text-memora-secondary mb-6 leading-tight">
-            Surpreenda <span className="bg-gradient-to-r from-yellow-400 via-purple-500 to-purple-600 bg-clip-text text-transparent">quem você ama</span> com <span className="bg-gradient-to-r from-yellow-400 via-purple-500 to-purple-600 bg-clip-text text-transparent">uma música</span> feita só para <span className="bg-gradient-to-r from-yellow-400 via-purple-500 to-purple-600 bg-clip-text text-transparent">ele ou ela</span>
+            {t('header.surprise')} <span className="bg-gradient-to-r from-yellow-400 via-purple-500 to-purple-600 bg-clip-text text-transparent">{t('header.lovedOne')}</span> {t('header.with')} <span className="bg-gradient-to-r from-yellow-400 via-purple-500 to-purple-600 bg-clip-text text-transparent">{t('header.song')}</span> {t('header.madeFor')} <span className="bg-gradient-to-r from-yellow-400 via-purple-500 to-purple-600 bg-clip-text text-transparent">{t('header.them')}</span>
           </h2>
           <p className="text-xl lg:text-2xl text-white/90 max-w-3xl mx-auto leading-relaxed">
-            É grátis no lançamento. Crie agora e descubra o poder de transformar sentimentos em melodia.
+            {t('header.subtitle')}
           </p>
         </div>
 
@@ -55,8 +57,8 @@ const FinalCTA = ({ onOpenAuth }: { onOpenAuth: () => void }) => {
               }
             }}
           >
-            <Sparkles className="mr-3 h-6 w-6" />
-            Crie sua música agora
+            {t('button.createNow')}
+            <Sparkles className="ml-3 h-6 w-6" />
           </LiquidGlassButton>
         </div>
 
@@ -68,10 +70,10 @@ const FinalCTA = ({ onOpenAuth }: { onOpenAuth: () => void }) => {
                 <Music className="w-6 h-6 text-white" />
               </div>
               <h3 className="font-heading font-bold text-white text-lg">
-                100% Personalizada
+                {t('features.personalized.title')}
               </h3>
               <p className="text-white/50 text-sm">
-                Cada música é única e criada especialmente para você
+                {t('features.personalized.description')}
               </p>
             </div>
 
@@ -82,10 +84,10 @@ const FinalCTA = ({ onOpenAuth }: { onOpenAuth: () => void }) => {
                 </div>
               </div>
               <h3 className="font-heading font-bold text-white text-lg">
-                Tecnologia Avançada
+                {t('features.technology.title')}
               </h3>
               <p className="text-white/50 text-sm">
-                Inteligência artificial de última geração para criar sua música
+                {t('features.technology.description')}
               </p>
             </div>
 
@@ -96,10 +98,10 @@ const FinalCTA = ({ onOpenAuth }: { onOpenAuth: () => void }) => {
                 </div>
               </div>
               <h3 className="font-heading font-bold text-white text-lg">
-                Qualidade Profissional
+                {t('features.quality.title')}
               </h3>
               <p className="text-white/50 text-sm">
-                Áudio em alta qualidade, pronto para compartilhar
+                {t('features.quality.description')}
               </p>
             </div>
           </div>
@@ -109,15 +111,15 @@ const FinalCTA = ({ onOpenAuth }: { onOpenAuth: () => void }) => {
         <div className="mt-12 flex flex-wrap justify-center items-center gap-8 text-white/60 text-sm">
           <div className="flex items-center space-x-2">
             <div className="w-2 h-2 bg-green-400 rounded-full" />
-            <span>Grátis no lançamento</span>
+            <span>{t('trust.freeLaunch')}</span>
           </div>
           <div className="flex items-center space-x-2">
             <div className="w-2 h-2 bg-green-400 rounded-full" />
-            <span>Sem compromisso</span>
+            <span>{t('trust.noCommitment')}</span>
           </div>
           <div className="flex items-center space-x-2">
             <div className="w-2 h-2 bg-green-400 rounded-full" />
-            <span>Resultado em minutos</span>
+            <span>{t('trust.quickResult')}</span>
           </div>
         </div>
       </div>

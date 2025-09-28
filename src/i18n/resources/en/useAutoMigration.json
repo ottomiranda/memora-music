@@ -1,0 +1,18 @@
+{
+  "migration": {
+    "starting": "Starting automatic migration",
+    "completed": "Migration completed",
+    "error": "Migration error",
+    "unknownError": "Unknown migration error",
+    "autoMigrationError": "Automatic migration error",
+    "unknownAutoError": "Unknown error",
+    "cannotVerifyGuest": "Could not verify guest songs",
+    "dataFound": "Data found",
+    "noData": "No data",
+    "noGuestId": "No Guest ID found for migration",
+    "dataFoundStarting": "Data found, starting migration...",
+    "checkDataError": "Error checking data for migration",
+    "checkingMigration": "Checking migration for user",
+    "noDataToMigrate": "No data to migrate, clearing Guest ID"
+  }
+}

@@ -163,8 +163,8 @@ const webhookRateLimit = rateLimit({
 
 // Validation schemas
 const createPaymentIntentSchema = z.object({
-  amount: z.number().min(100, 'Valor mínimo é R$ 1,00').max(100000, 'Valor máximo é R$ 1.000,00'),
-  currency: z.string().default('brl'),
+  amount: z.number().min(100, 'Valor mínimo é R$ 1,00 ou $1.00').max(100000, 'Valor máximo é R$ 1.000,00 ou $1.000.00'),
+  currency: z.enum(['brl', 'usd'], { errorMap: () => ({ message: 'Moeda deve ser BRL ou USD' }) }),
   metadata: z.object({
     userId: z.string().optional(),
     deviceId: z.string().optional(),
@@ -238,38 +238,44 @@ router.post('/create-payment-intent', paymentRateLimit, optionalAuthMiddleware, 
     
     // Criar Payment Intent no Stripe
     let paymentIntent: Stripe.PaymentIntent;
+    const paymentMetadata = {
+      userId: userId || 'guest',
+      deviceId: metadata?.deviceId || '',
+      productType: metadata?.productType || 'music_generation',
+      description: metadata?.description || (currency === 'usd' ? 'Premium music generation' : 'Geração de música premium'),
+      timestamp: new Date().toISOString(),
+    };
+
     try {
-      // Tenta forçar BR métodos (cartão, boleto e pix)
-      paymentIntent = await stripe.paymentIntents.create({
-        amount: Math.round(amount),
-        currency: 'brl',
-        payment_method_types: ['card', 'boleto', 'pix'],
-        payment_method_options: {
-          boleto: { expires_after_days: 5 },
-          pix: { expires_after_seconds: 60 * 60 },
-        },
-        metadata: {
-          userId: userId || 'guest',
-          deviceId: metadata?.deviceId || '',
-          productType: metadata?.productType || 'music_generation',
-          description: metadata?.description || 'Geração de música premium',
-          timestamp: new Date().toISOString(),
-        },
-      });
+      if (currency === 'usd') {
+        // Para USD, usar apenas cartão (métodos internacionais)
+        paymentIntent = await stripe.paymentIntents.create({
+          amount: Math.round(amount),
+          currency: 'usd',
+          payment_method_types: ['card'],
+          metadata: paymentMetadata,
+        });
+      } else {
+        // Para BRL, tentar métodos brasileiros (cartão, boleto e pix)
+        paymentIntent = await stripe.paymentIntents.create({
+          amount: Math.round(amount),
+          currency: 'brl',
+          payment_method_types: ['card', 'boleto', 'pix'],
+          payment_method_options: {
+            boleto: { expires_after_days: 5 },
+            pix: { expires_after_seconds: 60 * 60 },
+          },
+          metadata: paymentMetadata,
+        });
+      }
     } catch (e: any) {
-      // Fallback: conta pode não ter PIX/BOLETO ativados — usar APM automáticos
+      // Fallback: usar APM automáticos
       console.warn('[STRIPE] Falha ao usar payment_method_types específicos, aplicando fallback automático');
       paymentIntent = await stripe.paymentIntents.create({
         amount: Math.round(amount),
-        currency: 'brl',
+        currency: currency,
         automatic_payment_methods: { enabled: true },
-        metadata: {
-          userId: userId || 'guest',
-          deviceId: metadata?.deviceId || '',
-          productType: metadata?.productType || 'music_generation',
-          description: metadata?.description || 'Geração de música premium',
-          timestamp: new Date().toISOString(),
-        },
+        metadata: paymentMetadata,
       });
     }
     

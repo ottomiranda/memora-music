@@ -5,6 +5,7 @@ interface UiState {
   authCallback: (() => void) | null;
   isPaymentPopupVisible: boolean;
   isCreationFlowBlocked: boolean;
+  isAuthPopupSuppressed: boolean;
   showAuthPopup: (callback?: () => void) => void;
   hideAuthPopup: () => void;
   executeAuthCallback: () => void;
@@ -13,6 +14,7 @@ interface UiState {
   handleUpgrade: () => void;
   blockCreationFlow: () => void;
   unblockCreationFlow: () => void;
+  suppressAuthPopup: (duration?: number) => void;
 }
 
 export const useUiStore = create<UiState>((set, get) => ({
@@ -20,18 +22,24 @@ export const useUiStore = create<UiState>((set, get) => ({
   authCallback: null,
   isPaymentPopupVisible: false,
   isCreationFlowBlocked: false,
-   
+  isAuthPopupSuppressed: false,
+  
   showAuthPopup: (callback?: () => void) => {
+    if (get().isAuthPopupSuppressed) {
+      console.debug('[UI] Auth popup suprimido - ignorando solicitação');
+      return;
+    }
+
     set({ 
       isAuthModalOpen: true, 
-      authCallback: callback 
+      authCallback: callback ?? null 
     });
   },
    
   hideAuthPopup: () => {
     set({ 
       isAuthModalOpen: false, 
-      authCallback: undefined 
+      authCallback: null 
     });
   },
    
@@ -39,7 +47,21 @@ export const useUiStore = create<UiState>((set, get) => ({
     const { authCallback } = get();
     if (authCallback) {
       authCallback();
-      set({ authCallback: undefined });
+      set({ authCallback: null });
+    }
+  },
+
+  suppressAuthPopup: (duration = 1500) => {
+    set({ 
+      isAuthPopupSuppressed: true,
+      isAuthModalOpen: false,
+      authCallback: null,
+    });
+
+    if (duration > 0) {
+      setTimeout(() => {
+        set({ isAuthPopupSuppressed: false });
+      }, duration);
     }
   },
 

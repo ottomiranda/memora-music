@@ -508,59 +508,45 @@ export class SongService {
    */
   static async shouldSongBePaid(userId, guestId) {
     try {
-      const deviceId = userId || guestId;
-      
-      if (!deviceId) {
+      if (!userId && !guestId) {
         console.warn('No user_id or guest_id provided for checking payment status');
         return true; // Default to paid if no user info
       }
 
-      // Get current user data to check freesongsused count
-      let userData = null;
-      let error = null;
-      
+      const orFilters = [];
       if (userId) {
-        // For authenticated users, search by user_id (not primary key)
-        const result = await getSupabaseClient()
-          .from('user_creations')
-          .select('freesongsused, user_id, device_id')
-          .eq('user_id', userId)
-          .maybeSingle();
-        userData = result.data;
-        error = result.error;
-        
-        // Se não encontrar via user_id, tentar associar via device_id igual ao próprio userId
-        if ((!userData || !userData.freesongsused) && !error) {
-          const fallback = await getSupabaseClient()
-            .from('user_creations')
-            .select('freesongsused, user_id, device_id')
-            .eq('device_id', userId)
-            .maybeSingle();
-          if (fallback.data) {
-            userData = fallback.data;
-            error = fallback.error;
-          }
-        }
-      } else {
-        // For guest users, search by device_id
-        const result = await getSupabaseClient()
-          .from('user_creations')
-          .select('freesongsused, user_id, device_id')
-          .eq('device_id', guestId)
-          .maybeSingle();
-        userData = result.data;
-        error = result.error;
+        orFilters.push(`user_id.eq.${userId}`);
       }
+      [userId, guestId].filter(Boolean).forEach(id => {
+        orFilters.push(`device_id.eq.${id}`);
+      });
 
-      if (error || !userData) {
-        console.log(`⚠️ User not found for device_id: ${deviceId}, defaulting to free song`);
+      if (orFilters.length === 0) {
+        console.log('⚠️ No identifiers matched for user_creations lookup, defaulting to free song');
         return false; // First song is always free for new users
       }
 
-      const currentCount = userData.freesongsused || 0;
+      const { data, error } = await getSupabaseClient()
+        .from('user_creations')
+        .select('freesongsused')
+        .or(orFilters.join(','))
+        .order('freesongsused', { ascending: false })
+        .limit(1);
+
+      if (error) {
+        console.error('❌ Error checking payment status:', error);
+        return false;
+      }
+
+      if (!data || data.length === 0) {
+        console.log('⚠️ User not found in user_creations, defaulting to free song');
+        return false;
+      }
+
+      const currentCount = data[0]?.freesongsused || 0;
       const shouldBePaid = currentCount >= 1; // First song (count 0) is free, subsequent songs are paid
       
-      console.log(`💰 Payment check for device_id ${deviceId}: freesongsused=${currentCount}, shouldBePaid=${shouldBePaid}`);
+      console.log(`💰 Payment check: freesongsused=${currentCount}, shouldBePaid=${shouldBePaid}`);
       
       return shouldBePaid;
     } catch (error) {

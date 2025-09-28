@@ -1,0 +1,27 @@
+{
+  "loading": {
+    "title": "Verifying email...",
+    "subtitle": "Processing your email confirmation..."
+  },
+  "success": {
+    "title": "Email verified successfully!",
+    "subtitle": "Redirecting in {{countdown}} seconds...",
+    "button": "Go to My Songs"
+  },
+  "error": {
+    "title": "Verification error",
+    "buttons": {
+      "retry": "Try again",
+      "login": "Login",
+      "home": "Go home"
+    },
+    "messages": {
+      "supabaseInit": "Failed to initialize Supabase client",
+      "sessionSync": "Failed to sync session with system",
+      "noSession": "No session found. Please check your email and try again.",
+      "emailNotConfirmed": "Email not yet confirmed. Please check your inbox.",
+      "invalidCredentials": "Invalid credentials. Please try logging in again.",
+      "unknown": "Unknown error"
+    }
+  }
+}

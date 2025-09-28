@@ -2,6 +2,7 @@ import React from 'react';
 import { Play, Pause, Music, Clock, User, Download } from 'lucide-react';
 import { Song } from '../types/guest';
 import { useAudioPlayerStore } from '@/store/audioPlayerStore';
+import { useTranslation } from '@/i18n/hooks/useTranslation';
 
 interface SongCardProps {
   song: Song;
@@ -25,6 +26,7 @@ export const SongCard: React.FC<SongCardProps> = ({
   playingVersionLabel,
 }) => {
   const { currentTime, duration } = useAudioPlayerStore();
+  const { t, language } = useTranslation('minhasMusicas');
 
   const handlePlayPause = () => {
     if (isLoading) return;
@@ -43,7 +45,7 @@ export const SongCard: React.FC<SongCardProps> = ({
 
   const formatDate = (dateString: string): string => {
     const date = new Date(dateString);
-    return date.toLocaleDateString('pt-BR', {
+    return date.toLocaleDateString(language === 'pt' ? 'pt-BR' : 'en-US', {
       day: '2-digit',
       month: '2-digit',
       year: 'numeric'
@@ -78,7 +80,7 @@ export const SongCard: React.FC<SongCardProps> = ({
           onClick={handlePlayPause}
           disabled={isLoading}
           className="flex-shrink-0 ml-3 w-12 h-12 bg-yellow-500 hover:bg-yellow-600 text-black rounded-full flex items-center justify-center transition-colors duration-200"
-          aria-label={isLoading ? 'Carregando música' : isPlaying ? 'Pausar música' : 'Reproduzir música'}
+          aria-label={isLoading ? t('songCard.loadingMusic') : isPlaying ? t('songCard.pauseMusic') : t('songCard.playMusic')}
         >
           {isLoading ? (
             <div className="w-5 h-5 border-2 border-white/40 border-t-white rounded-full animate-spin" />
@@ -112,9 +114,9 @@ export const SongCard: React.FC<SongCardProps> = ({
             {(song as any).audioUrlOption1 && (
               <div className="flex items-center justify-between">
                 <div className="text-sm text-gray-200 font-medium flex items-center gap-2">
-                  Versão A
+                  {t('songCard.versionA')}
                   {isPlaying && playingVersionLabel === 'A' && (
-                    <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-blue-100 text-blue-700">Tocando</span>
+                    <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-blue-100 text-blue-700">{t('songCard.playing')}</span>
                   )}
                 </div>
                 <div className="flex items-center gap-2">
@@ -122,17 +124,17 @@ export const SongCard: React.FC<SongCardProps> = ({
                     onClick={() => onPlay?.(song, (song as any).audioUrlOption1, 'A')}
                     disabled={isLoading}
                     className={`px-2 py-1 text-xs rounded-md ${isPlaying && playingVersionLabel === 'A' ? 'bg-purple-700 text-white' : 'bg-purple-600 text-white hover:bg-purple-700'} ${isLoading ? 'opacity-70 cursor-not-allowed' : ''}`}
-                    aria-label="Reproduzir versão A"
+                    aria-label={t('songCard.playVersionA')}
                   >
-                    <Play className="w-3 h-3 inline mr-1" /> Reproduzir
+                    <Play className="w-3 h-3 inline mr-1" /> {t('songCard.playButton')}
                   </button>
                   {onDownloadVersion && (
                     <button
                       onClick={() => onDownloadVersion('A', (song as any).audioUrlOption1)}
                       className="px-2 py-1 text-xs rounded-md bg-gray-100 text-gray-800 hover:bg-gray-200"
-                      aria-label="Baixar versão A"
+                      aria-label={t('songCard.downloadVersionA')}
                     >
-                      <Download className="w-3 h-3 inline mr-1" /> Baixar
+                      <Download className="w-3 h-3 inline mr-1" /> {t('songCard.downloadButton')}
                     </button>
                   )}
                 </div>
@@ -141,9 +143,9 @@ export const SongCard: React.FC<SongCardProps> = ({
             {(song as any).audioUrlOption2 && (
               <div className="flex items-center justify-between">
                 <div className="text-sm text-gray-200 font-medium flex items-center gap-2">
-                  Versão B
+                  {t('songCard.versionB')}
                   {isPlaying && playingVersionLabel === 'B' && (
-                    <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-blue-100 text-blue-700">Tocando</span>
+                    <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-blue-100 text-blue-700">{t('songCard.playing')}</span>
                   )}
                 </div>
                 <div className="flex items-center gap-2">
@@ -151,17 +153,17 @@ export const SongCard: React.FC<SongCardProps> = ({
                     onClick={() => onPlay?.(song, (song as any).audioUrlOption2, 'B')}
                     disabled={isLoading}
                     className={`px-2 py-1 text-xs rounded-md ${isPlaying && playingVersionLabel === 'B' ? 'bg-purple-700 text-white' : 'bg-purple-600 text-white hover:bg-purple-700'} ${isLoading ? 'opacity-70 cursor-not-allowed' : ''}`}
-                    aria-label="Reproduzir versão B"
+                    aria-label={t('songCard.playVersionB')}
                   >
-                    <Play className="w-3 h-3 inline mr-1" /> Reproduzir
+                    <Play className="w-3 h-3 inline mr-1" /> {t('songCard.playButton')}
                   </button>
                   {onDownloadVersion && (
                     <button
                       onClick={() => onDownloadVersion('B', (song as any).audioUrlOption2)}
                       className="px-2 py-1 text-xs rounded-md bg-gray-100 text-gray-800 hover:bg-gray-200"
-                      aria-label="Baixar versão B"
+                      aria-label={t('songCard.downloadVersionB')}
                     >
-                      <Download className="w-3 h-3 inline mr-1" /> Baixar
+                      <Download className="w-3 h-3 inline mr-1" /> {t('songCard.downloadButton')}
                     </button>
                   )}
                 </div>
@@ -174,7 +176,7 @@ export const SongCard: React.FC<SongCardProps> = ({
       {/* Footer com data de criação */}
       <div className="mt-4 pt-3 border-t border-gray-100">
         <div className="flex items-center justify-between text-xs text-gray-300">
-          <span>Criada em {formatDate(song.createdAt)}</span>
+          <span>{t('songCard.createdOn')} {formatDate(song.createdAt)}</span>
           {song.status && (
             <span className={`px-2 py-1 rounded-full text-xs font-medium ${
               song.status === 'completed' 
@@ -183,9 +185,9 @@ export const SongCard: React.FC<SongCardProps> = ({
                 ? 'bg-yellow-500/20 text-yellow-200'
                 : 'bg-red-500/20 text-red-200'
             }`}>
-              {song.status === 'completed' ? 'Concluída' : 
-               song.status === 'processing' ? 'Processando' : 
-               song.status === 'failed' ? 'Falhou' : song.status}
+              {song.status === 'completed' ? t('songCard.statusCompleted') : 
+               song.status === 'processing' ? t('songCard.statusProcessing') : 
+               song.status === 'failed' ? t('songCard.statusFailed') : song.status}
             </span>
           )}
         </div>
@@ -195,7 +197,7 @@ export const SongCard: React.FC<SongCardProps> = ({
       {isPlaying && (
         <div className="mt-3">
           <div className="flex items-center justify-between text-xs text-blue-200 mb-1">
-            <span className="font-medium">Reproduzindo{playingVersionLabel ? ` · Versão ${playingVersionLabel}` : ''}</span>
+            <span className="font-medium">{t('songCard.nowPlaying')}{playingVersionLabel ? ` · ${playingVersionLabel === 'A' ? t('songCard.versionA') : t('songCard.versionB')}` : ''}</span>
             <span>
               {formatDuration(Math.floor(currentTime || 0))} / {formatDuration(Math.floor(duration || 0))}
             </span>

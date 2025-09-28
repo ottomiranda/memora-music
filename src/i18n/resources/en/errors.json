@@ -1,0 +1,71 @@
+{
+  "general": {
+    "unknown": "Unknown error",
+    "network": "Network error",
+    "server": "Server error",
+    "timeout": "Timeout exceeded",
+    "unauthorized": "Unauthorized",
+    "forbidden": "Access denied",
+    "notFound": "Not found",
+    "badRequest": "Invalid request",
+    "conflict": "Conflict",
+    "tooManyRequests": "Too many requests",
+    "internalServerError": "Internal server error",
+    "serviceUnavailable": "Service unavailable",
+    "tryAgain": "Try again",
+    "somethingWentWrong": "Something went wrong"
+  },
+  "validation": {
+    "required": "This field is required",
+    "invalid": "Invalid value",
+    "tooShort": "Must be at least {{min}} characters",
+    "tooLong": "Must be at most {{max}} characters",
+    "invalidEmail": "Invalid email",
+    "invalidPhone": "Invalid phone",
+    "invalidUrl": "Invalid URL",
+    "invalidDate": "Invalid date",
+    "invalidTime": "Invalid time",
+    "invalidNumber": "Invalid number",
+    "invalidPassword": "Invalid password",
+    "passwordMismatch": "Passwords don't match",
+    "weakPassword": "Password too weak",
+    "fieldRequired": "The {{field}} field is required",
+    "invalidRange": "Must be between {{min}} and {{max}}"
+  },
+  "auth": {
+    "loginFailed": "Login failed",
+    "invalidCredentials": "Invalid credentials",
+    "accountLocked": "Account locked",
+    "accountNotVerified": "Account not verified",
+    "sessionExpired": "Session expired",
+    "accessDenied": "Access denied",
+    "tokenInvalid": "Invalid token",
+    "tokenExpired": "Token expired",
+    "emailNotVerified": "Email not verified",
+    "userNotFound": "User not found",
+    "emailAlreadyExists": "Email already exists",
+    "registrationFailed": "Registration failed"
+  },
+  "file": {
+    "uploadFailed": "File upload failed",
+    "fileTooLarge": "File too large. Maximum {{size}}MB",
+    "invalidFileType": "Unsupported file type. Use {{types}}",
+    "fileNotFound": "File not found",
+    "downloadFailed": "Download failed",
+    "processingFailed": "Error processing file {{filename}}"
+  },
+  "songCreation": {
+    "failed": "Failed to create song",
+    "invalidData": "Invalid data for creation",
+    "processingError": "Error processing song for {{name}}",
+    "generationTimeout": "Timeout exceeded after {{minutes}} minutes",
+    "quotaExceeded": "Quota of {{limit}} songs exceeded"
+  },
+  "payment": {
+    "failed": "Payment failed",
+    "cardDeclined": "Card declined",
+    "insufficientFunds": "Insufficient funds",
+    "invalidCard": "Invalid card",
+    "processingError": "Payment processing error"
+  }
+}

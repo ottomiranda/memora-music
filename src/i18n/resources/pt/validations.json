@@ -1,0 +1,98 @@
+{
+  "briefing": {
+    "occasion": {
+      "required": "Por favor, selecione uma ocasião especial.",
+      "min": "A ocasião é obrigatória."
+    },
+    "recipientName": {
+      "required": "Por favor, informe o nome da pessoa.",
+      "min": "O nome da pessoa é obrigatório.",
+      "max": "O nome deve ter no máximo 50 caracteres."
+    },
+    "relationship": {
+      "required": "Por favor, selecione o tipo de relação.",
+      "min": "A relação é obrigatória."
+    },
+    "senderName": {
+      "max": "O nome deve ter no máximo 50 caracteres."
+    },
+    "hobbies": {
+      "min": "Hobbies são obrigatórios",
+      "max": "Hobbies devem ter no máximo 500 caracteres"
+    },
+    "qualities": {
+      "min": "Qualidades são obrigatórias",
+      "max": "Qualidades devem ter no máximo 500 caracteres"
+    },
+    "uniqueTraits": {
+      "min": "Características únicas são obrigatórias",
+      "max": "Características únicas devem ter no máximo 500 caracteres"
+    },
+    "memories": {
+      "min": "Memórias são obrigatórias",
+      "max": "Memórias devem ter no máximo 1000 caracteres"
+    }
+  },
+  "lyrics": {
+    "lyrics": {
+      "required": "A letra da música é obrigatória.",
+      "min": "A letra deve ter pelo menos 10 caracteres.",
+      "max": "A letra deve ter no máximo 2000 caracteres."
+    }
+  },
+  "style": {
+    "genre": {
+      "required": "Por favor, selecione um gênero musical.",
+      "min": "O gênero musical é obrigatório."
+    },
+    "emotion": {
+      "required": "Por favor, selecione uma emoção.",
+      "min": "A emoção é obrigatória."
+    },
+    "vocalPreference": {
+      "required": "Por favor, selecione uma preferência vocal.",
+      "min": "A preferência vocal é obrigatória."
+    }
+  },
+  "auth": {
+    "email": {
+      "required": "O email é obrigatório.",
+      "invalid": "Por favor, insira um email válido."
+    },
+    "password": {
+      "minLength": "A senha deve ter pelo menos 6 caracteres.",
+      "maxLength": "A senha deve ter no máximo 100 caracteres."
+    },
+    "name": {
+      "minLength": "O nome deve ter pelo menos 2 caracteres.",
+      "maxLength": "O nome deve ter no máximo 100 caracteres.",
+      "invalidFormat": "O nome deve conter apenas letras e espaços."
+    }
+  },
+  "errors": {
+    "invalidStep": "Passo inválido: {{step}}",
+    "required": "Este campo é obrigatório.",
+    "tooShort": "Deve ter pelo menos {{min}} caracteres.",
+    "tooLong": "Deve ter no máximo {{max}} caracteres.",
+    "invalidEmail": "Por favor, insira um email válido.",
+    "invalidFormat": "Formato inválido."
+  },
+  "customMessages": {
+    "occasion": "Por favor, selecione uma ocasião",
+    "recipientName": "Por favor, informe o nome da pessoa",
+    "relationship": "Por favor, selecione o relacionamento",
+    "hobbies": "Por favor, descreva os hobbies e interesses (obrigatório)",
+    "qualities": "Por favor, descreva as qualidades da pessoa (obrigatório)",
+    "uniqueTraits": "Por favor, descreva características únicas (obrigatório)",
+    "memories": "Por favor, compartilhe algumas memórias especiais (obrigatório)",
+    "lyrics": "Por favor, escreva a letra da música",
+    "genre": "Por favor, selecione um estilo musical",
+    "emotion": "Selecione a emoção que deseja transmitir.",
+    "vocalPreference": "Por favor, selecione uma preferência vocal"
+  },
+  "song": {
+    "userIdOrGuestIdRequired": "É necessário fornecer userId ou guestId",
+    "guestIdRequired": "ID do convidado é obrigatório",
+    "taskIdRequired": "ID da tarefa é obrigatório"
+  }
+}

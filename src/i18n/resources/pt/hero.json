@@ -1,0 +1,21 @@
+{
+  "headline": {
+    "part1": "A música que transforma",
+    "feelings": "sentimentos",
+    "part2": "em",
+    "gift": "presente"
+  },
+  "subheadline": {
+    "part1": "Em até 5 minutos, a Memora cria duas versões profissionais",
+    "part2": " e únicas da sua canção para você escolher e emocionar quem ama."
+  },
+  "cta": {
+    "title": "Vamos começar?",
+    "button": "Crie sua música agora",
+    "freeMessage": "✨ Grátis na primeira criação - Sem cartão necessário"
+  },
+  "form": {
+    "placeholder": "Digite o nome aqui",
+    "ariaDescription": "Digite o nome da pessoa para quem você quer criar a música"
+  }
+}

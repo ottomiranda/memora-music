@@ -1,0 +1,27 @@
+{
+  "loading": {
+    "title": "Verificando email...",
+    "subtitle": "Processando sua confirmação de email..."
+  },
+  "success": {
+    "title": "Email verificado com sucesso!",
+    "subtitle": "Redirecionando em {{countdown}} segundos...",
+    "button": "Ir para Minhas Músicas"
+  },
+  "error": {
+    "title": "Erro na verificação",
+    "buttons": {
+      "retry": "Tentar novamente",
+      "login": "Fazer login",
+      "home": "Voltar ao início"
+    },
+    "messages": {
+      "supabaseInit": "Falha ao inicializar cliente Supabase",
+      "sessionSync": "Falha ao sincronizar sessão com o sistema",
+      "noSession": "Nenhuma sessão encontrada. Verifique seu email e tente novamente.",
+      "emailNotConfirmed": "Email ainda não foi confirmado. Verifique sua caixa de entrada.",
+      "invalidCredentials": "Credenciais inválidas. Tente fazer login novamente.",
+      "unknown": "Erro desconhecido"
+    }
+  }
+}

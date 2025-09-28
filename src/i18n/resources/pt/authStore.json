@@ -1,0 +1,36 @@
+{
+  "migration": {
+    "starting": "Iniciando migração de dados do convidado",
+    "deviceIdNotFound": "DeviceId não encontrado",
+    "completed": "Migração concluída com sucesso",
+    "failed": "Erro ao migrar dados do convidado",
+    "notCompleted": "Migração não concluída",
+    "migrationFailed": "Migração falhou",
+    "guestIdRemoved": "GuestId removido do localStorage"
+  },
+  "auth": {
+    "supabaseInitFailed": "Falha ao inicializar Supabase",
+    "invalidSession": "Sessão inválida",
+    "invalidCredentials": "Email ou senha inválidos",
+    "unknownCreateError": "Erro desconhecido ao criar conta",
+    "logoutComplete": "Logout completo realizado",
+    "logoutError": "Erro durante logout",
+    "passwordRecoveryError": "Erro ao solicitar recuperação de senha",
+    "resendEmailError": "Erro ao reenviar email de confirmação",
+    "sessionSynced": "Sessão sincronizada",
+    "sessionSyncError": "Erro ao sincronizar sessão"
+  },
+  "hydration": {
+    "configuring": "Configurando hidratação...",
+    "started": "HIDRATAÇÃO INICIADA",
+    "tokensFound": "Tokens encontrados",
+    "clientInitialized": "Cliente Supabase inicializado, verificando sessão...",
+    "invalidSessionOrError": "Sessão inválida ou erro",
+    "initFailedDuringHydration": "Falha ao inicializar cliente Supabase durante hidratação",
+    "sessionCheckError": "Erro ao verificar sessão durante hidratação",
+    "invalidTokenRemoved": "Token inválido removido durante hidratação",
+    "completeNotAuthenticated": "Hidratação completa - usuário não autenticado",
+    "criticalError": "Erro crítico durante hidratação",
+    "initializationError": "Erro durante inicialização"
+  }
+}

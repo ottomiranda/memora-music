@@ -7,9 +7,10 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { musicGenres, searchGenres, type MusicGenre, type SubGenre } from '@/data/musicGenres';
+import { musicGenres, type MusicGenre, type SubGenre } from '@/data/musicGenres';
 import { useMusicStore } from '@/store/musicStore';
 import { cn } from '@/lib/utils';
+import { useTranslation } from 'react-i18next';
 
 interface GenreSelectorProps {
   onGenreSelect?: (genreId: string, subGenreId?: string) => void;
@@ -18,28 +19,62 @@ interface GenreSelectorProps {
   className?: string;
 }
 
-export const GenreSelector: React.FC<GenreSelectorProps> = ({
+export default function GenreSelector({
   onGenreSelect,
   selectedGenre,
   selectedSubGenre,
-  className = ''
-}) => {
+  className = '',
+}: GenreSelectorProps) {
+  const { t } = useTranslation('common');
   const { updateFormData } = useMusicStore();
+  const [selectedSubGenres, setSelectedSubGenres] = useState<string[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedMainGenre, setSelectedMainGenre] = useState<MusicGenre | null>(null);
+  const [activeTab, setActiveTab] = useState<'brazilian' | 'international'>('brazilian');
+  const [showSubGenres, setShowSubGenres] = useState(false);
+  const [currentGenre, setCurrentGenre] = useState<any>(null);
   const [currentView, setCurrentView] = useState<'genres' | 'subgenres'>('genres');
   const [internalSelectedGenre, setInternalSelectedGenre] = useState<string | null>(selectedGenre || null);
+  const [selectedMainGenre, setSelectedMainGenre] = useState<MusicGenre | null>(null);
   const [internalSelectedSubGenre, setInternalSelectedSubGenre] = useState<string | null>(selectedSubGenre || null);
 
   // Debug logs
   console.log('GenreSelector - musicGenres:', musicGenres)
   console.log('GenreSelector - musicGenres length:', musicGenres.length)
 
-  // Filtrar gêneros baseado na busca
+  // Filtrar gêneros baseado na busca, suportando traduções
   const filteredGenres = useMemo(() => {
-    if (!searchQuery.trim()) return musicGenres;
-    return searchGenres(searchQuery);
-  }, [searchQuery]);
+    const trimmedQuery = searchQuery.trim().toLowerCase();
+    if (!trimmedQuery) return musicGenres;
+
+    const matchesQuery = (value?: string | null) =>
+      typeof value === 'string' && value.toLowerCase().includes(trimmedQuery);
+
+    return musicGenres.filter((genre) => {
+      const translatedGenreDescription = t(`genreSelector.genreDescriptions.${genre.id}`, {
+        defaultValue: genre.description,
+      });
+
+      const genreMatches = [
+        genre.name,
+        genre.description,
+        translatedGenreDescription,
+      ].some(matchesQuery);
+
+      if (genreMatches) return true;
+
+      return genre.subGenres.some((subGenre) => {
+        const translatedSubDescription = t(`genreSelector.subGenreDescriptions.${subGenre.id}`, {
+          defaultValue: subGenre.description,
+        });
+
+        return [
+          subGenre.name,
+          subGenre.description,
+          translatedSubDescription,
+        ].some(matchesQuery);
+      });
+    });
+  }, [searchQuery, t]);
 
   // Separar gêneros brasileiros e internacionais
   const { brazilianGenres, internationalGenres } = useMemo(() => {
@@ -50,10 +85,8 @@ export const GenreSelector: React.FC<GenreSelectorProps> = ({
       !['mpb', 'samba', 'bossa-nova', 'forro', 'sertanejo', 'axe', 'frevo', 'baiao', 'choro', 'tropicalia', 'funk-carioca'].includes(genre.id)
     );
 
-
-
     return { brazilianGenres: brazilian, internationalGenres: international };
-  }, [filteredGenres, searchQuery, currentView]);
+  }, [filteredGenres]);
 
   const handleGenreClick = (genre: MusicGenre) => {
     setInternalSelectedGenre(genre.id);
@@ -87,6 +120,16 @@ export const GenreSelector: React.FC<GenreSelectorProps> = ({
   const clearSearch = () => {
     setSearchQuery('');
   };
+
+  const getGenreDescription = (genre: MusicGenre) =>
+    t(`genreSelector.genreDescriptions.${genre.id}`, {
+      defaultValue: genre.description,
+    });
+
+  const getSubGenreDescription = (subGenre: SubGenre) =>
+    t(`genreSelector.subGenreDescriptions.${subGenre.id}`, {
+      defaultValue: subGenre.description,
+    });
 
   const GenreCard: React.FC<{ genre: MusicGenre; isSelected?: boolean }> = ({ genre, isSelected }) => (
     <div 
@@ -152,11 +195,11 @@ export const GenreSelector: React.FC<GenreSelectorProps> = ({
           )}
         </div>
         <p className="text-sm text-white/80 leading-relaxed line-clamp-2">
-          {genre.description}
+          {getGenreDescription(genre)}
         </p>
         {genre.subGenres && genre.subGenres.length > 0 && (
           <div className="flex items-center text-xs text-white/60 pt-1">
-            <span>{genre.subGenres.length} estilo{genre.subGenres.length > 1 ? 's' : ''}</span>
+            <span>{t('genreSelector.stylesCount', { count: genre.subGenres.length })}</span>
           </div>
         )}
       </div>
@@ -195,10 +238,10 @@ export const GenreSelector: React.FC<GenreSelectorProps> = ({
         "before:opacity-0 before:transition-opacity before:duration-300",
         "group-hover:before:opacity-100",
         isSelected && [
-          "ring-2 ring-blue-400/80 shadow-blue-400/20",
-          "bg-gradient-to-br from-blue-500/30 via-blue-400/20 to-cyan-300/10",
-          "border-blue-400/50",
-          "shadow-2xl shadow-blue-500/20"
+          "ring-2 ring-amber-400/80 shadow-amber-400/20",
+          "bg-gradient-to-br from-amber-500/30 via-yellow-400/20 to-amber-300/10",
+          "border-amber-400/50",
+          "shadow-2xl shadow-amber-500/20"
         ]
       )} />
       
@@ -214,12 +257,12 @@ export const GenreSelector: React.FC<GenreSelectorProps> = ({
           <div className="flex items-center justify-between">
             <h4 className={cn(
               "font-heading font-medium text-base leading-tight line-clamp-2 drop-shadow-sm transition-all duration-500 group-hover:drop-shadow-xl",
-              isSelected ? "text-blue-100 font-semibold" : "text-white group-hover:text-white/95"
+              isSelected ? "text-amber-100 font-semibold" : "text-white group-hover:text-white/95"
             )}>
               {subGenre.name}
             </h4>
             {isSelected && (
-              <div className="flex items-center justify-center w-6 h-6 rounded-full bg-blue-400/80 backdrop-blur-sm ml-2">
+              <div className="flex items-center justify-center w-6 h-6 rounded-full bg-amber-400/80 backdrop-blur-sm ml-2">
                 <Check className="h-3 w-3 text-white flex-shrink-0" />
               </div>
             )}
@@ -228,7 +271,7 @@ export const GenreSelector: React.FC<GenreSelectorProps> = ({
             "text-sm leading-relaxed line-clamp-3 transition-colors duration-300",
             isSelected ? "text-blue-100/90" : "text-white/80"
           )}>
-            {subGenre.description}
+            {getSubGenreDescription(subGenre)}
           </p>
         </div>
        </div>
@@ -269,7 +312,7 @@ export const GenreSelector: React.FC<GenreSelectorProps> = ({
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(255,255,255,0.1),transparent_70%)] transition-opacity duration-700 group-hover:opacity-60 z-0" />
         
         {/* Animated border glow */}
-        <div className="absolute -inset-px bg-gradient-to-r from-blue-400/20 via-purple-400/20 to-pink-400/20 opacity-0 group-hover:opacity-100 transition-opacity duration-700 blur-sm rounded-2xl z-0" />
+        <div className="absolute -inset-px bg-gradient-to-r from-amber-400/20 via-purple-400/20 to-pink-400/20 opacity-0 group-hover:opacity-100 transition-opacity duration-700 blur-sm rounded-2xl z-0" />
         
         <div className="relative z-20 p-8 pb-6">
           {/* Header apenas para subgêneros */}
@@ -285,14 +328,14 @@ export const GenreSelector: React.FC<GenreSelectorProps> = ({
               </Button>
               <Music className="h-6 w-6 text-purple-300" />
               <h2 className="text-xl font-heading font-semibold text-white">
-                {`${selectedMainGenre?.name} - Subgêneros`}
+                {t('genreSelector.subgenresTitle', { genreName: selectedMainGenre?.name ?? '' })}
               </h2>
               {/* Badge do subgênero selecionado */}
               {internalSelectedSubGenre && selectedMainGenre && (
                 <div className="ml-3">
                   <Badge 
                     variant="secondary" 
-                    className="bg-gradient-to-r from-blue-500/80 to-cyan-500/80 text-white border-blue-400/50 backdrop-blur-sm shadow-lg"
+                    className="bg-gradient-to-r from-amber-500/80 to-yellow-500/80 text-white border-amber-400/50 backdrop-blur-sm shadow-lg"
                   >
                     <Music className="h-3 w-3 mr-1" />
                     {selectedMainGenre.subGenres.find(sg => sg.id === internalSelectedSubGenre)?.name}
@@ -307,7 +350,7 @@ export const GenreSelector: React.FC<GenreSelectorProps> = ({
             <div className="relative mb-6">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-white/60" />
               <Input
-                placeholder="Buscar por gênero ou estilo..."
+                placeholder={t('genreSelector.searchPlaceholder')}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="pl-10 pr-10 bg-white/10 border-white/20 text-white placeholder:text-white/60 focus:bg-white/15 focus:border-white/40"
@@ -334,7 +377,7 @@ export const GenreSelector: React.FC<GenreSelectorProps> = ({
                   // Resultados da busca
                   <div className="space-y-3">
                     <h3 className="text-lg font-heading font-semibold text-white">
-                      Resultados da busca ({filteredGenres.length})
+                      {t('genreSelector.searchResults', { count: filteredGenres.length })}
                     </h3>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
                       {filteredGenres.map((genre) => (
@@ -352,17 +395,17 @@ export const GenreSelector: React.FC<GenreSelectorProps> = ({
                     <TabsList className="grid w-full grid-cols-2 bg-white/10 border-white/20 mt-2">
                       <TabsTrigger value="brasileiros" className="flex items-center gap-2 text-white/70 data-[state=active]:text-white data-[state=active]:bg-white/20">
                         <MapPin className="w-4 h-4" />
-                        Gêneros Brasileiros
+                        {t('genreSelector.brazilianGenres')}
                       </TabsTrigger>
                       <TabsTrigger value="internacionais" className="flex items-center gap-2 text-white/70 data-[state=active]:text-white data-[state=active]:bg-white/20">
                         <Globe className="w-4 h-4" />
-                        Gêneros Internacionais
+                        {t('genreSelector.internationalGenres')}
                       </TabsTrigger>
                     </TabsList>
                     
                     <TabsContent value="brasileiros" className="mt-6">
                       <GenreSection 
-                        title="Gêneros Brasileiros" 
+                        title={t('genreSelector.brazilianGenres')} 
                         genres={brazilianGenres} 
                         icon="🇧🇷" 
                       />
@@ -370,7 +413,7 @@ export const GenreSelector: React.FC<GenreSelectorProps> = ({
                     
                     <TabsContent value="internacionais" className="mt-6">
                       <GenreSection 
-                        title="Gêneros Internacionais" 
+                        title={t('genreSelector.internationalGenres')} 
                         genres={internationalGenres} 
                         icon="🌍" 
                       />
@@ -381,9 +424,9 @@ export const GenreSelector: React.FC<GenreSelectorProps> = ({
                 {filteredGenres.length === 0 && (
                   <div className="text-center py-12">
                     <Music className="h-12 w-12 text-white/30 mx-auto mb-4" />
-                    <p className="text-white/60">Nenhum gênero encontrado para "{searchQuery}"</p>
+                    <p className="text-white/60">{t('genreSelector.noGenresFound', { searchQuery })}</p>
                     <Button variant="outline" onClick={clearSearch} className="mt-2 border-white/30 text-white hover:bg-white/10">
-                      Limpar busca
+                      {t('genreSelector.clearSearch')}
                     </Button>
                   </div>
                 )}
@@ -393,10 +436,10 @@ export const GenreSelector: React.FC<GenreSelectorProps> = ({
               <div className="space-y-4">
                 {selectedMainGenre && (
                   <>
-                    <div className="bg-gradient-to-r from-purple-100/20 to-pink-100/20 p-4 rounded-lg border border-white/20 backdrop-blur-sm">
-                      <h3 className="font-heading font-semibold text-white">{selectedMainGenre.name}</h3>
-                      <p className="text-sm text-white/70">{selectedMainGenre.description}</p>
-                    </div>
+                  <div className="bg-gradient-to-r from-purple-100/20 to-pink-100/20 p-4 rounded-lg border border-white/20 backdrop-blur-sm">
+                    <h3 className="font-heading font-semibold text-white">{selectedMainGenre.name}</h3>
+                    <p className="text-sm text-white/70">{getGenreDescription(selectedMainGenre)}</p>
+                  </div>
                     
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
                       {selectedMainGenre.subGenres.map((subGenre) => (
@@ -417,5 +460,3 @@ export const GenreSelector: React.FC<GenreSelectorProps> = ({
     </div>
   );
 };
-
-export default GenreSelector;

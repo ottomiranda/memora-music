@@ -1,0 +1,69 @@
+{
+  "form": {
+    "securePayment": "Pagamento Seguro",
+    "paymentMethod": "Método de Pagamento"
+  },
+  "button": {
+    "processing": "Processando...",
+    "completed": "Pagamento Concluído",
+    "pay": "Pagar {{amount}}"
+  },
+  "status": {
+    "processing": "Pagamento em processamento. Aguarde a confirmação."
+  },
+  "errors": {
+    "paymentError": "Erro no pagamento. Tente novamente.",
+    "invalidTaxId": "CPF/CNPJ inválido. Verifique os dados informados.",
+    "notProcessed": "Pagamento não foi processado. Tente novamente.",
+    "unexpected": "Erro inesperado. Tente novamente."
+  },
+  "feedback": {
+    "errorTitle": "Erro no Pagamento",
+    "successTitle": "Pagamento Realizado!",
+    "successMessage": "Seu pagamento foi processado com sucesso."
+  },
+  "security": {
+    "stripeSecure": "Pagamento seguro processado pelo Stripe"
+  },
+  "modal": {
+    "title": "Seja Premium",
+    "close": "Fechar popup",
+    "limitReached": {
+      "title": "Limite de músicas gratuitas atingido",
+      "description": "Você já criou sua música gratuita. Faça upgrade para continuar!"
+    },
+    "price": {
+      "amount": "{{amount}}",
+      "note": "pagamento único"
+    },
+    "pending": {
+      "title": "Pagamento pendente encontrado",
+      "description": "Finalize o boleto antes de continuar. Você pode abrir o comprovante abaixo e, após concluir o pagamento, clicar em verificar.",
+      "intentLabel": "Intent: {{id}}",
+      "openVoucher": "Abrir boleto",
+      "checkButton": "Já paguei, verificar agora"
+    },
+    "form": {
+      "title": "Finalizar Pagamento",
+      "back": "← Voltar",
+      "loading": "Carregando pagamento...",
+      "loadError": "Ocorreu um erro ao carregar o formulário. Tente novamente."
+    },
+    "actions": {
+      "upgrade": "Fazer upgrade agora",
+      "processing": "Processando...",
+      "simulatedMode": "Modo simulado",
+      "maybeLater": "Talvez mais tarde"
+    },
+    "toasts": {
+      "simulatedSuccess": "Pagamento simulado realizado com sucesso!",
+      "stripeSuccess": "Pagamento aprovado! Liberando criação...",
+      "pendingWaiting": "Ainda aguardando confirmação. Tente novamente em alguns segundos.",
+      "loadFormError": "Erro ao carregar formulário de pagamento",
+      "genericError": "Erro no pagamento: {{message}}"
+    },
+    "metadata": {
+      "description": "Geração de música premium"
+    }
+  }
+}

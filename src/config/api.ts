@@ -362,7 +362,7 @@ export const apiRequest = async <T = unknown>(
     // Sempre incluir o deviceId em todas as requisições
     const deviceId = localStorage.getItem('deviceId');
     if (deviceId) {
-      requestHeaders['X-Device-ID'] = deviceId;
+      requestHeaders['x-device-id'] = deviceId;
     }
     
     if (isLoggedIn && token) {

@@ -5,6 +5,8 @@ import fetch from 'node-fetch';
 import multer from 'multer';
 import { SongService } from '../../src/lib/services/songService.js';
 import { executeSupabaseQuery, getSupabaseServiceClient, testSupabaseConnection } from '../../src/lib/supabase-client.js';
+import { hasUnlimitedAccess, normalizeIds, resolveFreeUsage, syncUsageRecords, type UsageRecord } from '../lib/paywall-utils.js';
+import { PromptAdapter } from '../../src/lib/services/promptAdapter.js';
 
 // Função para obter cliente Supabase (compatibilidade)
 function getSupabaseClient() {
@@ -15,15 +17,6 @@ const router = express.Router();
 
 // Configuração do multer para processar multipart/form-data
 const upload = multer({ storage: multer.memoryStorage() });
-
-interface UserCreationRow {
-  user_id: string | null;
-  device_id: string | null;
-  freesongsused?: number | null;
-  last_used_ip?: string | null;
-  ip?: string | null;
-  creations?: number | null;
-}
 
 interface SunoJobClip {
   id?: string;
@@ -66,7 +59,6 @@ const generatePreviewSchema = z.object({
   mood: z.string().optional(),
   tempo: z.string().optional(),
   duration: z.string().default("3:00"), // Definimos um padrão
-  
   // Flag de controle
   lyricsOnly: z.boolean().optional(),
   
@@ -76,7 +68,8 @@ const generatePreviewSchema = z.object({
   instruments: z.array(z.string()).optional(),
   specialMemories: z.string().optional(),
   emotion: z.string().optional(),
-  lyrics: z.string().optional()
+  lyrics: z.string().optional(),
+  language: z.string().optional() // Campo para idioma (en-US ou pt-BR)
 });
 
 // Tipo inferido do schema para uso em TypeScript
@@ -523,42 +516,34 @@ function parseAIResponse(responseText: string | null): { songTitle: string, lyri
   return { songTitle, lyrics };
 }
 
-// Função para gerar prompt detalhado para o ChatGPT (mantida para compatibilidade)
+// Função para gerar prompt detalhado para o ChatGPT usando PromptAdapter
 function createLyricsPrompt(data: z.infer<typeof generatePreviewSchema>): string {
-  return `Você é um compositor experiente da "Memora.music", especializado em criar letras de música personalizadas e emocionantes.
-
-Crie uma letra de música única e tocante com base nas seguintes informações:
-
-**INFORMAÇÕES PESSOAIS:**
-- Título da música: ${data.songTitle || 'A definir'}
-- Destinatário: ${data.recipientName}
-- Ocasião: ${data.occasion}
-- Relacionamento: ${data.relationship}
-- Tom emocional desejado: ${data.emotionalTone || 'Emotivo'}
-- Memórias especiais: ${data.specialMemories || data.memories || 'Não especificado'}
-- Mensagem pessoal: ${data.personalMessage || 'Não especificado'}
-- Remetente: ${data.senderName || 'Não especificado'}
-- Hobbies: ${data.hobbies || 'Não especificado'}
-- Qualidades: ${data.qualities || 'Não especificado'}
-- Traços únicos: ${data.uniqueTraits || 'Não especificado'}
-
-**ESTILO MUSICAL:**
-- Gênero: ${data.genre || 'Pop'}
-- Humor/Atmosfera: ${data.mood || 'Alegre'}
-- Tempo: ${data.tempo || 'Moderado'}
-- Duração aproximada: ${data.duration}
-- Instrumentos: ${data.instruments?.join(', ') || 'Não especificado'}
-
-**INSTRUÇÕES:**
-1. Crie uma letra original, emotiva e personalizada
-2. Use o tom emocional ${data.emotionalTone || 'emotivo'} como guia principal
-3. Incorpore as memórias e mensagens pessoais de forma natural
-4. Adapte o estilo de escrita ao gênero ${data.genre || 'pop'}
-5. A letra deve ser adequada para a ocasião: ${data.occasion}
-6. Mantenha o foco no relacionamento ${data.relationship}
-
-**FORMATO DE RESPOSTA:**
-Retorne APENAS a letra da música, sem comentários adicionais, explicações ou formatação extra. A letra deve estar pronta para ser cantada.`;
+  // Usar o idioma enviado do frontend (en-US ou pt-BR)
+  const language = data.language || 'pt-BR';
+  
+  // Criar objeto de requisição para o PromptAdapter
+  const request = {
+    occasion: data.occasion,
+    recipientName: data.recipientName,
+    relationship: data.relationship,
+    senderName: data.senderName,
+    hobbies: data.hobbies,
+    qualities: data.qualities,
+    uniqueTraits: data.uniqueTraits,
+    memories: data.memories,
+    specialMemories: data.specialMemories,
+    personalMessage: data.personalMessage,
+    songTitle: data.songTitle,
+    emotionalTone: data.emotionalTone,
+    genre: data.genre,
+    mood: data.mood,
+    tempo: data.tempo,
+    duration: data.duration,
+    instruments: data.instruments
+  };
+  
+  // Usar o PromptAdapter para gerar o prompt no idioma correto
+  return PromptAdapter.adaptPrompt('generateLyrics', language, request);
 }
 
 // Função para criar prompt para geração de música na Suno API
@@ -786,6 +771,8 @@ router.post('/', upload.none(), async (req: Request, res: Response) => {
       freesongsused: number;
       last_used_ip?: string | null;
     } | null = null;
+    let usageRecords: UsageRecord[] = [];
+    let usageDeviceIds: string[] = [];
     
     // Verificar se o usuário pode criar uma nova música
     if (shouldEnforcePaywall) {
@@ -795,224 +782,47 @@ router.post('/', upload.none(), async (req: Request, res: Response) => {
       
       try {
         const supabase = getSupabaseClient();
-        
+
         // ===== PASSO 1: CONSULTAR USUÁRIO (SEM MODIFICAR) =====
         console.log('[PAYWALL_STEP1] Consultando usuário existente...');
-        
-        const selectColumns = 'user_id, device_id, freesongsused, last_used_ip, creations';
 
-        if (userId) {
-          console.log('[PAYWALL_STEP1] Buscando registro em user_creations para usuário autenticado:', userId);
+        try {
+          const usage = await resolveFreeUsage(supabase, {
+            userId,
+            deviceIds: [deviceId, guestId],
+          });
 
-          const { data: userRow, error: userError } = await supabase
-            .from('user_creations')
-            .select(selectColumns)
-            .eq('user_id', userId)
-            .maybeSingle();
+          usageRecords = usage.records;
+          usageDeviceIds = usageRecords
+            .map(record => record.device_id)
+            .filter((value): value is string => Boolean(value));
 
-          if (userError && userError.code !== 'PGRST116') {
-            console.error('[PAYWALL_ERROR] Erro ao buscar usuário autenticado em user_creations:', userError);
-            return res.status(500).json({
-              success: false,
-              error: 'Erro interno do servidor',
-              message: 'Não foi possível verificar seu status de usuário.',
-              debug: process.env.NODE_ENV === 'development' ? userError : undefined
-            });
-          }
+          if (usage.records.length > 0) {
+            const preferredDeviceId = usage.primaryRecord?.device_id
+              ?? usageDeviceIds[0]
+              ?? deviceId
+              ?? guestId
+              ?? null;
 
-          if (userRow) {
             existingUser = {
-              user_id: userRow.user_id ?? userId,
-              device_id: userRow.device_id ?? deviceId ?? null,
-              freesongsused: userRow.freesongsused ?? 0,
-              last_used_ip: userRow.last_used_ip ?? null
+              user_id: usage.primaryRecord?.user_id ?? userId ?? null,
+              device_id: preferredDeviceId,
+              freesongsused: usage.maxFreeSongs,
+              last_used_ip: usage.primaryRecord?.last_used_ip ?? null,
             };
-            console.log('[PAYWALL_STEP1] Registro encontrado para usuário autenticado:', existingUser);
-
-            // Se o deviceId atual ainda possuir contadores maiores (ex: migração recente), fazer o merge
-            if (deviceId && deviceId !== existingUser.device_id) {
-              const { data: deviceMergeRow, error: deviceMergeError } = await supabase
-                .from<UserCreationRow>('user_creations')
-                .select(selectColumns)
-                .eq('device_id', deviceId)
-                .maybeSingle();
-
-              if (deviceMergeError && deviceMergeError.code !== 'PGRST116') {
-                console.warn('[PAYWALL_STEP1] Erro ao buscar registro adicional por deviceId para merge:', deviceMergeError);
-              } else if (deviceMergeRow) {
-                existingUser = {
-                  user_id: existingUser.user_id ?? deviceMergeRow.user_id ?? null,
-                  device_id: existingUser.device_id ?? deviceMergeRow.device_id ?? deviceId,
-                  freesongsused: Math.max(existingUser.freesongsused ?? 0, deviceMergeRow.freesongsused ?? 0),
-                  last_used_ip: deviceMergeRow.last_used_ip ?? existingUser.last_used_ip ?? null
-                };
-                console.log('[PAYWALL_STEP1] Registro do usuário atualizado com dados do device atual:', existingUser);
-              }
-            }
+            console.log('[PAYWALL_STEP1] Registro consolidado encontrado:', existingUser);
           } else {
-            console.log('[PAYWALL_STEP1] Nenhum registro existente para usuário autenticado - será criado após geração');
+            existingUser = null;
+            console.log('[PAYWALL_STEP1] Nenhum registro existente para usuário ou convidado - será criado após geração');
           }
-        }
-
-        if (!existingUser) {
-          console.log('[PAYWALL_STEP1] Buscando registro em user_creations para convidado');
-          console.log('[PAYWALL_STEP1] DeviceId:', deviceId);
-          console.log('[PAYWALL_STEP1] GuestId:', guestId);
-          console.log('[PAYWALL_STEP1] ClientIp:', clientIp);
-
-          let deviceRecord: UserCreationRow | null = null;
-          if (deviceId) {
-            const { data, error } = await supabase
-              .from<UserCreationRow>('user_creations')
-              .select(selectColumns)
-              .eq('device_id', deviceId)
-              .maybeSingle();
-
-            if (error && error.code !== 'PGRST116') {
-              console.error('[PAYWALL_ERROR] Erro ao buscar usuário por deviceId em user_creations:', error);
-              return res.status(500).json({
-                success: false,
-                error: 'Erro interno do servidor',
-                message: 'Não foi possível verificar seu status de dispositivo.',
-                debug: process.env.NODE_ENV === 'development' ? error : undefined
-              });
-            }
-
-            if (data) {
-              deviceRecord = data;
-              console.log('[PAYWALL_STEP1] Registro encontrado via deviceId:', data);
-            }
-          }
-
-          let guestRecord: UserCreationRow | null = null;
-          if (guestId && (!deviceId || guestId !== deviceId)) {
-            const { data, error } = await supabase
-              .from<UserCreationRow>('user_creations')
-              .select(selectColumns)
-              .eq('device_id', guestId)
-              .maybeSingle();
-
-            if (error && error.code !== 'PGRST116') {
-              console.error('[PAYWALL_ERROR] Erro ao buscar usuário por guestId em user_creations:', error);
-              return res.status(500).json({
-                success: false,
-                error: 'Erro interno do servidor',
-                message: 'Não foi possível verificar seu status de convidado.',
-                debug: process.env.NODE_ENV === 'development' ? error : undefined
-              });
-            }
-
-            if (data) {
-              guestRecord = data;
-              console.log('[PAYWALL_STEP1] Registro encontrado via guestId:', data);
-            }
-          }
-
-          let mergedLastIp: string | null = null;
-
-          if (deviceRecord && guestRecord && deviceRecord.device_id !== guestRecord.device_id) {
-            console.log('[PAYWALL_STEP1] Detectada duplicação de registros (deviceId e guestId). Consolidando...');
-
-            const canonicalDeviceId = guestId || deviceId || guestRecord.device_id;
-            const combinedFreeSongs = Math.max(deviceRecord.freesongsused ?? 0, guestRecord.freesongsused ?? 0);
-            const combinedCreations = Math.max(deviceRecord.creations ?? 0, guestRecord.creations ?? 0);
-            const combinedLastIp = clientIp ?? guestRecord.last_used_ip ?? deviceRecord.last_used_ip ?? null;
-            mergedLastIp = combinedLastIp;
-
-            const { data: mergedGuest, error: mergeUpdateError } = await supabase
-              .from<UserCreationRow>('user_creations')
-              .update({
-                device_id: canonicalDeviceId,
-                freesongsused: combinedFreeSongs,
-                creations: combinedCreations,
-                last_used_ip: combinedLastIp,
-                updated_at: new Date().toISOString()
-              })
-              .eq('device_id', guestRecord.device_id)
-              .select(selectColumns)
-              .maybeSingle();
-
-            if (mergeUpdateError) {
-              console.error('[PAYWALL_ERROR] Falha ao consolidar registros duplicados:', mergeUpdateError);
-            } else {
-              guestRecord = mergedGuest ?? guestRecord;
-              const { error: deleteError } = await supabase
-                .from<UserCreationRow>('user_creations')
-                .delete()
-                .eq('device_id', deviceRecord.device_id);
-
-              if (deleteError) {
-                console.error('[PAYWALL_ERROR] Falha ao remover registro duplicado:', deleteError);
-              } else {
-                console.log('[PAYWALL_STEP1] Registro duplicado removido com sucesso (deviceId).');
-                deviceRecord = null;
-              }
-            }
-          }
-
-          if (guestRecord) {
-            existingUser = {
-              user_id: guestRecord.user_id ?? null,
-              device_id: guestRecord.device_id ?? guestId ?? deviceId ?? null,
-              freesongsused: guestRecord.freesongsused ?? 0,
-              last_used_ip: mergedLastIp ?? guestRecord.last_used_ip ?? clientIp ?? null
-            };
-            console.log('[PAYWALL_STEP1] Registro consolidado para convidado:', existingUser);
-          } else if (deviceRecord) {
-            existingUser = {
-              user_id: deviceRecord.user_id ?? null,
-              device_id: deviceRecord.device_id ?? deviceId ?? null,
-              freesongsused: deviceRecord.freesongsused ?? 0,
-              last_used_ip: deviceRecord.last_used_ip ?? clientIp ?? null
-            };
-            console.log('[PAYWALL_STEP1] Registro encontrado para convidado via deviceId:', existingUser);
-          }
-
-          // FALLBACK POR IP DESABILITADO TEMPORARIAMENTE
-          // O fallback por IP estava causando bloqueios incorretos para usuários com deviceId diferentes
-          // mas mesmo IP (ex: usuários na mesma rede/empresa)
-          if (!existingUser && clientIp && !deviceId && !guestId) {
-            console.log('[PAYWALL_STEP1] Fallback por IP desabilitado - deviceId/guestId devem ser únicos');
-            // Código do fallback por IP comentado para evitar bloqueios incorretos
-            /*
-            const ttlDays = Number(process.env.IP_FALLBACK_TTL_DAYS || '7');
-            const cutoff = new Date(Date.now() - ttlDays * 24 * 60 * 60 * 1000).toISOString();
-
-            const { data: ipRow, error: ipError } = await supabase
-              .from<UserCreationRow>('user_creations')
-              .select(selectColumns)
-              .is('user_id', null)
-              .eq('last_used_ip', clientIp)
-              .gte('created_at', cutoff)
-              .order('created_at', { ascending: false })
-              .limit(1)
-              .maybeSingle();
-
-            if (ipError && ipError.code !== 'PGRST116') {
-              console.error('[PAYWALL_ERROR] Erro ao buscar usuário convidado por IP em user_creations:', ipError);
-              return res.status(500).json({
-                success: false,
-                error: 'Erro interno do servidor',
-                message: 'Não foi possível verificar seu status de dispositivo.',
-                debug: process.env.NODE_ENV === 'development' ? ipError : undefined
-              });
-            }
-
-            if (ipRow) {
-              existingUser = {
-                user_id: ipRow.user_id ?? null,
-                device_id: ipRow.device_id ?? deviceId ?? guestId ?? null,
-                freesongsused: ipRow.freesongsused ?? 0,
-                last_used_ip: ipRow.last_used_ip ?? clientIp ?? null
-              };
-              console.log('[PAYWALL_STEP1] Registro encontrado via fallback de IP:', existingUser);
-            }
-            */
-          }
-
-          if (!existingUser) {
-            console.log('[PAYWALL_STEP1] Nenhum registro existente para convidado - será criado após geração');
-          }
+        } catch (lookupError) {
+          console.error('[PAYWALL_ERROR] Erro ao buscar registros em user_creations:', lookupError);
+          return res.status(500).json({
+            success: false,
+            error: 'Erro interno do servidor',
+            message: 'Não foi possível verificar seu status de usuário.',
+            debug: process.env.NODE_ENV === 'development' ? lookupError : undefined,
+          });
         }
 
         if (!userId && !deviceId && !guestId) {
@@ -1026,120 +836,133 @@ router.post('/', upload.none(), async (req: Request, res: Response) => {
 
         // ===== PASSO 2: VERIFICAR PERMISSÃO =====
         console.log('[PAYWALL_STEP2] Verificando permissões...');
-        
-        if (existingUser && existingUser.freesongsused >= FREE_SONG_LIMIT) {
-          const identifier = userId
-            ? `usuário ${userId}`
-            : `dispositivo ${deviceId || guestId || existingUser.device_id || 'desconhecido'}`;
-          console.log(`[PAYWALL_BLOCK] Limite atingido para ${identifier}. FreeSongsUsed: ${existingUser.freesongsused}`);
-          
-          return res.status(402).json({
-            success: false,
-            error: 'PAYMENT_REQUIRED',
-            message: 'Você já usou suas criações de música gratuitas. Por favor, faça um upgrade para criar mais.',
-            freeSongsUsed: existingUser.freesongsused,
-            maxFreeSongs: FREE_SONG_LIMIT,
-            requiresPayment: true
-          });
-        }
 
-        const identifier = userId
-          ? `usuário ${userId}`
-          : `dispositivo ${deviceId || guestId || existingUser?.device_id || 'desconhecido'}`;
-        const currentCount = existingUser?.freesongsused || 0;
-        console.log(`[PAYWALL_ALLOW] Permissão concedida para ${identifier}. Músicas usadas: ${currentCount}/${FREE_SONG_LIMIT}`);
-        
-        // === INCREMENTAR CONTADOR IMEDIATAMENTE APÓS VERIFICAÇÃO ===
-        console.log('🎵 Incrementando contador ANTES da geração para bloquear múltiplas tentativas...');
-        
         const supabaseClient = getSupabaseClient();
-        const canonicalIdentifier = (guestId && guestId.trim())
-          || (deviceId && deviceId.trim())
-          || existingUser?.device_id
-          || userId
-          || clientIp
-          || `guest-${Date.now()}`;
+        const premiumDeviceCandidates = [
+          deviceId,
+          guestId,
+          existingUser?.device_id,
+          ...usageDeviceIds,
+        ];
+        const hasPremiumAccess = await hasUnlimitedAccess(supabaseClient, {
+          userId,
+          deviceIds: premiumDeviceCandidates,
+        });
 
-        try {
-          if (!existingUser) {
-            // Novo usuário: criar registro com freesongsused = 1
-            console.log('🎵 Criando novo registro em user_creations com contador = 1');
+        if (!hasPremiumAccess) {
+          const identifierTarget = userId
+            ? `usuário ${userId}`
+            : `dispositivo ${normalizeIds([deviceId, guestId, existingUser?.device_id ?? null])[0] || 'desconhecido'}`;
+
+          if (existingUser && existingUser.freesongsused >= FREE_SONG_LIMIT) {
+            console.log(`[PAYWALL_BLOCK] Limite atingido para ${identifierTarget}. FreeSongsUsed: ${existingUser.freesongsused}`);
             
-           const insertData: Record<string, unknown> = {
-             freesongsused: 1,
-             last_used_ip: clientIp
-           };
-           
-           if (userId) {
-             insertData.user_id = userId;
-              insertData.device_id = userId;
+            // Verificação dupla: consultar novamente hasUnlimitedAccess para casos de pagamento recente
+            console.log('[PAYWALL_DOUBLE_CHECK] Verificando novamente acesso premium após limite atingido...');
+            const doubleCheckAccess = await hasUnlimitedAccess(supabaseClient, {
+              userId,
+              deviceIds: [deviceId, guestId, existingUser?.device_id].filter(Boolean)
+            });
+            
+            if (doubleCheckAccess) {
+              console.log('[PAYWALL_DOUBLE_CHECK] ✅ Acesso premium confirmado na segunda verificação - permitindo geração');
             } else {
-              insertData.device_id = canonicalIdentifier;
-            }
-            
-            const { error: insertError } = await supabaseClient
-              .from('user_creations')
-              .insert(insertData);
-            
-            if (insertError) {
-              console.error('[PAYWALL_DB_ERROR] Erro ao criar registro:', insertError);
-              return res.status(500).json({
+              console.log('[PAYWALL_DOUBLE_CHECK] ❌ Acesso premium não confirmado - bloqueando geração');
+              return res.status(402).json({
                 success: false,
-                error: 'Erro interno do servidor',
-                message: 'Não foi possível processar sua solicitação.'
+                error: 'PAYMENT_REQUIRED',
+                message: 'Você já usou suas criações de música gratuitas. Por favor, faça um upgrade para criar mais.',
+                freeSongsUsed: existingUser.freesongsused,
+                maxFreeSongs: FREE_SONG_LIMIT,
+                requiresPayment: true
               });
-            } else {
-              console.log('✅ Contador criado com sucesso: 1');
-            }
-          } else {
-            // Usuário existente: incrementar contador
-            console.log('🎵 Incrementando contador do usuário existente');
-            
-            const newCount = (existingUser.freesongsused ?? 0) + 1;
-            const updateData: Record<string, unknown> = {
-              freesongsused: newCount,
-              last_used_ip: clientIp || existingUser.last_used_ip
-            };
-            
-            if (userId) {
-              updateData.user_id = userId;
-            }
-            if (!existingUser.user_id && canonicalIdentifier) {
-              updateData.device_id = canonicalIdentifier;
-            }
-            
-            let updateQuery = supabaseClient
-              .from('user_creations')
-              .update(updateData);
-            
-            if (existingUser.user_id) {
-              updateQuery = updateQuery.eq('user_id', existingUser.user_id);
-            } else if (existingUser.device_id) {
-              updateQuery = updateQuery.eq('device_id', existingUser.device_id);
-            } else if (canonicalIdentifier) {
-              updateQuery = updateQuery.eq('device_id', canonicalIdentifier);
-            }
-            
-            const { error: updateError } = await updateQuery;
-            
-            if (updateError) {
-              console.error('[PAYWALL_DB_ERROR] Erro ao incrementar contador:', updateError);
-              return res.status(500).json({
-                success: false,
-                error: 'Erro interno do servidor',
-                message: 'Não foi possível processar sua solicitação.'
-              });
-            } else {
-              console.log(`✅ Contador incrementado para ${newCount}`);
             }
           }
-        } catch (error) {
-          console.error('[PAYWALL_DB_ERROR] Erro ao incrementar contador antes da geração:', error);
-          return res.status(500).json({
-            success: false,
-            error: 'Erro interno do servidor',
-            message: 'Não foi possível processar sua solicitação.'
-          });
+
+          const currentCount = existingUser?.freesongsused || 0;
+          console.log(`[PAYWALL_ALLOW] Permissão concedida para ${identifierTarget}. Músicas usadas: ${currentCount}/${FREE_SONG_LIMIT}`);
+
+          console.log('🎵 Incrementando contador ANTES da geração para bloquear múltiplas tentativas...');
+
+          const identifierCandidates = normalizeIds([
+            deviceId,
+            guestId,
+            existingUser?.device_id ?? null,
+            userId,
+          ]);
+
+          const canonicalDeviceId = identifierCandidates[0]
+            ?? (clientIp ? `ip-${clientIp}` : null)
+            ?? `guest-${Date.now()}`;
+
+          try {
+            if (usageRecords.length === 0) {
+              console.log('🎵 Criando novo registro em user_creations com contador = 1');
+
+              const insertData: Record<string, unknown> = {
+                device_id: canonicalDeviceId,
+                freesongsused: 1,
+                last_used_ip: clientIp ?? null,
+              };
+
+              if (userId) {
+                insertData.user_id = userId;
+              }
+
+              const { error: insertError } = await supabaseClient
+                .from('user_creations')
+                .insert(insertData);
+
+              if (insertError) {
+                console.error('[PAYWALL_DB_ERROR] Erro ao criar registro:', insertError);
+                return res.status(500).json({
+                  success: false,
+                  error: 'Erro interno do servidor',
+                  message: 'Não foi possível processar sua solicitação.'
+                });
+              }
+
+              console.log('✅ Contador criado com sucesso: 1');
+              existingUser = {
+                user_id: userId ?? null,
+                device_id: canonicalDeviceId,
+                freesongsused: 1,
+                last_used_ip: clientIp ?? null,
+              };
+              usageRecords = [{
+                device_id: canonicalDeviceId,
+                user_id: userId ?? null,
+                freesongsused: 1,
+                last_used_ip: clientIp ?? null,
+              }];
+              usageDeviceIds = [canonicalDeviceId];
+            } else {
+              console.log('🎵 Incrementando contador do usuário existente');
+
+              const newCount = (existingUser?.freesongsused ?? 0) + 1;
+
+              await syncUsageRecords(supabaseClient, usageRecords, newCount, {
+                userId,
+                lastUsedIp: clientIp ?? existingUser?.last_used_ip ?? null,
+              });
+
+              if (existingUser) {
+                existingUser.freesongsused = newCount;
+                existingUser.last_used_ip = clientIp ?? existingUser.last_used_ip ?? null;
+              }
+
+              console.log(`✅ Contador sincronizado para ${newCount}`);
+            }
+          } catch (error) {
+            console.error('[PAYWALL_DB_ERROR] Erro ao incrementar contador antes da geração:', error);
+            return res.status(500).json({
+              success: false,
+              error: 'Erro interno do servidor',
+              message: 'Não foi possível processar sua solicitação.'
+            });
+          }
+        } else {
+          console.log('[PAYWALL_ALLOW] Plano ativo detectado - ignorando limite e contador de músicas gratuitas');
         }
         
       } catch (error) {

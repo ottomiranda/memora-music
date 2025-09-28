@@ -1,0 +1,84 @@
+{
+  "termsOfUse": {
+    "title": "Termos de Uso",
+    "lastUpdated": "Última atualização: 15 de janeiro de 2025",
+    "introduction": "Bem-vindo ao Memora Music. Ao utilizar nossa plataforma, você concorda com os seguintes termos e condições de uso.",
+    "sections": {
+      "acceptance": {
+        "title": "1. Aceitação dos Termos",
+        "content": "Ao acessar e usar o Memora Music, você concorda em cumprir e estar vinculado a estes Termos de Uso. Se você não concordar com qualquer parte destes termos, não deve usar nosso serviço."
+      },
+      "description": {
+        "title": "2. Descrição do Serviço",
+        "content": "O Memora Music é uma plataforma que permite aos usuários criar músicas personalizadas usando inteligência artificial. Nosso serviço transforma suas memórias e emoções em composições musicais únicas."
+      },
+      "userAccounts": {
+        "title": "3. Contas de Usuário",
+        "content": "Para usar certas funcionalidades do serviço, você deve criar uma conta. Você é responsável por manter a confidencialidade de sua conta e senha, e por todas as atividades que ocorrem sob sua conta."
+      },
+      "intellectualProperty": {
+        "title": "4. Propriedade Intelectual",
+        "content": "As músicas criadas através do Memora Music são de sua propriedade. No entanto, você nos concede uma licença limitada para processar e entregar o conteúdo conforme necessário para fornecer o serviço."
+      },
+      "prohibitedUses": {
+        "title": "5. Usos Proibidos",
+        "content": "Você não pode usar o serviço para criar conteúdo ilegal, ofensivo, difamatório ou que viole direitos de terceiros. Reservamo-nos o direito de remover qualquer conteúdo que viole estes termos."
+      },
+      "limitation": {
+        "title": "6. Limitação de Responsabilidade",
+        "content": "O Memora Music é fornecido 'como está'. Não garantimos que o serviço será ininterrupto ou livre de erros. Nossa responsabilidade é limitada ao máximo permitido por lei."
+      },
+      "modifications": {
+        "title": "7. Modificações dos Termos",
+        "content": "Reservamo-nos o direito de modificar estes termos a qualquer momento. As alterações entrarão em vigor imediatamente após a publicação. O uso continuado do serviço constitui aceitação dos termos modificados."
+      },
+      "contact": {
+        "title": "8. Contato",
+        "content": "Se você tiver dúvidas sobre estes Termos de Uso, entre em contato conosco através do email: contato@memoramusic.com"
+      }
+    }
+  },
+  "privacyPolicy": {
+    "title": "Política de Privacidade",
+    "lastUpdated": "Última atualização: 15 de janeiro de 2025",
+    "introduction": "Esta Política de Privacidade descreve como coletamos, usamos e protegemos suas informações pessoais.",
+    "sections": {
+      "introduction": {
+        "title": "1. Introdução",
+        "content": "Esta Política de Privacidade descreve como o Memora Music coleta, usa e protege suas informações pessoais quando você usa nosso serviço."
+      },
+      "dataCollection": {
+        "title": "2. Coleta de Dados",
+        "content": "Coletamos informações que você nos fornece diretamente, como nome, email e preferências musicais. Também coletamos dados de uso automaticamente, incluindo informações sobre como você interage com nosso serviço."
+      },
+      "dataUse": {
+        "title": "3. Uso dos Dados",
+        "content": "Usamos suas informações para fornecer e melhorar nosso serviço, personalizar sua experiência, processar pagamentos e comunicar com você sobre atualizações e ofertas."
+      },
+      "dataSharing": {
+        "title": "4. Compartilhamento de Dados",
+        "content": "Não vendemos suas informações pessoais. Podemos compartilhar dados com prestadores de serviços terceirizados que nos ajudam a operar o serviço, sempre sob acordos de confidencialidade."
+      },
+      "dataSecurity": {
+        "title": "5. Segurança dos Dados",
+        "content": "Implementamos medidas de segurança técnicas e organizacionais apropriadas para proteger suas informações pessoais contra acesso não autorizado, alteração, divulgação ou destruição."
+      },
+      "userRights": {
+        "title": "6. Seus Direitos",
+        "content": "Você tem o direito de acessar, corrigir, excluir ou portar seus dados pessoais. Também pode optar por não receber comunicações de marketing a qualquer momento."
+      },
+      "cookies": {
+        "title": "7. Cookies",
+        "content": "Usamos cookies e tecnologias similares para melhorar sua experiência, analisar o uso do serviço e personalizar conteúdo. Você pode controlar o uso de cookies através das configurações do seu navegador."
+      },
+      "changes": {
+        "title": "8. Alterações na Política",
+        "content": "Podemos atualizar esta Política de Privacidade periodicamente. Notificaremos você sobre mudanças significativas através do email ou de um aviso em nosso serviço."
+      },
+      "contact": {
+          "title": "8. Contato",
+          "content": "Se você tiver dúvidas sobre esta Política de Privacidade, entre em contato conosco através do e-mail contato@memoramusic.com."
+        }
+    }
+  }
+}

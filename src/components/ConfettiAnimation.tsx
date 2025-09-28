@@ -63,7 +63,6 @@ const ConfettiAnimation: React.FC<ConfettiAnimationProps> = ({ show, onComplete 
         ]}
         initialVelocityX={15} // Dispersão horizontal extrema
         initialVelocityY={55} // Explosão vertical violenta
-        startVelocityX={15} // Velocidade inicial horizontal para dispersão ampla
         wind={0.05} // Vento mais forte para movimento caótico
         friction={0.98} // Menos fricção para movimento mais duradouro
         opacity={0.9} // Mais opaco para maior impacto visual

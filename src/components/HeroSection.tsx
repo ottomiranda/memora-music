@@ -1,11 +1,13 @@
 import { Button } from "@/components/ui/button";
 import { Play, Sparkles, Heart } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
+import { useTranslation } from 'react-i18next';
 import { useMusicStore } from "@/store/musicStore";
 import { useAuthStore } from "@/store/authStore";
 import heroImage from "@/assets/hero-music.jpg";
 
 export default function HeroSection() {
+  const { t } = useTranslation('common');
   const navigate = useNavigate();
   const { startNewCreationFlow } = useMusicStore();
 
@@ -20,7 +22,7 @@ export default function HeroSection() {
       <div className="absolute inset-0 z-0">
         <img
           src={heroImage}
-          alt="Memora.music - Transforme memórias em música"
+          alt={t('heroSection.altText.heroImage')}
           className="w-full h-full object-cover opacity-20"
         />
         <div className="absolute inset-0 bg-gradient-to-b from-background/50 via-background/30 to-background"></div>
@@ -39,40 +41,39 @@ export default function HeroSection() {
         <div className="space-y-4">
           <div className="flex items-center justify-center space-x-2 text-primary mb-4">
             <Sparkles className="w-6 h-6" />
-            <span className="text-sm font-medium uppercase tracking-wider">Powered by AI</span>
+            <span className="text-sm font-medium uppercase tracking-wider">{t('heroSection.poweredBy')}</span>
             <Sparkles className="w-6 h-6" />
           </div>
           
           <h1 className="text-4xl md:text-6xl lg:text-7xl font-heading font-bold leading-tight">
-            Transforme{" "}
+            {t('heroSection.title.transform')}{" "}
             <span className="bg-gradient-music bg-clip-text text-transparent">
-              memórias
+              {t('heroSection.title.memories')}
             </span>
             <br />
-            em música
+            {t('heroSection.title.intoMusic')}
           </h1>
           
           <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto">
-            Crie canções personalizadas de 3 minutos em segundos. 
-            O presente perfeito para momentos especiais e emoções únicas.
+            {t('heroSection.subtitle')}
           </p>
         </div>
 
         <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
           <Button variant="hero" size="xl" className="group" onClick={handleCreateSongClick}>
             <Heart className="w-5 h-5 group-hover:scale-110 transition-transform" />
-            Criar Minha Canção Agora
+            {t('heroSection.buttons.createSong')}
           </Button>
           
           <Button variant="outline" size="xl" className="group">
             <Play className="w-5 h-5 group-hover:scale-110 transition-transform" />
-            Ouvir Exemplo
+            {t('heroSection.buttons.listenExample')}
           </Button>
         </div>
 
         <div className="pt-8">
           <p className="text-sm text-muted-foreground">
-            ✨ Sem cadastro necessário • 🎵 Resultados em minutos • ❤️ Presente único
+            {t('heroSection.features')}
           </p>
         </div>
       </div>

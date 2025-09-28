@@ -1,0 +1,78 @@
+{
+  "loading": {
+    "message": "Carregando suas músicas..."
+  },
+  "error": {
+    "tryAgain": "Tentar Novamente"
+  },
+  "header": {
+    "title": "Minhas Músicas",
+    "subtitle": "Suas criações musicais personalizadas",
+    "createNew": "Criar Nova Música"
+  },
+  "search": {
+    "placeholder": "Buscar por título..."
+  },
+  "sort": {
+    "placeholder": "Ordenar",
+    "recent": "Mais recentes",
+    "oldest": "Mais antigas",
+    "title": "Título A-Z"
+  },
+  "status": {
+    "placeholder": "Status",
+    "all": "Todos",
+    "completed": "Concluídas",
+    "processing": "Processando",
+    "failed": "Falhas"
+  },
+  "empty": {
+    "title": "Nenhuma música encontrada",
+    "subtitle": "Você ainda não criou nenhuma música. Que tal começar agora?",
+    "createFirst": "Criar Primeira Música"
+  },
+  "actions": {
+    "copyLink": "Copiar Link",
+    "share": "Compartilhar",
+    "delete": "Excluir"
+  },
+  "deleteModal": {
+    "title": "Excluir música?",
+    "description": "Esta ação não pode ser desfeita. A música \"{title}\" será removida permanentemente.",
+    "cancel": "Cancelar",
+    "confirm": "Excluir"
+  },
+  "toast": {
+    "linkCopied": "Link copiado para a área de transferência",
+    "linkCopiedSuccess": "O link da sua música foi copiado com sucesso para área de transferência.",
+    "downloadError": "Não foi possível localizar o arquivo para download."
+  },
+  "messages": {
+    "noTitle": "Sem título",
+    "loadError": "Erro ao carregar suas músicas. Tente novamente.",
+    "audioLoadError": "Não foi possível carregar o áudio desta música.",
+    "playbackError": "Falha ao iniciar a reprodução. Tente novamente.",
+    "deleteError": "Não foi possível excluir a música.",
+    "shareText": "Ouça minha música no Memora Music",
+    "defaultFilename": "minha-musica"
+  },
+  "songCard": {
+    "versionA": "Versão A",
+    "versionB": "Versão B",
+    "playing": "Tocando",
+    "playButton": "Reproduzir",
+    "downloadButton": "Baixar",
+    "createdOn": "Criada em",
+    "statusCompleted": "Concluída",
+    "statusProcessing": "Processando",
+    "statusFailed": "Falhou",
+    "nowPlaying": "Reproduzindo",
+    "loadingMusic": "Carregando música",
+    "pauseMusic": "Pausar música",
+    "playMusic": "Reproduzir música",
+    "playVersionA": "Reproduzir versão A",
+    "playVersionB": "Reproduzir versão B",
+    "downloadVersionA": "Baixar versão A",
+    "downloadVersionB": "Baixar versão B"
+  }
+}

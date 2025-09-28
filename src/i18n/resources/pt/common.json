@@ -1,0 +1,331 @@
+{
+  "navigation": {
+    "home": "Início",
+    "about": "Sobre",
+    "services": "Serviços",
+    "contact": "Contato",
+    "login": "Entrar",
+    "logout": "Sair",
+    "profile": "Perfil",
+    "settings": "Configurações",
+    "dashboard": "Painel",
+    "menu": "Menu",
+    "close": "Fechar",
+    "back": "Voltar",
+    "next": "Próximo",
+    "previous": "Anterior",
+    "search": "Buscar",
+    "myMusic": "Minhas Músicas",
+    "createSong": "Criar Música",
+    "howItWorks": "Como Funciona",
+    "examples": "Exemplos",
+    "artists": "Artistas",
+    "pricing": "Preços",
+    "faq": "FAQ",
+    "createMusic": "Crie sua Música",
+    "hello": "Olá, {{name}}!",
+    "user": "usuário"
+  },
+  "actions": {
+    "save": "Salvar",
+    "cancel": "Cancelar",
+    "delete": "Excluir",
+    "edit": "Editar",
+    "view": "Visualizar",
+    "download": "Baixar",
+    "upload": "Enviar",
+    "share": "Compartilhar",
+    "copy": "Copiar",
+    "print": "Imprimir",
+    "export": "Exportar",
+    "import": "Importar",
+    "refresh": "Atualizar",
+    "reload": "Recarregar",
+    "reset": "Redefinir",
+    "listen": "Ouvir",
+    "play": "Reproduzir",
+    "pause": "Pausar",
+    "stop": "Parar"
+  },
+  "status": {
+    "loading": "Carregando...",
+    "saving": "Salvando...",
+    "saved": "Salvo",
+    "error": "Erro",
+    "success": "Sucesso",
+    "warning": "Aviso",
+    "info": "Informação",
+    "pending": "Pendente",
+    "completed": "Concluído",
+    "failed": "Falhou",
+    "cancelled": "Cancelado",
+    "processing": "Processando...",
+    "generating": "Gerando...",
+    "created": "Criado",
+    "ready": "Pronto",
+    "progress": "{{progress}}% concluído",
+    "timeRemaining": "Tempo restante: {{time}}"
+  },
+  "time": {
+    "now": "Agora",
+    "today": "Hoje",
+    "yesterday": "Ontem",
+    "tomorrow": "Amanhã",
+    "thisWeek": "Esta semana",
+    "lastWeek": "Semana passada",
+    "nextWeek": "Próxima semana",
+    "thisMonth": "Este mês",
+    "lastMonth": "Mês passado",
+    "nextMonth": "Próximo mês",
+    "thisYear": "Este ano",
+    "lastYear": "Ano passado",
+    "nextYear": "Próximo ano"
+  },
+  "pages": {
+    "notFound": {
+      "title": "404",
+      "message": "Oops! Página não encontrada",
+      "button": "Voltar ao Início"
+    },
+    "myMusic": {
+      "title": "Minhas Músicas",
+      "empty": "Você ainda não criou nenhuma música. Que tal criar sua primeira?",
+      "count": {
+        "zero": "Nenhuma música",
+        "one": "{{count}} música",
+        "other": "{{count}} músicas"
+      },
+      "greeting": "Olá, {{name}}! Aqui estão suas músicas:"
+    }
+  },
+  "general": {
+    "or": "ou",
+    "and": "e",
+    "yes": "Sim",
+    "no": "Não",
+    "ok": "OK",
+    "confirm": "Confirmar",
+    "continue": "Continuar",
+    "finish": "Finalizar",
+    "optional": "Opcional",
+    "required": "Obrigatório"
+  },
+  "steps": {
+    "story": {
+      "label": "História",
+      "description": "Compartilhe a ocasião e os sentimentos que quer transformar em música.",
+      "microcopy": "Conte sua história"
+    },
+    "lyrics": {
+      "label": "Canção",
+      "description": "Veja a letra criada pela IA com base na sua história.",
+      "microcopy": "Sua letra está pronta"
+    },
+    "style": {
+      "label": "Estilo",
+      "description": "Escolha o gênero musical e a voz que combinam com o momento.",
+      "microcopy": "Defina o som perfeito"
+    },
+    "music": {
+      "label": "Sua música",
+      "description": "Ouça a prévia e receba a versão final da sua canção.",
+      "microcopy": "Sua música está sendo criada"
+    }
+  },
+  "testimonials": {
+    "title": "Histórias que viraram <span class=\"bg-gradient-to-r from-yellow-400 via-purple-500 to-purple-600 bg-clip-text text-transparent\">presente</span>",
+    "subtitle": "Veja como nossos usuários eternizaram momentos especiais em canções personalizadas.",
+    "navigation": {
+      "previous": "Depoimento anterior",
+      "next": "Próximo depoimento",
+      "goTo": "Ir para depoimento {{number}}"
+    },
+    "stats": {
+      "songsCreated": "Músicas criadas",
+      "averageRating": "Avaliação média",
+      "userSatisfaction": "Satisfação dos usuários"
+    },
+    "cta": "Crie sua música agora",
+    "altText": {
+      "userPhoto": "Foto de {{name}}"
+    },
+    "meta": {
+      "age": "{{age}} anos"
+    }
+  },
+  "faq": {
+    "title": "Perguntas Frequentes",
+    "subtitle": "Tire suas dúvidas sobre como criar sua música personalizada",
+    "questions": {
+      "howMusicIsCreated": {
+        "question": "Como a música é criada?",
+        "answer": "A partir do briefing que você envia (ocasião e sentimentos), nossa inteligência artificial gera a letra e a melodia em menos de 5 minutos. Você recebe duas versões exclusivas para escolher a que mais emociona."
+      },
+      "availableStyles": {
+        "question": "Quais estilos musicais estão disponíveis?",
+        "answer": "Oferecemos uma variedade de estilos, desde baladas românticas até pop, MPB, Rock, sertanejo e outros 50 mais. Assim você pode escolher o gênero que melhor combina com o momento."
+      },
+      "pricing": {
+        "question": "Preciso pagar para criar minha música?",
+        "answer": "A primeira criação é totalmente grátis. Depois, novas músicas poderão ser adquiridas por R$149,00 cada."
+      },
+      "deliveryTime": {
+        "question": "Quanto tempo leva para receber minha música final?",
+        "answer": "Em menos de 5 minutos sua música já estará pronta para ouvir e baixar em MP3."
+      },
+      "sharing": {
+        "question": "Posso compartilhar a música nas redes sociais?",
+        "answer": "Sim! Você pode baixar a versão final em MP3 e compartilhar livremente em qualquer rede social ou enviar diretamente para a pessoa homenageada."
+      }
+    }
+  },
+  "heroSection": {
+    "poweredBy": "Powered by AI",
+    "title": {
+      "transform": "Transforme",
+      "memories": "memórias",
+      "intoMusic": "em música"
+    },
+    "subtitle": "Crie canções personalizadas de 3 minutos em segundos. O presente perfeito para momentos especiais e emoções únicas.",
+    "buttons": {
+      "createSong": "Criar Minha Canção Agora",
+      "listenExample": "Ouvir Exemplo"
+    },
+    "features": "✨ Sem cadastro necessário • 🎵 Resultados em minutos • ❤️ Presente único",
+    "altText": {
+      "heroImage": "Memora.music - Transforme memórias em música"
+    }
+  },
+  "footer": {
+    "description": "Transforme suas ideias em música com inteligência artificial. Crie composições únicas e personalizadas em minutos.",
+    "feedback": "🚀 Sua voz faz a diferença. Diga o que achou da Memora.",
+    "quickLinks": {
+      "title": "Links Rápidos",
+      "howItWorks": "Como Funciona",
+      "pricing": "Preços",
+      "examples": "Exemplos",
+      "faq": "FAQ"
+    },
+    "legal": {
+      "title": "Legal",
+      "termsOfUse": "Termos de Uso",
+      "privacyPolicy": "Política de Privacidade",
+      "cookies": "Cookies"
+    },
+    "copyright": "© 2025 Memora.music. Todos os direitos reservados.",
+    "madeWith": {
+      "text": "Feito com",
+      "purpose": "para criar memórias inesquecíveis"
+    },
+    "backToTop": "Voltar ao topo",
+    "altText": {
+      "logo": "Memora Music",
+      "backToTopButton": "Voltar ao topo"
+    }
+  },
+  "genreSelector": {
+    "title": "Escolha o estilo musical",
+    "searchPlaceholder": "Buscar por gênero ou estilo...",
+    "brazilianGenres": "Gêneros Brasileiros",
+    "internationalGenres": "Gêneros Internacionais",
+    "backButton": "Voltar",
+    "searchResults": "Resultados da busca ({{count}})",
+    "noGenresFound": "Nenhum gênero encontrado para '{searchQuery}'",
+    "clearSearch": "Limpar busca",
+    "subgenresTitle": "{{genreName}} - Subgêneros",
+    "stylesCount_one": "{{count}} estilo",
+    "stylesCount_other": "{{count}} estilos",
+    "genreDescriptions": {
+      "rock": "Energético e poderoso",
+      "pop": "Cativante e universal",
+      "hip-hop": "Urbano e expressivo",
+      "jazz": "Sofisticado e improvisado",
+      "blues": "Emotivo e autêntico",
+      "country": "Narrativo e rural",
+      "eletronica": "Digital e futurista",
+      "folk": "Tradicional e storytelling",
+      "rnb-soul": "Sensual e emotivo",
+      "metal": "Pesado e intenso",
+      "punk": "Rebelde e direto",
+      "easy-listening": "Relaxante e suave",
+      "avant-garde": "Inovador e vanguardista",
+      "mpb": "Brasileira e sofisticada",
+      "samba": "Alegre e brasileiro",
+      "bossa-nova": "Elegante e intimista",
+      "forro": "Dançante e nordestino",
+      "sertanejo": "Popular e emotivo",
+      "axe": "Festivo e baiano",
+      "funk-carioca": "Urbano e carioca",
+      "tropicalia": "Revolucionária e antropofágica",
+      "choro": "Virtuoso e instrumental"
+    },
+    "subGenreDescriptions": {
+      "rock-alternativo": "Moderno e experimental",
+      "rock-classico": "Atemporal e icônico",
+      "hard-rock": "Pesado e vibrante",
+      "punk-rock": "Rápido e contestador",
+      "dance-pop": "Dançante e envolvente",
+      "electropop": "Eletrônico e moderno",
+      "indie-pop": "Independente e criativo",
+      "synth-pop": "Sintético e nostálgico",
+      "k-pop": "Colorido e dinâmico",
+      "hip-hop-alternativo": "Inovador e consciente",
+      "gangsta-rap": "Intenso e direto",
+      "trap": "Pesado e hipnótico",
+      "drill": "Sombrio e agressivo",
+      "bebop": "Rápido e complexo",
+      "big-band": "Grandioso e swing",
+      "cool-jazz": "Suave e relaxante",
+      "jazz-fusion": "Moderno e elétrico",
+      "chicago-blues": "Urbano e elétrico",
+      "delta-blues": "Tradicional e acústico",
+      "blues-eletrico": "Amplificado e potente",
+      "gospel-blues": "Espiritual e tocante",
+      "bluegrass": "Acústico e virtuoso",
+      "country-pop": "Comercial e acessível",
+      "country-rock": "Energético e híbrido",
+      "ambient": "Atmosférico e contemplativo",
+      "breakbeat": "Fragmentado e rítmico",
+      "disco": "Dançante e festivo",
+      "drum-and-bass": "Rápido e intenso",
+      "house": "Repetitivo e hipnótico",
+      "techno": "Industrial e mecânico",
+      "trance": "Elevado e transcendente",
+      "americana": "Raízes e contemporâneo",
+      "celta": "Místico e ancestral",
+      "indie-folk": "Moderno e intimista",
+      "funk": "Groove e dançante",
+      "gospel": "Espiritual e poderoso",
+      "neo-soul": "Contemporâneo e sofisticado",
+      "black-metal": "Sombrio e extremo",
+      "death-metal": "Brutal e técnico",
+      "heavy-metal": "Clássico e poderoso",
+      "punk-anarquista": "Político e revolucionário",
+      "hardcore": "Extremo e agressivo",
+      "pop-punk": "Melódico e acessível",
+      "musica-ambiente": "Sutil e envolvente",
+      "lounge": "Elegante e sofisticado",
+      "soft-rock": "Melódico e gentil",
+      "experimental": "Ousado e único",
+      "avant-garde": "Artístico e conceitual",
+      "mpb-classica": "Tradicional e poética",
+      "mpb-contemporanea": "Moderna e inovadora",
+      "samba-de-raiz": "Autêntico e tradicional",
+      "pagode": "Festivo e popular",
+      "bossa-nova-classica": "Suave e refinada",
+      "bossa-nova-moderna": "Contemporânea e estilizada",
+      "forro-pe-de-serra": "Tradicional e sanfona",
+      "forro-universitario": "Moderno e romântico",
+      "sertanejo-raiz": "Tradicional e rural",
+      "sertanejo-universitario": "Comercial e romântico",
+      "axe-classico": "Carnavalesco e energético",
+      "axe-pop": "Comercial e dançante",
+      "funk-melody": "Melódico e romântico",
+      "funk-ostentacao": "Luxuoso e aspiracional",
+      "tropicalia-classica": "Experimental e cultural",
+      "neo-tropicalia": "Contemporânea e conceitual",
+      "choro-tradicional": "Clássico e técnico",
+      "choro-moderno": "Inovador e fusion"
+    }
+  }
+}

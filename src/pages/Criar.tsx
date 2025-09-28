@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { toast } from 'sonner';
+import { useTranslation } from 'react-i18next';
+import type { TFunction } from 'i18next';
 
 import StepIndicator from "@/components/StepIndicator";
 import ParticlesAndWaves from "@/components/memora/ParticlesAndWaves";
 import NewMusicPlayer from "@/components/NewMusicPlayer";
-import ValidationPopup from "@/components/ValidationPopup";
+import FeedbackPopup, { type FeedbackSubmissionPayload } from "@/components/memora/FeedbackPopup";
 import HighlightedTextarea from "@/components/HighlightedTextarea";
 import GenreSelector from "@/components/GenreSelector";
 import ConfettiAnimation from "@/components/ConfettiAnimation";
@@ -21,114 +23,255 @@ import { LiquidGlassButtonWhite } from "@/components/ui/LiquidGlassButtonWhite";
 import { LiquidGlassButtonSmall } from "@/components/ui/LiquidGlassButtonSmall";
 import { LiquidGlassButtonWhiteSmall } from "@/components/ui/LiquidGlassButtonWhiteSmall";
 import { GlobalTextField } from '@/components/ui/GlobalTextField';
-import { HeroCard, GlassInput, GlassTextarea, GlassButton, GlassButtonGroup, GlassSection } from '@/components/HeroCard';
+import { HeroCard, GlassButton, GlassButtonGroup, GlassInput, GlassTextarea, GlassSection, GlassSeparator } from '@/components/HeroCard';
 import { SectionTitle } from '@/components/ui/SectionTitle'
 import { SectionSubtitle } from '@/components/ui/SectionSubtitle'
 import { Play, Download, RotateCcw, ArrowLeft, ArrowRight, Music, Sparkles, Edit, Volume2, Loader2, Wand2, RefreshCw, Pause, Check, Search, X } from "lucide-react";
 import CountdownTimer from '../components/CountdownTimer';
 import { useMusicStore } from '@/store/musicStore';
+import type { FormData as MusicFormData } from '@/store/musicStore';
 import { useAuthStore } from '@/store/authStore';
 import { useUiStore } from '@/store/uiStore';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { musicGenres } from '@/data/musicGenres';
 import { validateStep, getValidationErrors } from '@/lib/validations';
+import i18n from '@/i18n';
 import { z } from 'zod';
+import { apiRequest } from '@/config/api';
 
 const steps = ["Briefing", "Letra", "Estilo", "Prévia"];
 
-// Ocasiões organizadas por categorias para uma seleção mais intuitiva
-const occasionCategories: { category: string; items: string[] }[] = [
+type OptionItem = { key: string; label: string };
+type OptionCategory = { key: string; label: string; items: OptionItem[] };
+
+const OCCASION_CATEGORY_CONFIG = [
   {
-    category: 'Amor',
-    items: [
-      'Canção de amor',
-      'Aniversário de namoro',
-      'Aniversário de casamento',
-      'Proposta',
-      'Noivado',
-      'Casamento',
-      'Desculpa',
-      'Só porque…',
+    key: 'romantic',
+    labelKey: 'options.occasions.romantic.category',
+    itemKeys: [
+      'options.occasions.romantic.anniversary',
+      'options.occasions.romantic.valentine',
+      'options.occasions.romantic.proposal',
+      'options.occasions.romantic.wedding',
+      'options.occasions.romantic.engagement',
+      'options.occasions.romantic.dateNight',
+      'options.occasions.romantic.apology',
+      'options.occasions.romantic.longDistance',
     ],
   },
   {
-    category: 'Família',
-    items: [
-      'Aniversário',
-      'Dia dos Pais',
-      'Dia das Mães',
-      'Nascimento de criança',
-      'Chá de bebê',
-      'Batizado',
-      'Natal',
+    key: 'celebration',
+    labelKey: 'options.occasions.celebration.category',
+    itemKeys: [
+      'options.occasions.celebration.birthday',
+      'options.occasions.celebration.graduation',
+      'options.occasions.celebration.newJob',
+      'options.occasions.celebration.promotion',
+      'options.occasions.celebration.retirement',
+      'options.occasions.celebration.newHome',
+      'options.occasions.celebration.achievement',
+      'options.occasions.celebration.success',
     ],
   },
   {
-    category: 'Amizade',
-    items: ['Melhores amigos', 'Agradecimento', 'Despedida', 'Saudade'],
-  },
-  {
-    category: 'Conquistas',
-    items: ['Graduação', 'Formatura', 'Reconhecimento'],
-  },
-  {
-    category: 'Memória',
-    items: ['Memorial', 'Homenagem a quem partiu'],
-  },
-];
-
-// Relações organizadas por categorias
-const relationshipCategories: { category: string; items: string[] }[] = [
-  {
-    category: 'Família',
-    items: [
-      'Pai ou Mãe',
-      'Filho(a)',
-      'Irmão ou Irmã',
-      'Avô ou Avó',
-      'Neto(a)',
-      'Tio ou Tia',
-      'Sobrinho(a)',
-      'Padrasto ou Madrasta',
-      'Enteado(a)',
+    key: 'friendship',
+    labelKey: 'options.occasions.friendship.category',
+    itemKeys: [
+      'options.occasions.friendship.friendship',
+      'options.occasions.friendship.support',
+      'options.occasions.friendship.encouragement',
+      'options.occasions.friendship.reunion',
+      'options.occasions.friendship.farewell',
+      'options.occasions.friendship.thankYou',
+      'options.occasions.friendship.justBecause',
+      'options.occasions.friendship.missYou',
     ],
   },
   {
-    category: 'Amor',
-    items: ['Namorado(a)', 'Esposo(a) / Esposa', 'Noivo(a)', 'Companheiro(a)'],
-  },
-  {
-    category: 'Amigos & Outros',
-    items: [
-      'Amigo(a)',
-      'Melhores amigos',
-      'Colega de trabalho',
-      'Professor(a) / Mentor(a)',
-      'Chefe / Equipe',
-      'Cliente especial',
+    key: 'achievements',
+    labelKey: 'options.occasions.achievements.category',
+    itemKeys: [
+      'options.occasions.achievements.competition',
+      'options.occasions.achievements.award',
+      'options.occasions.achievements.recognition',
+      'options.occasions.achievements.milestone',
+      'options.occasions.achievements.goal',
+      'options.occasions.achievements.victory',
+      'options.occasions.achievements.accomplishment',
+      'options.occasions.achievements.breakthrough',
     ],
   },
+  {
+    key: 'memorial',
+    labelKey: 'options.occasions.memorial.category',
+    itemKeys: [
+      'options.occasions.memorial.memorial',
+      'options.occasions.memorial.tribute',
+      'options.occasions.memorial.remembrance',
+      'options.occasions.memorial.honor',
+      'options.occasions.memorial.legacy',
+      'options.occasions.memorial.celebration_of_life',
+      'options.occasions.memorial.memory',
+      'options.occasions.memorial.farewell_tribute',
+    ],
+  },
+] as const;
+
+const RELATIONSHIP_CATEGORY_CONFIG = [
+  {
+    key: 'family',
+    labelKey: 'options.relationships.family.category',
+    itemKeys: [
+      'options.relationships.family.mother',
+      'options.relationships.family.father',
+      'options.relationships.family.son',
+      'options.relationships.family.daughter',
+      'options.relationships.family.brother',
+      'options.relationships.family.sister',
+      'options.relationships.family.grandmother',
+      'options.relationships.family.grandfather',
+      'options.relationships.family.aunt',
+      'options.relationships.family.uncle',
+      'options.relationships.family.cousin',
+      'options.relationships.family.nephew',
+      'options.relationships.family.niece',
+    ],
+  },
+  {
+    key: 'romantic',
+    labelKey: 'options.relationships.romantic.category',
+    itemKeys: [
+      'options.relationships.romantic.wife',
+      'options.relationships.romantic.husband',
+      'options.relationships.romantic.girlfriend',
+      'options.relationships.romantic.boyfriend',
+      'options.relationships.romantic.fiancee',
+      'options.relationships.romantic.partner',
+      'options.relationships.romantic.soulmate',
+      'options.relationships.romantic.crush',
+    ],
+  },
+  {
+    key: 'friendship',
+    labelKey: 'options.relationships.friendship.category',
+    itemKeys: [
+      'options.relationships.friendship.best_friend',
+      'options.relationships.friendship.friend',
+      'options.relationships.friendship.colleague',
+      'options.relationships.friendship.mentor',
+      'options.relationships.friendship.teacher',
+      'options.relationships.friendship.student',
+      'options.relationships.friendship.neighbor',
+      'options.relationships.friendship.acquaintance',
+    ],
+  },
+] as const;
+
+const OCCASION_ITEM_KEYS = OCCASION_CATEGORY_CONFIG.flatMap((category) => category.itemKeys);
+const RELATIONSHIP_ITEM_KEYS = RELATIONSHIP_CATEGORY_CONFIG.flatMap((category) => category.itemKeys);
+
+const EMOTION_KEYS = [
+  'options.emotions.happy',
+  'options.emotions.romantic',
+  'options.emotions.nostalgic',
+  'options.emotions.energetic',
+  'options.emotions.peaceful',
+  'options.emotions.emotional',
+  'options.emotions.inspiring',
+  'options.emotions.playful',
+  'options.emotions.melancholic',
+  'options.emotions.triumphant',
+  'options.emotions.grateful',
+  'options.emotions.hopeful',
+  'options.emotions.celebratory',
+  'options.emotions.tender',
+  'options.emotions.uplifting',
+  'options.emotions.sentimental',
+  'options.emotions.joyful',
+  'options.emotions.passionate',
+  'options.emotions.serene',
+  'options.emotions.motivational',
 ];
 
+const VOCAL_KEYS = ['style.voice.female', 'style.voice.male', 'style.voice.both'];
 
+const SUPPORTED_LANGUAGES = ['pt', 'en'] as const;
 
-const emotions = [
-  "Feliz e animado",
-  "Emocional e profundo",
-  "Romântico e terno",
-  "Divertido e brincalhão",
-  "Nostálgico e reflexivo",
-  "Inspirador e motivador",
-  "Cómico e peculiar"
-];
+const buildValueToKeyMap = (keys: readonly string[]) => {
+  const map: Record<string, string> = {};
+  keys.forEach((key) => {
+    map[key] = key;
+  });
+  SUPPORTED_LANGUAGES.forEach((lng) => {
+    const fixedT = i18n.getFixedT(lng, 'criar');
+    keys.forEach((key) => {
+      const label = fixedT(key);
+      map[label] = key;
+    });
+  });
+  return map;
+};
 
-const vocalPreferences = [
-  "Feminino",
-  "Masculino",
-  "Ambos"
-];
+const OCCASION_VALUE_MAP = buildValueToKeyMap(OCCASION_ITEM_KEYS);
+const RELATIONSHIP_VALUE_MAP = buildValueToKeyMap(RELATIONSHIP_ITEM_KEYS);
+const EMOTION_VALUE_MAP = buildValueToKeyMap(EMOTION_KEYS);
+const VOCAL_VALUE_MAP = buildValueToKeyMap(VOCAL_KEYS);
+
+const getOccasionCategories = (t: TFunction<'criar'>): OptionCategory[] =>
+  OCCASION_CATEGORY_CONFIG.map(({ key, labelKey, itemKeys }) => ({
+    key,
+    label: t(labelKey),
+    items: itemKeys.map((itemKey) => ({ key: itemKey, label: t(itemKey) })),
+  }));
+
+const getRelationshipCategories = (t: TFunction<'criar'>): OptionCategory[] =>
+  RELATIONSHIP_CATEGORY_CONFIG.map(({ key, labelKey, itemKeys }) => ({
+    key,
+    label: t(labelKey),
+    items: itemKeys.map((itemKey) => ({ key: itemKey, label: t(itemKey) })),
+  }));
+
+const getEmotions = (t: TFunction<'criar'>): OptionItem[] =>
+  EMOTION_KEYS.map((key) => ({ key, label: t(key) }));
+
+const getVocalPreferences = (t: TFunction<'criar'>): OptionItem[] =>
+  VOCAL_KEYS.map((key) => ({ key, label: t(key) }));
+
+const optionConfig = {
+  occasion: { keys: OCCASION_ITEM_KEYS, map: OCCASION_VALUE_MAP },
+  relationship: { keys: RELATIONSHIP_ITEM_KEYS, map: RELATIONSHIP_VALUE_MAP },
+  emotion: { keys: EMOTION_KEYS, map: EMOTION_VALUE_MAP },
+  vocal: { keys: VOCAL_KEYS, map: VOCAL_VALUE_MAP },
+} as const;
+
+type OptionType = keyof typeof optionConfig;
+
+const normalizeOptionValue = (type: OptionType, value: string): string => {
+  if (!value) return value;
+  const { keys, map } = optionConfig[type];
+  if (keys.includes(value)) {
+    return value;
+  }
+  return map[value] ?? value;
+};
+
+const translateOptionValue = (
+  type: OptionType,
+  value: string,
+  t: TFunction<'criar'>,
+): string => {
+  if (!value) return '';
+  const normalized = normalizeOptionValue(type, value);
+  const { keys } = optionConfig[type];
+  if (keys.includes(normalized)) {
+    return t(normalized);
+  }
+  return value;
+};
 
 export default function Criar() {
+  const { t } = useTranslation('criar');
+  
   // Estados do store Zustand
   const musicStore = useMusicStore();
   const {
@@ -156,6 +299,8 @@ export default function Criar() {
     totalExpected,
     // Estados MVP
     isValidationPopupVisible,
+    setValidationPopupVisible,
+    completeMvpFlow,
     // Nova função centralizada
     startNewCreationFlow,
     generatedLyrics,
@@ -164,6 +309,9 @@ export default function Criar() {
   // Hook de navegação
   const navigate = useNavigate();
   const location = useLocation();
+
+  // Estado de autenticação
+  const { isLoggedIn } = useAuthStore();
 
   // Estado de bloqueio centralizado
   const { isCreationFlowBlocked } = useUiStore();
@@ -194,21 +342,98 @@ export default function Criar() {
   const scrollToPreviewStatus = React.useCallback(() => {
     previewStatusRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }, []);
+  // Obter arrays traduzidos
+  const occasionCategories = React.useMemo(() => getOccasionCategories(t), [t]);
+  const relationshipCategories = React.useMemo(() => getRelationshipCategories(t), [t]);
+  const emotions = React.useMemo(() => getEmotions(t), [t]);
+  const vocalPreferences = React.useMemo(() => getVocalPreferences(t), [t]);
+  const emotionPlaceholder = t('style.emotion.placeholder', { defaultValue: 'Selecione a emoção' });
+
   // Categoria selecionada no briefing
   const [selectedOccasionCategory, setSelectedOccasionCategory] = useState<string>(() => {
-    // Tenta inferir a categoria a partir da ocasião já selecionada
-    const found = occasionCategories.find((c) => c.items.includes(musicStore.formData.occasion || ''));
-    return found ? found.category : occasionCategories[0].category;
+    const normalizedOccasion = normalizeOptionValue('occasion', musicStore.formData.occasion);
+    const found = OCCASION_CATEGORY_CONFIG.find((category) =>
+      category.itemKeys.includes(normalizedOccasion),
+    );
+    return found?.key ?? OCCASION_CATEGORY_CONFIG[0]?.key ?? '';
   });
   const [selectedRelationshipCategory, setSelectedRelationshipCategory] = useState<string>(() => {
-    const rel = musicStore.formData.relationship || '';
-    const found = relationshipCategories.find((c) => c.items.includes(rel));
-    return found ? found.category : relationshipCategories[0].category;
+    const normalizedRelationship = normalizeOptionValue('relationship', musicStore.formData.relationship);
+    const found = RELATIONSHIP_CATEGORY_CONFIG.find((category) =>
+      category.itemKeys.includes(normalizedRelationship),
+    );
+    return found?.key ?? RELATIONSHIP_CATEGORY_CONFIG[0]?.key ?? '';
   });
 
+  const handleFeedbackSubmit = React.useCallback(async ({
+    difficulty,
+    wouldRecommend,
+    priceRaw,
+  }: FeedbackSubmissionPayload) => {
+    await apiRequest('/api/save-feedback', {
+      method: 'POST',
+      body: {
+        difficulty,
+        wouldRecommend,
+        priceWillingness: priceRaw,
+      },
+    });
+  }, []);
+
+  const handleFeedbackClose = React.useCallback(() => {
+    setValidationPopupVisible(false);
+  }, [setValidationPopupVisible]);
+
+  const handleFeedbackSuccess = React.useCallback(() => {
+    completeMvpFlow();
+  }, [completeMvpFlow]);
+
+  const selectedOccasionCategoryData = occasionCategories.find(
+    (category) => category.key === selectedOccasionCategory,
+  ) ?? occasionCategories[0];
+  const selectedRelationshipCategoryData = relationshipCategories.find(
+    (category) => category.key === selectedRelationshipCategory,
+  ) ?? relationshipCategories[0];
 
 
 
+
+
+  useEffect(() => {
+    const updates: Partial<MusicFormData> = {};
+
+    if (formData.occasion) {
+      const normalized = normalizeOptionValue('occasion', formData.occasion);
+      if (normalized !== formData.occasion) {
+        updates.occasion = normalized;
+      }
+    }
+
+    if (formData.relationship) {
+      const normalized = normalizeOptionValue('relationship', formData.relationship);
+      if (normalized !== formData.relationship) {
+        updates.relationship = normalized;
+      }
+    }
+
+    if (formData.emotion) {
+      const normalized = normalizeOptionValue('emotion', formData.emotion);
+      if (normalized !== formData.emotion) {
+        updates.emotion = normalized;
+      }
+    }
+
+    if (formData.vocalPreference) {
+      const normalized = normalizeOptionValue('vocal', formData.vocalPreference);
+      if (normalized !== formData.vocalPreference) {
+        updates.vocalPreference = normalized;
+      }
+    }
+
+    if (Object.keys(updates).length > 0) {
+      updateFormData(updates);
+    }
+  }, [formData.occasion, formData.relationship, formData.emotion, formData.vocalPreference, updateFormData]);
 
   // useEffect para posicionar scroll no topo da página
   useEffect(() => {
@@ -437,7 +662,7 @@ export default function Criar() {
     switch (step) {
       case 0:
         return (
-          <HeroCard title="Conte sua história">
+          <HeroCard title={t('briefing.title')}>
             <div className="space-y-8">
               {/* Mensagem de erro global */}
               {error && (
@@ -447,45 +672,49 @@ export default function Criar() {
               )}
               
               {/* A Ocasião (por categorias) */}
-              <GlassSection title="A Ocasião">
+              <GlassSection title={t('briefing.occasion.title')}>
                 <div className="space-y-3">
-                  <Label className="text-white/90 font-medium drop-shadow-sm">Qual a ocasião especial? *</Label>
+                  <Label className="text-white/90 font-medium drop-shadow-sm">{t('briefing.occasion.label')}</Label>
                   {/* Categorias */}
                   <GlassButtonGroup>
-                    {occasionCategories.map(({ category }) => {
-                      const active = selectedOccasionCategory === category;
+                    {occasionCategories.map(({ key, label }) => {
+                      const active = selectedOccasionCategory === key;
                       return (
                         <GlassButton
                           type="button"
-                          key={category}
+                          key={key}
                           active={active}
-                          onClick={() => setSelectedOccasionCategory(category)}
+                          onClick={() => setSelectedOccasionCategory(key)}
                           aria-pressed={active}
                         >
-                          {category}
+                          {label}
                         </GlassButton>
                       );
                     })}
                   </GlassButtonGroup>
 
+                  {/* Separador visual entre categoria principal e subcategorias */}
+                  {selectedOccasionCategory && selectedOccasionCategoryData?.items && selectedOccasionCategoryData.items.length > 0 && (
+                    <GlassSeparator className="my-3" />
+                  )}
+
                   {/* Opções da categoria selecionada */}
                   <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2 mt-2">
-                    {occasionCategories
-                      .find((c) => c.category === selectedOccasionCategory)!
-                      .items.map((item) => {
-                        const active = formData.occasion === item;
-                        return (
-                          <GlassButton
-                            type="button"
-                            key={item}
-                            active={active}
-                            onClick={() => handleFieldUpdate('occasion', item)}
-                            className="text-left"
-                          >
-                            {item}
-                          </GlassButton>
-                        );
-                      })}
+                    {selectedOccasionCategoryData?.items.map((item) => {
+                      const active = formData.occasion === item.key;
+                      return (
+                        <GlassButton
+                          type="button"
+                          key={item.key}
+                          active={active}
+                          variant="secondary"
+                          onClick={() => handleFieldUpdate('occasion', item.key)}
+                          className="text-left"
+                        >
+                          {item.label}
+                        </GlassButton>
+                      );
+                    })}
                   </div>
 
                   {validationErrors.occasion && (
@@ -495,12 +724,12 @@ export default function Criar() {
               </GlassSection>
 
               {/* Sobre a(s) Pessoa(s) */}
-              <GlassSection title="Sobre a(s) Pessoa(s)">
+              <GlassSection title={t('briefing.person.title')}>
                 <div className="space-y-4">
                   <GlassInput
                     id="recipientName"
-                    label="Qual o nome da pessoa para quem está a criar esta música? *"
-                    placeholder="Ex: Maria"
+                    label={t('briefing.person.recipientName.label')}
+                    placeholder={t('briefing.person.recipientName.placeholder')}
                     value={formData.recipientName}
                     onChange={(e) => handleFieldUpdate('recipientName', e.target.value)}
                     error={validationErrors.recipientName}
@@ -510,43 +739,47 @@ export default function Criar() {
                   )}
                   
                   <div className="space-y-2">
-                    <Label className="text-white/90 font-medium drop-shadow-sm">Qual a vossa relação? *</Label>
+                    <Label className="text-white/90 font-medium drop-shadow-sm">{t('briefing.person.relationship.label')}</Label>
                     {/* Categorias de relação */}
                     <GlassButtonGroup>
-                      {relationshipCategories.map(({ category }) => {
-                        const active = selectedRelationshipCategory === category;
+                      {relationshipCategories.map(({ key, label }) => {
+                        const active = selectedRelationshipCategory === key;
                         return (
                           <GlassButton
                             type="button"
-                            key={category}
+                            key={key}
                             active={active}
-                            onClick={() => setSelectedRelationshipCategory(category)}
+                            onClick={() => setSelectedRelationshipCategory(key)}
                             aria-pressed={active}
                           >
-                            {category}
+                            {label}
                           </GlassButton>
                         );
                       })}
                     </GlassButtonGroup>
 
+                    {/* Separador visual entre categoria principal e subcategorias */}
+                    {selectedRelationshipCategory && selectedRelationshipCategoryData?.items && selectedRelationshipCategoryData.items.length > 0 && (
+                      <GlassSeparator className="my-3" />
+                    )}
+
                     {/* Opções da categoria selecionada */}
                     <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2 mt-2">
-                      {relationshipCategories
-                        .find((c) => c.category === selectedRelationshipCategory)!
-                        .items.map((item) => {
-                          const active = formData.relationship === item;
-                          return (
-                            <GlassButton
-                              type="button"
-                              key={item}
-                              active={active}
-                              onClick={() => handleFieldUpdate('relationship', item)}
-                              className="text-left"
-                            >
-                              {item}
-                            </GlassButton>
-                          );
-                        })}
+                      {selectedRelationshipCategoryData?.items.map((item) => {
+                        const active = formData.relationship === item.key;
+                        return (
+                          <GlassButton
+                            type="button"
+                            key={item.key}
+                            active={active}
+                            variant="secondary"
+                            onClick={() => handleFieldUpdate('relationship', item.key)}
+                            className="text-left"
+                          >
+                            {item.label}
+                          </GlassButton>
+                        );
+                      })}
                     </div>
 
                     {validationErrors.relationship && (
@@ -556,8 +789,8 @@ export default function Criar() {
                   
                   <GlassInput
                     id="senderName"
-                    label="Qual o seu nome?"
-                    placeholder="Ex: João"
+                    label={t('briefing.person.senderName.label')}
+                    placeholder={t('briefing.person.senderName.placeholder')}
                     value={formData.senderName}
                     onChange={(e) => handleFieldUpdate('senderName', e.target.value)}
                   />
@@ -565,12 +798,12 @@ export default function Criar() {
               </GlassSection>
 
               {/* Detalhes e Personalidade */}
-              <GlassSection title="Detalhes e Personalidade">
+              <GlassSection title={t('briefing.details.title')}>
                 <div className="space-y-4">
                   <GlassTextarea
                     id="hobbies"
-                    label="Fale-nos sobre os seus hobbies e interesses! *"
-                    placeholder="Ex: Adora cozinhar, fazer caminhadas na natureza, ler livros de ficção..."
+                    label={t('briefing.details.hobbies.label')}
+                    placeholder={t('briefing.details.hobbies.placeholder')}
                     value={formData.hobbies}
                     onChange={(e) => handleFieldUpdate('hobbies', e.target.value)}
                     rows={3}
@@ -581,8 +814,8 @@ export default function Criar() {
                   
                   <GlassTextarea
                     id="qualities"
-                    label="Quais as qualidades que você mais admira nessa pessoa? *"
-                    placeholder="Ex: É muito generosa, sempre disposta a ajudar, tem um sorriso contagiante..."
+                    label={t('briefing.details.qualities.label')}
+                    placeholder={t('briefing.details.qualities.placeholder')}
                     value={formData.qualities}
                     onChange={(e) => handleFieldUpdate('qualities', e.target.value)}
                     rows={3}
@@ -593,8 +826,8 @@ export default function Criar() {
                   
                   <GlassTextarea
                     id="uniqueTraits"
-                    label="O que a torna única ou especial? Tem algum hábito engraçado ou interessante? *"
-                    placeholder="Ex: Sempre canta no chuveiro, coleciona postais de viagens, faz as melhores panquecas..."
+                    label={t('briefing.details.uniqueTraits.label')}
+                    placeholder={t('briefing.details.uniqueTraits.placeholder')}
                     value={formData.uniqueTraits}
                     onChange={(e) => handleFieldUpdate('uniqueTraits', e.target.value)}
                     rows={3}
@@ -606,11 +839,11 @@ export default function Criar() {
               </GlassSection>
 
               {/* Memórias e Histórias */}
-              <GlassSection title="Memórias e Histórias">
+              <GlassSection title={t('briefing.memories.title')}>
                 <GlassTextarea
                   id="memories"
-                  label="Partilhe as vossas histórias ou memórias favoritas que gostaria de incluir na música. *"
-                  placeholder="Uma é suficiente. Mais é melhor."
+                  label={t('briefing.memories.label')}
+                  placeholder={t('briefing.memories.placeholder')}
                   value={formData.memories}
                   onChange={(e) => handleFieldUpdate('memories', e.target.value)}
                   rows={4}
@@ -625,20 +858,20 @@ export default function Criar() {
       
       case 1:
         return (
-          <HeroCard title="Letra da sua música">
+          <HeroCard title={t('lyrics.title')}>
             <div className="space-y-6">
               {!formData.lyrics && !isLoading && (
                 <div className="text-center space-y-4">
                   <p className="text-muted-foreground">
-                    Vamos gerar a letra da sua música baseada na história que você contou.
+                    {t('lyrics.description')}
                   </p>
                   <PurpleFormButton 
                     onClick={generateLyrics} 
                     isLoading={isLoading}
-                    loadingText="Gerando letra..."
+                    loadingText={t('lyrics.generating')}
                     disabled={isLoading || !formData.occasion || !formData.recipientName || !formData.relationship}
                   >
-                    Gerar Letra da Música
+                    {t('lyrics.generateButton')}
                   </PurpleFormButton>
                 </div>
               )}
@@ -649,9 +882,9 @@ export default function Criar() {
                   <Loader2 className="w-12 h-12 animate-spin text-purple-500 mx-auto" />
                   </div>
                   <div>
-                    <p className="font-medium text-white">Criando sua letra personalizada...</p>
+                    <p className="font-medium text-white">{t('lyrics.creating')}</p>
                     <p className="text-sm text-white/50">
-                      Estamos analisando sua história e criando versos únicos
+                      {t('lyrics.analyzing')}
                     </p>
                   </div>
                 </div>
@@ -671,21 +904,21 @@ export default function Criar() {
                         </div>
                         <div>
                           <h3 className="font-heading font-semibold text-lg text-white">
-                            Sua Letra Personalizada
+                            {t('lyrics.personalizedTitle')}
                           </h3>
                           <p className="text-sm text-white/60 mt-0.5">
-                            {isEditingLyrics ? 'Modo de edição ativo' : 'Clique em editar para personalizar'}
+                            {isEditingLyrics ? t('lyrics.editModeActive') : t('lyrics.clickToEdit')}
                           </p>
                         </div>
                       </div>
                       <LiquidGlassButtonWhite
                         onClick={toggleLyricsEditor}
                         className="text-sm px-4 py-2.5 h-auto font-medium"
-                        aria-label={isEditingLyrics ? 'Fechar edição' : 'Editar letra'}
+                        aria-label={isEditingLyrics ? t('lyrics.closeEdit') : t('lyrics.editLyrics')}
                         aria-pressed={isEditingLyrics}
                       >
                         {isEditingLyrics ? <X className="w-4 h-4 mr-2" /> : <Edit className="w-4 h-4 mr-2" />}
-                        {isEditingLyrics ? 'Fechar Edição' : 'Editar Letra'}
+                        {isEditingLyrics ? t('lyrics.closeEdit') : t('lyrics.editLyrics')}
                       </LiquidGlassButtonWhite>
                     </div>
 
@@ -696,7 +929,7 @@ export default function Criar() {
                         {findText && (
                           <div className="absolute top-2 right-2">
                             <span className="text-xs px-2 py-1 rounded-md bg-primary/20 text-primary font-medium">
-                              Buscando: "{findText}"
+                              {t('lyrics.searching')}: "{findText}"
                             </span>
                           </div>
                         )}
@@ -710,10 +943,10 @@ export default function Criar() {
                             <div className="lg:col-span-2 space-y-2">
                               <div className="relative">
                                 <GlobalTextField
-                                  label="Digite o texto que deseja encontrar"
+                                  label={t('lyrics.findTextLabel')}
                                   value={findText}
                                   onChange={(e) => setFindText(e.target.value)}
-                                  placeholder="Buscar texto na letra..."
+                                  placeholder={t('lyrics.searchPlaceholder')}
                                   className="pl-10 pr-10"
                                 />
                                 <div className="absolute left-3 top-[42px] pointer-events-none">
@@ -722,7 +955,7 @@ export default function Criar() {
                                 {findText && (
                                   <button
                                     type="button"
-                                    aria-label="Limpar busca"
+                                    aria-label={t('lyrics.clearSearch')}
                                     onClick={() => setFindText("")}
                                     className="absolute right-3 top-[42px] p-1.5 rounded-md hover:bg-white/20 text-white/70 hover:text-white transition-all duration-200 hover:scale-110"
                                   >
@@ -744,7 +977,7 @@ export default function Criar() {
                                 }}
                               >
                                 <RotateCcw className="w-4 h-4" />
-                                Restaurar
+                                {t('lyrics.restore')}
                               </button>
                               
                               <div className="flex items-center justify-center gap-2 text-xs text-white/70 bg-white/5 rounded-lg px-3 py-2">
@@ -753,7 +986,7 @@ export default function Criar() {
                                   {saveHint === 'saved' && <Check className="w-3.5 h-3.5 text-green-400" />}
                                   {saveHint === 'idle' && <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />}
                                   <span className="font-medium">
-                                    {saveHint === 'saving' ? 'Salvando...' : saveHint === 'saved' ? 'Salvo' : 'Auto-save'}
+                                    {saveHint === 'saving' ? t('lyrics.saving') : saveHint === 'saved' ? t('lyrics.saved') : t('lyrics.autoSave')}
                                   </span>
                                 </div>
                               </div>
@@ -773,7 +1006,7 @@ export default function Criar() {
                           {findText && (
                             <div className="absolute top-3 right-3">
                               <span className="text-xs px-2 py-1 rounded-md bg-primary/20 text-primary font-medium backdrop-blur-sm">
-                                Destacando: "{findText}"
+                                {t('lyrics.highlighting')}: "{findText}"
                               </span>
                             </div>
                           )}
@@ -790,16 +1023,17 @@ export default function Criar() {
                       }} 
                       className="flex-1"
                       isLoading={isLoading}
-                      loadingText="Gerando nova letra..."
+                      loadingText={t('lyrics.generatingNew')}
+                      iconPosition="right"
                     >
-                      <RotateCcw className="w-4 h-4 mr-2" />
-                      Gerar Nova Letra
+                      {t('lyrics.generateNew')}
+                      <RotateCcw className="w-4 h-4" />
                     </PurpleFormButton>
 
                   </div>
                   
                   <p className="text-xs text-white/60 text-center">
-                    💡 Dica: Você pode gerar quantas versões quiser até ficar satisfeito
+                    💡 {t('lyrics.tip')}
                   </p>
                 </div>
               )}
@@ -809,7 +1043,7 @@ export default function Criar() {
       
       case 2:
         return (
-          <HeroCard title="Escolha o estilo musical">
+          <HeroCard title={t('style.title')}>
             <div className="space-y-6">
               <div className="grid gap-6">
                 <div className="space-y-4">
@@ -837,15 +1071,18 @@ export default function Criar() {
                 
                 <div className="grid md:grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="emotion" className="text-base font-semibold text-white">Que emoção você quer transmitir? *</Label>
-                    <Select value={formData.emotion} onValueChange={(value) => handleFieldUpdate('emotion', value)}>
+                    <Label htmlFor="emotion" className="text-base font-semibold text-white">{t('style.emotion.label')}</Label>
+                    <Select
+                      value={formData.emotion || ''}
+                      onValueChange={(value) => handleFieldUpdate('emotion', value)}
+                    >
                        <SelectTrigger className="h-12 bg-white/10 backdrop-blur-md border-white/20 text-white placeholder:text-white/60 hover:bg-white/15 focus:bg-white/20 focus:border-white/40">
-                         <SelectValue placeholder="Selecione a emoção" />
+                         <SelectValue placeholder={emotionPlaceholder} />
                        </SelectTrigger>
                       <SelectContent>
                         {emotions.map((emotion) => (
-                          <SelectItem key={emotion} value={emotion}>
-                            {emotion}
+                          <SelectItem key={emotion.key} value={emotion.key}>
+                            {emotion.label}
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -856,15 +1093,18 @@ export default function Criar() {
                   </div>
                   
                   <div className="space-y-2">
-                    <Label htmlFor="vocalPreference" className="text-base font-semibold text-white">Escolha o tipo de voz *</Label>
-                    <Select value={formData.vocalPreference} onValueChange={(value) => handleFieldUpdate('vocalPreference', value)}>
+                    <Label htmlFor="vocalPreference" className="text-base font-semibold text-white">{t('style.voice.label')}</Label>
+                    <Select
+                      value={formData.vocalPreference || ''}
+                      onValueChange={(value) => handleFieldUpdate('vocalPreference', value)}
+                    >
                        <SelectTrigger className="h-12 bg-white/10 backdrop-blur-md border-white/20 text-white placeholder:text-white/60 hover:bg-white/15 focus:bg-white/20 focus:border-white/40">
-                         <SelectValue placeholder="Selecione a preferência vocal" />
+                         <SelectValue placeholder={t('style.voice.placeholder')} />
                        </SelectTrigger>
                       <SelectContent>
                         {vocalPreferences.map((preference) => (
-                          <SelectItem key={preference} value={preference}>
-                            {preference}
+                          <SelectItem key={preference.key} value={preference.key}>
+                            {preference.label}
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -881,12 +1121,12 @@ export default function Criar() {
       
       case 3: {
         const summaryItems = [
-          { label: 'Ocasião', value: formData.occasion },
-          { label: 'Para', value: formData.recipientName },
-          { label: 'Relação', value: formData.relationship },
-          { label: 'Gênero', value: formData.genre },
-          { label: 'Emoção', value: formData.emotion },
-          { label: 'Vocal', value: formData.vocalPreference },
+          { label: t('summary.occasion'), value: translateOptionValue('occasion', formData.occasion, t) },
+          { label: t('summary.for'), value: formData.recipientName },
+          { label: t('summary.relationship'), value: translateOptionValue('relationship', formData.relationship, t) },
+          { label: t('summary.genre'), value: formData.genre },
+          { label: t('summary.emotion'), value: translateOptionValue('emotion', formData.emotion, t) },
+          { label: t('summary.vocal'), value: translateOptionValue('vocal', formData.vocalPreference, t) },
         ].filter((item) => Boolean(item.value));
 
         const summaryCard = summaryItems.length > 0 ? (
@@ -895,7 +1135,7 @@ export default function Criar() {
               <span className="h-2 w-2 rounded-full bg-secondary shadow-[0_0_12px_rgba(254,198,65,0.65)]" aria-hidden />
             </div>
             <div>
-              <h3 className="text-2xl font-semibold font-heading text-white">Resumo da sua música</h3>
+              <h3 className="text-2xl font-semibold font-heading text-white">{t('summary.title')}</h3>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {summaryItems.map(({ label, value }) => (
@@ -915,28 +1155,31 @@ export default function Criar() {
             {!currentTaskId ? (
               <div className="flex flex-col items-center gap-4">
                 <div className="h-14 w-14 rounded-full border-2 border-secondary/60 border-t-transparent animate-spin" />
-                <p className="text-sm text-white/70">Conectando como nosso estúdio digital...</p>
+                <p className="text-sm text-white/70">{t('generation.connecting')}</p>
               </div>
             ) : (
               <CountdownTimer className="w-full" />
             )}
             <div className="space-y-2">
               <h3 className="text-xl font-semibold font-heading text-white">
-                {!currentTaskId ? 'Iniciando geração...' : musicGenerationStatus === 'processing' ? 'Criando sua música...' : 'Processando...'}
+                {!currentTaskId ? t('generation.starting') : musicGenerationStatus === 'processing' ? t('generation.creating') : t('generation.processing')}
               </h3>
               <p className="text-sm text-white/70 max-w-md mx-auto">
-                {!currentTaskId
-                  ? 'Estamos preparando tudo para transformar sua história em canção personalizada.'
+                  {!currentTaskId
+                    ? t('generation.preparing')
                   : totalExpected > 0
-                    ? `Gerando ${totalExpected} versões exclusivas para você.`
-                    : 'Estamos finalizando os últimos detalhes antes de liberar sua música.'}
-              </p>
+                      ? t('generation.generating', {
+                          count: Math.max(1, Math.min(completedClips || 0, totalExpected)),
+                          total: totalExpected,
+                        })
+                      : t('generation.finalizing')}
+                </p>
             </div>
             {totalExpected > 0 && (
               <div className="w-full max-w-sm space-y-3">
-                <div className="text-[11px] uppercase tracking-[0.28em] text-white/60">Progresso</div>
+                <div className="text-[11px] uppercase tracking-[0.28em] text-white/60">{t('generation.progress')}</div>
                 <div className="flex items-center justify-between text-sm text-white/80">
-                  <span>{completedClips || 0}/{totalExpected} músicas prontas</span>
+                  <span>{t('generation.songsReady', { completed: completedClips || 0, total: totalExpected })}</span>
                   <span className="text-white/60">{Math.round(((completedClips || 0) / totalExpected) * 100)}%</span>
                 </div>
                 <div className="h-2 w-full overflow-hidden rounded-full bg-white/10">
@@ -955,7 +1198,7 @@ export default function Criar() {
             <div ref={previewStatusRef} className="text-center space-y-3">
               <div className="mx-auto h-3 w-36 rounded-full bg-gradient-yellow-purple blur-xl opacity-80" aria-hidden />
               <h2 className="text-3xl font-extrabold font-heading bg-gradient-yellow-purple bg-clip-text text-transparent drop-shadow-sm">
-                Sua música está sendo gerada...
+                {t('generation.beingGenerated')}
               </h2>
             </div>
 
@@ -971,11 +1214,11 @@ export default function Criar() {
                     <div className="space-y-2">
                       <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
                         <h3 className="text-2xl font-semibold font-heading text-white">
-                          Música para {formData.recipientName || 'Pessoa Especial'}
+                          {t('generation.musicFor', { name: formData.recipientName || t('generation.specialPerson') })}
                         </h3>
                         {audioClips?.length ? (
                           <span className="inline-flex items-center gap-2 rounded-full bg-secondary/20 px-4 py-2 text-xs font-medium text-secondary backdrop-blur">
-                            ✓ {audioClips.filter((clip) => clip.audio_url).length} versão{audioClips.filter((clip) => clip.audio_url).length !== 1 ? 's' : ''} pronta{audioClips.filter((clip) => clip.audio_url).length !== 1 ? 's' : ''}
+                            ✓ {t('generation.versionsReady', { count: audioClips.filter((clip) => clip.audio_url).length })}
                           </span>
                         ) : null}
                       </div>
@@ -984,7 +1227,7 @@ export default function Criar() {
                     {(isPolling || isPreviewLoading) && totalExpected > 0 && (
                       <div className="space-y-2">
                         <div className="flex items-center justify-between text-xs text-white/70">
-                          <span>Progresso da geração</span>
+                          <span>{t('generation.generationProgress')}</span>
                           <span>{completedClips || 0}/{totalExpected}</span>
                         </div>
                         <div className="h-2 w-full overflow-hidden rounded-full bg-white/10">
@@ -1003,9 +1246,9 @@ export default function Criar() {
                         <div className="space-y-2">
                           <h4 className="flex items-center gap-2 text-lg font-semibold font-heading text-white">
                             <Music className="h-5 w-5 text-secondary" />
-                            Suas músicas personalizadas
+                            {t('generation.personalizedSongs')}
                           </h4>
-                          <p className="text-sm text-white/70">Ouça, compare e escolha a melhor versão para compartilhar.</p>
+                          <p className="text-sm text-white/70">{t('generation.listenAndChoose')}</p>
                         </div>
                         <NewMusicPlayer clips={audioClips} />
                       </LiquidGlassCard>
@@ -1021,16 +1264,16 @@ export default function Criar() {
                           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                             <div className="space-y-1">
                               <h4 className="flex items-center gap-2 text-lg font-semibold font-heading text-white">
-                                Opção {placeholderIndex}
+                                {t('generation.option', { number: placeholderIndex })}
                                 <span className="inline-flex items-center gap-1 rounded-full bg-secondary/15 px-3 py-1 text-xs font-medium text-secondary">
                                   <Loader2 className="h-4 w-4 animate-spin text-secondary" />
-                                  Gerando...
+                                  {t('generation.generating')}
                                 </span>
                               </h4>
-                              <p className="text-sm text-white/70">Aguarde, estamos preparando esta versão com carinho.</p>
+                              <p className="text-sm text-white/70">{t('generation.preparing')}</p>
                             </div>
                             <div className="text-sm text-white/60">
-                              Duração prevista
+                              {t('generation.estimatedDuration')}
                               <p className="font-mono text-lg text-white/80">--:--</p>
                             </div>
                           </div>
@@ -1040,14 +1283,14 @@ export default function Criar() {
                               <Music className="h-6 w-6" />
                             </LiquidGlassCard>
                             <LiquidGlassCard size="sm" className="flex-1 !p-0 px-4 py-3 text-sm text-white/70">
-                              O player aparecerá aqui assim que a versão estiver pronta.
+                              {t('generation.playerWillAppear')}
                             </LiquidGlassCard>
                           </div>
 
                           <div className="mt-4">
                             <Button size="sm" variant="outline" className="w-full" disabled>
                               <Download className="mr-2 h-4 w-4" />
-                              Aguardando geração...
+                              {t('generation.waitingGeneration')}
                             </Button>
                           </div>
                         </LiquidGlassCard>
@@ -1056,13 +1299,13 @@ export default function Criar() {
 
                     {(!audioClips || audioClips.length === 0) && !isPolling && (
                       <LiquidGlassCard className="p-6 text-center text-white/70">
-                        <h4 className="mb-2 text-lg font-semibold font-heading text-white">Nenhuma prévia disponível</h4>
-                        <p className="text-sm">Tente gerar a música novamente.</p>
+                        <h4 className="mb-2 text-lg font-semibold font-heading text-white">{t('generation.noPreviewAvailable')}</h4>
+                        <p className="text-sm">{t('generation.tryGenerateAgain')}</p>
                       </LiquidGlassCard>
                     )}
                   </div>
 
-                  {currentStep === steps.length - 1 && (
+                  {currentStep === steps.length - 1 && isLoggedIn && (
                     <div className="flex justify-center">
                       <LiquidGlassButton
                         onClick={() => {
@@ -1072,7 +1315,7 @@ export default function Criar() {
                         }}
                         className="px-8"
                       >
-                        Criar Nova Música
+                        {t('generation.createNewMusic')}
                       </LiquidGlassButton>
                     </div>
                   )}
@@ -1094,13 +1337,15 @@ export default function Criar() {
 
   return (
     <div className="min-h-screen flex flex-col">
-      <main className="flex-1 pt-25 pb-12">
+      <main className="flex-1 pt-40 pb-12">
         <div className="container mx-auto px-4">
           <div className="max-w-2xl mx-auto">
             <div className="text-center mb-8">
-              <SectionTitle>Dê <span className="bg-gradient-to-r from-yellow-400 to-purple-600 bg-clip-text text-transparent">vida</span> à sua <span className="bg-gradient-to-r from-yellow-400 to-purple-600 bg-clip-text text-transparent">canção</span></SectionTitle>
+              <SectionTitle>
+                <span dangerouslySetInnerHTML={{ __html: t('page.title') }} />
+              </SectionTitle>
               <SectionSubtitle>
-          Compartilhe sentimentos, escolha o estilo e receba sua música final em minutos.
+          {t('page.subtitle')}
         </SectionSubtitle>
             </div>
             
@@ -1120,7 +1365,7 @@ export default function Criar() {
                     onClick={handlePrevStep}
                   >
                     <ArrowLeft className="w-4 h-4" />
-                    Anterior
+                    {t('navigation.previous')}
                   </LiquidGlassButtonWhiteSmall>
                 )}
                 
@@ -1138,11 +1383,11 @@ export default function Criar() {
                       disabled={isEditingLyrics || !formData.lyrics || isLoading}
                     >
                       <ArrowRight className="w-4 h-4" />
-                      Aprovar e Continuar
+                      {t('navigation.approveAndContinue')}
                     </LiquidGlassButtonSmall>
                   ) : (
                     <LiquidGlassButtonSmall onClick={handleNextStep}>
-                      Próximo
+                      {currentStep === 2 ? t('style.continueButton') : t('navigation.next')}
                       <ArrowRight className="w-4 h-4" />
                     </LiquidGlassButtonSmall>
                   )
@@ -1155,8 +1400,16 @@ export default function Criar() {
       
 
       
-      {/* ValidationPopup renderizado condicionalmente */}
-      {isValidationPopupVisible && <ValidationPopup />}
+      {/* FeedbackPopup renderizado condicionalmente */}
+      {isValidationPopupVisible && (
+        <FeedbackPopup
+          isOpen={isValidationPopupVisible}
+          onClose={handleFeedbackClose}
+          submitFeedback={handleFeedbackSubmit}
+          onSubmitSuccess={handleFeedbackSuccess}
+          disableClose
+        />
+      )}
     </div>
   );
 }

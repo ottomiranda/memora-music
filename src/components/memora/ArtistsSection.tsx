@@ -11,6 +11,8 @@ import SectionSubtitle from '../ui/SectionSubtitle';
 import { toast } from "sonner";
 import { getSunoAudioLinks } from "@/lib/sunoAudio";
 import { LiquidGlassButton } from "@/components/ui/LiquidGlassButton";
+import { useTranslation } from "@/i18n/hooks/useTranslation";
+import { useLocalizedRoutes } from '@/hooks/useLocalizedRoutes';
 
 const fallbackGenres = [
   "Pop", "R&B", "Soul", "Hip hop", "Latin Pop", "Ballad",
@@ -42,6 +44,7 @@ const ArtistsSection: React.FC = () => {
   const [loadingSongId, setLoadingSongId] = useState<string | null>(null);
   const audioCache = useRef(new Map<string, { playbackUrl: string; downloadUrl?: string | null }>());
   const { currentId, isPlaying, play, pause } = useAudioPlayerStore();
+  const { t: tMarketing } = useTranslation('marketing');
 
   useEffect(() => {
     let mounted = true;
@@ -181,10 +184,16 @@ const ArtistsSection: React.FC = () => {
         {/* Header */}
         <div className="text-center mb-16 lg:mb-20 space-y-6">
           <SectionTitle className="text-memora-brand-purple drop-shadow leading-tight">
-            Estilos <span className="bg-gradient-to-r from-yellow-400 via-purple-500 to-purple-600 bg-clip-text text-transparent">variados</span> que dão vida às suas <span className="bg-gradient-to-r from-yellow-400 via-purple-500 to-purple-600 bg-clip-text text-transparent">memórias</span>
+            {tMarketing('artists.title').split(' ').map((word, index) => {
+              const normalized = word.toLowerCase();
+              if (['variados', 'memórias', 'varied', 'memories'].includes(normalized)) {
+                return <span key={index} className="bg-gradient-to-r from-yellow-400 via-purple-500 to-purple-600 bg-clip-text text-transparent">{word}</span>;
+              }
+              return <span key={index}>{word} </span>;
+            })}
           </SectionTitle>
           <SectionSubtitle className="text-white/90 max-w-3xl mx-auto leading-relaxed">
-            Escute vozes marcantes de nossos cantores que transformam sentimentos em canções eternas.
+            {tMarketing('artists.subtitle')}
           </SectionSubtitle>
         </div>
 
@@ -233,10 +242,10 @@ const ArtistsSection: React.FC = () => {
           <div className="inline-flex flex-col items-center gap-8 bg-gradient-to-br from-purple-900/30 via-indigo-900/25 to-pink-900/20 backdrop-blur-xl border border-white/20 rounded-3xl px-12 py-12 lg:px-16 lg:py-14 shadow-2xl shadow-purple-500/10 hover:shadow-purple-500/20 transition-all duration-300 max-w-2xl mx-auto">
             <div className="text-center space-y-4">
               <h3 className="text-white text-xl sm:text-2xl lg:text-3xl font-bold font-heading leading-tight">
-                Gostou do que ouviu?
+                {tMarketing('artists.cta.title')}
               </h3>
               <p className="text-white/80 text-lg sm:text-xl font-medium leading-relaxed">
-                Crie sua própria música personalizada agora mesmo.
+                {tMarketing('artists.cta.subtitle')}
               </p>
             </div>
             <ArtistsCTAButton />
@@ -254,13 +263,15 @@ const ArtistsCTAButton: React.FC = () => {
   const navigate = useNavigate();
   const { token } = useAuthStore();
   const { startNewCreationFlow } = useMusicStore();
+  const { t: tMarketing } = useTranslation('marketing');
+  const { buildPath } = useLocalizedRoutes();
 
   const onClick = async () => {
     try {
       await startNewCreationFlow(navigate, token || null);
     } catch (e) {
       console.error('[ArtistsCTAButton] erro ao iniciar fluxo de criação', e);
-      navigate('/criar');
+      navigate(buildPath('create'));
     }
   };
 
@@ -270,7 +281,7 @@ const ArtistsCTAButton: React.FC = () => {
       className="inline-flex items-center justify-center px-8"
     >
       <Sparkles className="mr-3 h-5 w-5" />
-      Crie sua música agora
+      {tMarketing('artists.cta.button')}
     </LiquidGlassButton>
   );
 };

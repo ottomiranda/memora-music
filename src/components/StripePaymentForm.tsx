@@ -4,9 +4,11 @@ import { AlertCircle, CheckCircle, CreditCard } from 'lucide-react';
 import { useAuthStore } from '@/store/authStore';
 import { LiquidGlassCard } from '@/components/ui/LiquidGlassCard';
 import { LiquidGlassButton } from '@/components/ui/LiquidGlassButton';
+import { useTranslation } from '@/i18n/hooks/useTranslation';
 
 interface StripePaymentFormProps {
   amount: number;
+  currency: 'brl' | 'usd';
   clientSecret?: string;
   onSuccess: (paymentIntentId: string) => void;
   onError: (error: string) => void;
@@ -15,11 +17,13 @@ interface StripePaymentFormProps {
 
 const StripePaymentForm: React.FC<StripePaymentFormProps> = ({
   amount,
+  currency,
   clientSecret,
   onSuccess,
   onError,
   disabled = false
 }) => {
+  const { t } = useTranslation('payment');
   const stripe = useStripe();
   const elements = useElements();
   const { user } = useAuthStore();
@@ -55,11 +59,11 @@ const StripePaymentForm: React.FC<StripePaymentFormProps> = ({
         setPaymentStatus('failed');
         // Mensagem mais amigável para CPF/CNPJ inválido no Boleto
         if ((error as any)?.code === 'tax_id_invalid') {
-          setErrorMessage('CPF/CNPJ inválido. Confira o número informado. Para testes, utilize um CPF/CNPJ válido.');
+          setErrorMessage(t('errors.invalidTaxId'));
         } else {
-          setErrorMessage((error as any)?.message || 'Erro no pagamento');
+          setErrorMessage((error as any)?.message || t('errors.paymentError'));
         }
-        onError(error.message || 'Erro no pagamento');
+        onError(error.message || t('errors.paymentError'));
       } else if (paymentIntent && paymentIntent.status === 'succeeded') {
         console.log('✅ Pagamento confirmado:', paymentIntent);
         setPaymentStatus('succeeded');
@@ -67,17 +71,17 @@ const StripePaymentForm: React.FC<StripePaymentFormProps> = ({
       } else if (paymentIntent && (paymentIntent.status === 'processing' || paymentIntent.status === 'requires_action')) {
         console.log('⏳ Pagamento em processamento/ação requerida:', paymentIntent.status);
         setPaymentStatus('processing');
-        setErrorMessage('Pagamento em processamento. Para Boleto/PIX, aguarde a confirmação. Você será liberado após a confirmação automática.');
+        setErrorMessage(t('status.processing'));
       } else {
         console.log('⚠️ Status do pagamento:', paymentIntent?.status);
         setPaymentStatus('failed');
-        setErrorMessage('Pagamento não foi processado corretamente');
-        onError('Pagamento não foi processado corretamente');
+        setErrorMessage(t('errors.notProcessed'));
+        onError(t('errors.notProcessed'));
       }
     } catch (error) {
       console.error('❌ Erro inesperado:', error);
       setPaymentStatus('failed');
-      const message = error instanceof Error ? error.message : 'Erro inesperado';
+      const message = error instanceof Error ? error.message : t('errors.unexpected');
       setErrorMessage(message);
       onError(message);
     } finally {
@@ -89,9 +93,10 @@ const StripePaymentForm: React.FC<StripePaymentFormProps> = ({
   // Ele gerencia automaticamente os campos e layout
 
   const formatCurrency = (cents: number) => {
-    return new Intl.NumberFormat('pt-BR', {
+    const locale = currency === 'usd' ? 'en-US' : 'pt-BR';
+    return new Intl.NumberFormat(locale, {
       style: 'currency',
-      currency: 'BRL',
+      currency: currency.toUpperCase(),
     }).format(cents / 100);
   };
 
@@ -100,7 +105,7 @@ const StripePaymentForm: React.FC<StripePaymentFormProps> = ({
       billingDetails: {
         name: user?.name || undefined,
         email: user?.email || undefined,
-        address: { country: 'BR' as const },
+        address: { country: currency === 'usd' ? 'US' as const : 'BR' as const },
       },
     },
     fields: {
@@ -108,12 +113,11 @@ const StripePaymentForm: React.FC<StripePaymentFormProps> = ({
         name: 'auto' as const,
         email: 'auto' as const,
         address: {
-          // Permite que o Payment Element envie o país (usa defaultValues BR)
           country: 'auto' as const,
         },
       },
     },
-  }), [user?.name, user?.email]);
+  }), [user?.name, user?.email, currency]);
 
   return (
     <form onSubmit={handleSubmit} className="space-y-5">
@@ -132,7 +136,7 @@ const StripePaymentForm: React.FC<StripePaymentFormProps> = ({
           className="relative z-10 space-y-4 border-white/25 p-4 sm:p-5 text-white"
         >
           <div className="flex items-center justify-between">
-            <h3 className="text-lg font-semibold sm:text-xl">Pagamento Seguro</h3>
+            <h3 className="text-lg font-semibold sm:text-xl">{t('form.securePayment')}</h3>
             <div className="text-xl font-heading font-semibold sm:text-2xl">
               {formatCurrency(amount)}
             </div>
@@ -149,7 +153,7 @@ const StripePaymentForm: React.FC<StripePaymentFormProps> = ({
             />
             <div className="flex items-center gap-2 text-sm font-semibold text-slate-700">
               <CreditCard className="h-5 w-5 text-slate-500" />
-              <span>Método de Pagamento</span>
+              <span>{t('form.paymentMethod')}</span>
             </div>
             <div className="rounded-2xl border border-slate-200/70 bg-white p-2 shadow-[0_12px_32px_rgba(15,23,42,0.08)]">
               <PaymentElement options={paymentElementOptions} />
@@ -164,7 +168,7 @@ const StripePaymentForm: React.FC<StripePaymentFormProps> = ({
           >
             <AlertCircle className="h-5 w-5 text-red-100 mt-0.5 flex-shrink-0" />
             <div>
-              <h4 className="font-semibold">Erro no pagamento</h4>
+              <h4 className="font-semibold">{t('feedback.errorTitle')}</h4>
               <p className="mt-1 text-sm text-red-50">{errorMessage}</p>
             </div>
             </LiquidGlassCard>
@@ -178,8 +182,8 @@ const StripePaymentForm: React.FC<StripePaymentFormProps> = ({
             >
               <CheckCircle className="h-5 w-5 text-emerald-100 mt-0.5 flex-shrink-0" />
               <div>
-                <h4 className="font-semibold">Pagamento realizado!</h4>
-                <p className="mt-1 text-sm text-emerald-50">Seu upgrade foi processado com sucesso.</p>
+                <h4 className="font-semibold">{t('feedback.successTitle')}</h4>
+                <p className="mt-1 text-sm text-emerald-50">{t('feedback.successMessage')}</p>
               </div>
             </LiquidGlassCard>
           )}
@@ -202,24 +206,24 @@ const StripePaymentForm: React.FC<StripePaymentFormProps> = ({
                 <span className="mr-2 flex h-4 w-4 items-center justify-center">
                   <span className="h-4 w-4 animate-spin rounded-full border-b-2 border-white" />
                 </span>
-                Processando...
+                {t('button.processing')}
               </>
             ) : paymentStatus === 'succeeded' ? (
               <>
                 <CheckCircle className="mr-2 h-5 w-5" />
-                Pagamento Concluído
+                {t('button.completed')}
               </>
             ) : (
               <>
                 <CreditCard className="mr-2 h-5 w-5" />
-                Pagar {formatCurrency(amount)}
+                {t('button.pay', { amount: formatCurrency(amount) })}
               </>
             )}
           </LiquidGlassButton>
         </div>
 
         <div className="mt-2 text-center text-[11px] leading-4 text-white/80">
-          <p>🔒 Pagamento seguro processado pelo Stripe</p>
+          <p>{t('security.stripeSecure')}</p>
         </div>
       </div>
     </form>

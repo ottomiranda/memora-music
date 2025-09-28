@@ -1,9 +1,13 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { toast } from 'sonner';
+import i18n from '../i18n';
 import { API_ENDPOINTS, apiRequest } from '../config/api';
 import { useAuthStore } from './authStore';
 import { useUiStore } from './uiStore';
+import { useTranslation } from '../i18n/hooks/useTranslation';
+import { buildLocalizedPath, type RouteKey } from '@/routes/paths';
+import type { SupportedLanguages } from '@/i18n';
 
 // Tipos para o formulário
 export interface FormData {
@@ -155,6 +159,22 @@ interface MusicStore {
 // Variável global para o intervalo de polling
 let pollingInterval: NodeJS.Timeout | null = null;
 
+// Helper function para obter o idioma atual
+const getCurrentLanguage = () => {
+  // Mapear idiomas do i18n para o formato esperado pelo PromptAdapter
+  const currentLang = i18n.language;
+  return currentLang === 'en' ? 'en-US' : 'pt-BR';
+};
+
+const getRoutingLanguage = (): SupportedLanguages => {
+  const lang = i18n.language;
+  return lang === 'en' ? 'en' : 'pt';
+};
+
+const getLocalizedRoutePath = (key: RouteKey, params?: Record<string, string>) => {
+  return buildLocalizedPath(key, getRoutingLanguage(), params);
+};
+
 // Criação do store
 export const useMusicStore = create<MusicStore>()(
   persist(
@@ -206,21 +226,22 @@ export const useMusicStore = create<MusicStore>()(
     
     // Validação usando apenas os campos obrigatórios do briefingSchema (primeira etapa)
     if (!formData.recipientName || !formData.occasion || !formData.relationship) {
-      const errorMsg = 'Por favor, preencha todos os campos obrigatórios da primeira etapa antes de gerar a letra.';
-      console.log('❌ Validação falhou - Campos obrigatórios da primeira etapa faltando:', {
-        recipientName: formData.recipientName,
-        occasion: formData.occasion,
-        relationship: formData.relationship
-      });
+      const errorMsg = toast.error(i18n.t('validation.fillRequiredFieldsStep1', { ns: 'musicStore' }));
+      console.log(i18n.t('debug.validationFailedStep1', { ns: 'musicStore' }), {
+          recipientName: formData.recipientName,
+          occasion: formData.occasion,
+          relationship: formData.relationship
+        });
       set({ error: errorMsg });
       toast.error(errorMsg);
       return;
     }
     
-    // Preparar payload para envio
+    // Preparar payload para envio com detecção automática de idioma
     const payload = {
       ...formData,
-      lyricsOnly: true
+      lyricsOnly: true,
+      language: getCurrentLanguage()
     };
     
     console.log('✅ Validação passou - Enviando payload para letra:', JSON.stringify(payload, null, 2));
@@ -247,10 +268,10 @@ export const useMusicStore = create<MusicStore>()(
           },
           generatedLyrics: result.lyrics,
         }));
-        toast.success('Letra e título gerados com sucesso!');
+        toast.success(i18n.t('success.lyricsGenerated', { ns: 'musicStore' }));
       } else {
-        const errorMsg = 'Resposta da API não contém letra ou título válidos';
-        console.log('❌ Erro na resposta da API:', {
+        const errorMsg = i18n.t('errors.invalidApiResponse', { ns: 'musicStore' });
+        console.log(i18n.t('errors.invalidApiResponse', { ns: 'musicStore' }), {
           lyrics: result.lyrics ? 'presente' : 'ausente',
           songTitle: result.songTitle ? 'presente' : 'ausente',
           result
@@ -259,11 +280,11 @@ export const useMusicStore = create<MusicStore>()(
         toast.error(errorMsg);
       }
     } catch (error) {
-      console.error('❌ Erro ao gerar letra (catch):', error);
+      console.error(i18n.t('errors.generateLyricsCatch', { ns: 'musicStore' }), error);
       console.error('❌ Stack trace:', error instanceof Error ? error.stack : 'N/A');
       const errorMsg = error instanceof Error ? 
         error.message : 
-        'Erro de conexão. Verifique sua internet e tente novamente.';
+        i18n.t('errors.connectionError', { ns: 'musicStore' });
       set({ error: errorMsg });
     } finally {
       // Garante que o loading seja sempre resetado
@@ -280,16 +301,17 @@ export const useMusicStore = create<MusicStore>()(
     if (!formData.songTitle || !formData.recipientName || !formData.occasion || 
         !formData.relationship || !formData.emotionalTone || !formData.genre || 
         !formData.mood || !formData.tempo || !formData.duration) {
-      const errorMsg = 'Por favor, preencha todos os campos obrigatórios antes de gerar a prévia.';
+      const errorMsg = i18n.t('validation.fillRequiredFields', { ns: 'musicStore' });
       set({ error: errorMsg });
       toast.error(errorMsg);
       return;
     }
     
-    // Preparar payload para envio
+    // Preparar payload para envio com detecção automática de idioma
     const payload = {
       ...formData,
-      lyricsOnly: false
+      lyricsOnly: false,
+      language: getCurrentLanguage()
     };
     
     set({ isPreviewLoading: true, error: null });
@@ -308,7 +330,7 @@ export const useMusicStore = create<MusicStore>()(
           isPreviewLoading: false,
         });
       } else {
-        const errorMsg = result.error || 'Erro desconhecido ao gerar prévia';
+        const errorMsg = result.error || i18n.t('errors.unknownPreviewError', { ns: 'musicStore' });
         set({
           error: errorMsg,
           isPreviewLoading: false,
@@ -316,8 +338,8 @@ export const useMusicStore = create<MusicStore>()(
         toast.error(errorMsg);
       }
     } catch (error) {
-      console.error('Erro ao gerar prévia:', error);
-      const errorMsg = 'Erro de conexão. Verifique sua internet e tente novamente.';
+      console.error(i18n.t('errors.generatePreview', { ns: 'musicStore' }), error);
+      const errorMsg = i18n.t('errors.connectionError', { ns: 'musicStore' });
       set({
         error: errorMsg,
         isPreviewLoading: false,
@@ -352,8 +374,8 @@ export const useMusicStore = create<MusicStore>()(
     // Validação dos campos obrigatórios para geração de música
     if (!formData.lyrics || !formData.songTitle || !formData.genre || 
         !formData.emotion || !formData.vocalPreference) {
-      const errorMsg = 'Por favor, preencha todos os campos de estilo antes de gerar a música.';
-      console.log('❌ Validação falhou - Campos obrigatórios faltando:', {
+      const errorMsg = i18n.t('validation.fillStyleFields', { ns: 'musicStore' });
+      console.log(i18n.t('debug.validationFailed', { ns: 'musicStore' }), {
         lyrics: formData.lyrics ? 'presente' : 'ausente',
         songTitle: formData.songTitle ? 'presente' : 'ausente',
         genre: formData.genre,
@@ -365,10 +387,11 @@ export const useMusicStore = create<MusicStore>()(
       return;
     }
     
-    // Preparar payload para envio
+    // Preparar payload para envio com detecção automática de idioma
     const payload = {
       ...formData,
-      lyricsOnly: false
+      lyricsOnly: false,
+      language: getCurrentLanguage()
     };
     
     console.log('✅ Validação passou - Enviando payload para música:', JSON.stringify(payload, null, 2));
@@ -413,11 +436,11 @@ export const useMusicStore = create<MusicStore>()(
         // CHAMAR STARTPOLLING
         get().startPolling();
         
-        toast.success('Geração de música iniciada! Aguarde enquanto processamos...');
+        toast.success(i18n.t('success.musicGenerationStarted', { ns: 'musicStore' }));
         
       } else if (result.success && result.audioClips) {
         // Fallback para sistema antigo (todas as músicas prontas de uma vez)
-        console.log(`✅ Músicas recebidas com sucesso (sistema antigo): ${result.audioClips.length} clipes`);
+        console.log(i18n.t('debug.musicReceivedOldSystem', { ns: 'musicStore' }), result.audioClips.length);
         
         set({
           audioClips: result.audioClips,
@@ -429,11 +452,11 @@ export const useMusicStore = create<MusicStore>()(
           completedClips: result.audioClips.length
         });
         
-        toast.success(`${result.audioClips.length} música(s) gerada(s) com sucesso!`);
+        toast.success(i18n.t('success.musicGenerated', { ns: 'musicStore', count: result.audioClips.length }));
         
       } else {
         const errorMsg = result.error || 'Resposta da API inválida';
-        console.log('❌ Erro na resposta da API:', result);
+        console.log(i18n.t('errors.invalidApiResponse', { ns: 'musicStore' }), result);
         set({ 
           error: errorMsg, 
           isPreviewLoading: false,
@@ -444,17 +467,40 @@ export const useMusicStore = create<MusicStore>()(
       }
       
     } catch (error) {
-      console.error('❌ Erro ao gerar música (catch):', error);
-      
-      const errorMsg = error instanceof Error ? 
-        error.message : 
-        'Erro de conexão. Verifique sua internet e tente novamente.';
+      console.error(i18n.t('errors.generateMusicCatch', { ns: 'musicStore' }), error);
+
+      const status = error && typeof error === 'object' && 'status' in error
+        ? (error as { status?: number }).status
+        : undefined;
+      const errorData = error && typeof error === 'object' && 'data' in error
+        ? (error as { data?: any }).data
+        : undefined;
+
+      if (status === 402 && errorData?.error === 'PAYMENT_REQUIRED') {
+        const paywallMessage = i18n.t('errors.paymentRequired', { ns: 'musicStore' });
+
+        set({
+          error: paywallMessage,
+          isPreviewLoading: false,
+          isLoading: false,
+          musicGenerationStatus: 'failed',
+        });
+
+        toast.error(paywallMessage);
+        return;
+      }
+
+      const fallbackMessage = i18n.t('errors.generateMusicCatch', { ns: 'musicStore' });
+      const errorMsg = fallbackMessage;
+
       set({ 
         error: errorMsg, 
         isPreviewLoading: false,
         isLoading: false,
         musicGenerationStatus: 'failed'
       });
+
+      toast.error(errorMsg);
     }
     
     console.log('=== FIM DEBUG GENERATE MUSIC (PROGRESSIVO) ===');
@@ -498,7 +544,7 @@ export const useMusicStore = create<MusicStore>()(
 
       // CONDIÇÃO DE PARADA PRECISA
       if (totalExpected > 0 && completeCount >= totalExpected) {
-        console.log('✅ Geração concluída. Parando polling.');
+        console.log(i18n.t('debug.generationCompleted', { ns: 'musicStore' }));
         
         set({ 
           isLoading: false,
@@ -509,11 +555,11 @@ export const useMusicStore = create<MusicStore>()(
         });
         
         get().stopPolling();
-        toast.success('🎉 Todas as músicas foram geradas com sucesso!');
+        toast.success(i18n.t('success.allMusicGenerated', { ns: 'musicStore' }));
       }
       
     } catch (error) {
-      console.error('❌ Erro ao verificar status:', error);
+      console.error(i18n.t('errors.statusCheckError', { ns: 'musicStore' }), error);
       get().stopPolling(); // Para o loop em caso de erro
       
       set({
@@ -522,7 +568,7 @@ export const useMusicStore = create<MusicStore>()(
         isLoading: false
       });
       
-      get().setError(`Erro ao verificar status: ${error instanceof Error ? error.message : 'Erro desconhecido'}`);
+      get().setError(`${i18n.t('errors.statusCheckPrefix', { ns: 'musicStore' })}: ${error instanceof Error ? error.message : i18n.t('errors.unknownError', { ns: 'musicStore' })}`);
     }
   },
 
@@ -533,11 +579,11 @@ export const useMusicStore = create<MusicStore>()(
     get().stopPolling(); // Garante que não haja loops duplicados
     
     if (!currentTaskId) {
-      console.warn('[DEBUG] Não é possível iniciar polling sem taskId');
+      console.warn(i18n.t('debug.cannotStartPollingWithoutTaskId', { ns: 'musicStore' }));
       return;
     }
 
-    console.log('[DEBUG] Iniciando polling de status...');
+    console.log(i18n.t('debug.startingStatusPolling', { ns: 'musicStore' }));
     
     // Inicia novo intervalo
     const newInterval = setInterval(async () => {
@@ -568,7 +614,7 @@ export const useMusicStore = create<MusicStore>()(
   },
 
   completeMvpFlow: () => {
-    console.log('[MVP] Completando fluxo MVP - desbloqueando funcionalidade completa');
+    console.log(i18n.t('debug.mvpFlowCompleting', { ns: 'musicStore' }));
     set({ 
       isMvpFlowComplete: true,
       isValidationPopupVisible: false 
@@ -598,25 +644,25 @@ export const useMusicStore = create<MusicStore>()(
 
       if (isFree === true) {
         // Se o usuário tem direito (novo convidado OU usuário logado com cota)
-        console.log('[PAYWALL] Acesso permitido. Navegando para /criar.');
+        console.log(i18n.t('debug.paywallAccessGranted', { ns: 'musicStore' }));
         uiStore.unblockCreationFlow();
-        navigate('/criar');
+        navigate(getLocalizedRoutePath('create'));
       } else {
         // Isso agora vai pegar os casos isFree === false, undefined, ou null
-        console.log('[PAYWALL] Acesso negado. Mostrando modal de pagamento.');
+        console.log(i18n.t('debug.paywallAccessDenied', { ns: 'musicStore' }));
         uiStore.blockCreationFlow();
         uiStore.showPaymentPopup();
         // IMPORTANTE: Não navegamos para lugar nenhum. O usuário fica onde está.
       }
     } catch (error) {
       // Fail-safe revisado: não bloquear por falha de rede.
-      console.warn('[PAYWALL] Falha ao verificar status. Permitindo acesso provisório ao fluxo.', error);
+      console.warn(i18n.t('debug.paywallCheckFailed', { ns: 'musicStore' }), error);
       uiStore.unblockCreationFlow();
       try {
         // Informar o usuário sem travar o fluxo
-        toast.info('Não foi possível verificar seu status agora. Acessando o criador mesmo assim.');
+      toast.info(i18n.t('errors.statusCheckFailedAccessing', { ns: 'musicStore' }));
       } catch {}
-      navigate('/criar');
+      navigate(getLocalizedRoutePath('create'));
     }
   },
 
@@ -631,7 +677,7 @@ export const useMusicStore = create<MusicStore>()(
 
   // Função para resetar o fluxo (equivalente ao resetFlow mencionado)
   resetFlow: () => {
-    console.log('[resetFlow] Estado da música sendo resetado.');
+    console.log(i18n.t('debug.musicStateReset', { ns: 'musicStore' }));
     // Para o polling se estiver ativo
     get().stopPolling();
     
@@ -657,7 +703,7 @@ export const useMusicStore = create<MusicStore>()(
 
   // Função para resetar o store completamente
   reset: () => {
-    console.log('[reset] Resetando store para estado inicial. currentStep será definido como 0.');
+    console.log(i18n.t('debug.storeReset', { ns: 'musicStore' }));
     // Para o polling se estiver ativo
     get().stopPolling();
     

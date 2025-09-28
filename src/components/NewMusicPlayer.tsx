@@ -1,11 +1,13 @@
 import React, { useRef, useEffect, useState } from 'react';
 import { Download, Play, Pause, SkipBack, SkipForward, Volume2 } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
+
 import { LiquidGlassCard } from '@/components/ui/LiquidGlassCard';
 import { PurpleFormButton } from '@/components/ui/PurpleFormButton';
 import { useMusicStore } from '@/store/musicStore';
 import { useAuthStore } from '@/store/authStore';
 import { useUiStore } from '@/store/uiStore';
-import { triggerDownload } from '@/utils/download';
+import { triggerDownload, ensureMp3Extension } from '@/utils/download';
 import { API_BASE_URL } from '@/config/api';
 import { AudioClip } from '@/store/musicStore';
 
@@ -14,6 +16,8 @@ interface NewMusicPlayerProps {
 }
 
 const NewMusicPlayer: React.FC<NewMusicPlayerProps> = ({ clips }) => {
+  const { t } = useTranslation('criar');
+
   const audioRef = useRef<HTMLAudioElement>(null);
   const fadeOutIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const progressRef = useRef<HTMLInputElement>(null);
@@ -148,7 +152,8 @@ const NewMusicPlayer: React.FC<NewMusicPlayerProps> = ({ clips }) => {
   const handleDownloadClick = (clip: AudioClip) => {
     const startDownload = () => {
       if (clip.audio_url) {
-        const friendlyFilename = clip.title || `Musica_Personalizada.mp3`;
+        const baseFilename = clip.title || 'Musica_Personalizada';
+        const friendlyFilename = ensureMp3Extension(baseFilename);
         const proxyUrl = `${API_BASE_URL}/api/download?url=${encodeURIComponent(clip.audio_url)}&filename=${encodeURIComponent(friendlyFilename)}`;
         triggerDownload(proxyUrl, friendlyFilename);
       }
@@ -191,9 +196,9 @@ const NewMusicPlayer: React.FC<NewMusicPlayerProps> = ({ clips }) => {
       <LiquidGlassCard className="p-8 text-center space-y-2">
         <div className="flex items-center justify-center gap-3 text-memora-primary">
           <div className="h-5 w-5 rounded-full border-2 border-memora-primary/40 border-t-transparent animate-spin"></div>
-          <span className="text-sm font-medium">Aguardando músicas...</span>
+          <span className="text-sm font-medium text-[#FFD700]">{t('generation.waitingTracks')}</span>
         </div>
-        <p className="text-sm text-white/70">Suas músicas aparecerão aqui quando estiverem prontas</p>
+        <p className="text-sm text-white/70">{t('generation.tracksWillAppear')}</p>
       </LiquidGlassCard>
     );
   }
@@ -220,10 +225,10 @@ const NewMusicPlayer: React.FC<NewMusicPlayerProps> = ({ clips }) => {
         {/* Track Info */}
         <div className="text-center space-y-1">
           <h3 className="text-xl font-semibold text-white">
-            {currentClip?.title || `Opção ${currentTrackIndex + 1}`}
+            {currentClip?.title || t('generation.option', { number: currentTrackIndex + 1 })}
           </h3>
           <p className="text-white/60 text-sm">
-            Faixa {currentTrackIndex + 1} de {validClips.length}
+            {t('generation.trackPosition', { current: currentTrackIndex + 1, total: validClips.length })}
           </p>
         </div>
 
@@ -300,7 +305,7 @@ const NewMusicPlayer: React.FC<NewMusicPlayerProps> = ({ clips }) => {
         {/* Track Selection */}
         {validClips.length > 1 && (
           <div className="space-y-3">
-            <h4 className="text-sm font-medium text-white/70">Escolha uma opção:</h4>
+            <h4 className="text-sm font-medium text-white/70">{t('generation.chooseOption')}</h4>
             <div className="grid grid-cols-2 gap-2">
               {validClips.map((clip, index) => (
                 <button
@@ -314,10 +319,10 @@ const NewMusicPlayer: React.FC<NewMusicPlayerProps> = ({ clips }) => {
                 >
                   <span className="pointer-events-none absolute inset-0 bg-gradient-to-r from-white/12 via-transparent to-white/12 opacity-0 transition-opacity duration-500 group-hover:opacity-60" />
                   <div className="relative z-10 font-medium text-sm">
-                    Opção {index + 1}
+                    {t('generation.option', { number: index + 1 })}
                   </div>
                   <div className="relative z-10 text-xs opacity-75">
-                    {clip.title || 'Música personalizada'}
+                    {clip.title || t('generation.defaultTrackTitle')}
                   </div>
                 </button>
               ))}
@@ -332,14 +337,14 @@ const NewMusicPlayer: React.FC<NewMusicPlayerProps> = ({ clips }) => {
             className="w-full flex items-center justify-center gap-2 h-12"
           >
             <Download className="w-4 h-4" />
-            Baixar Opção {currentTrackIndex + 1}
+            {t('generation.downloadOption', { number: currentTrackIndex + 1 })}
           </PurpleFormButton>
         )}
 
         {/* MVP Flow Message */}
         {!isMvpFlowComplete && !isLoggedIn && (
           <div className="text-center text-white/60 text-sm italic">
-            Ouça a prévia completa para desbloquear o download
+            {t('generation.listenToUnlock')}
           </div>
         )}
       </div>

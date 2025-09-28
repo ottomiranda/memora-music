@@ -1,0 +1,78 @@
+{
+  "loading": {
+    "message": "Loading your songs..."
+  },
+  "error": {
+    "tryAgain": "Try Again"
+  },
+  "header": {
+    "title": "My Songs",
+    "subtitle": "Your personalized musical creations",
+    "createNew": "Create New Song"
+  },
+  "search": {
+    "placeholder": "Search by title..."
+  },
+  "sort": {
+    "placeholder": "Sort",
+    "recent": "Most recent",
+    "oldest": "Oldest",
+    "title": "Title A-Z"
+  },
+  "status": {
+    "placeholder": "Status",
+    "all": "All",
+    "completed": "Completed",
+    "processing": "Processing",
+    "failed": "Failed"
+  },
+  "empty": {
+    "title": "No songs found",
+    "subtitle": "You haven't created any songs yet. How about starting now?",
+    "createFirst": "Create First Song"
+  },
+  "actions": {
+    "copyLink": "Copy Link",
+    "share": "Share",
+    "delete": "Delete"
+  },
+  "deleteModal": {
+    "title": "Delete song?",
+    "description": "This action cannot be undone. The song \"{title}\" will be permanently removed.",
+    "cancel": "Cancel",
+    "confirm": "Delete"
+  },
+  "toast": {
+    "linkCopied": "Link copied to clipboard",
+    "linkCopiedSuccess": "Your song link has been successfully copied to the clipboard.",
+    "downloadError": "Could not locate file for download."
+  },
+  "messages": {
+    "noTitle": "No title",
+    "loadError": "Error loading your songs. Please try again.",
+    "audioLoadError": "Could not load the audio for this song.",
+    "playbackError": "Failed to start playback. Please try again.",
+    "deleteError": "Could not delete the song.",
+    "shareText": "Listen to my song on Memora Music",
+    "defaultFilename": "my-song"
+  },
+  "songCard": {
+    "versionA": "Version A",
+    "versionB": "Version B",
+    "playing": "Playing",
+    "playButton": "Play",
+    "downloadButton": "Download",
+    "createdOn": "Created on",
+    "statusCompleted": "Completed",
+    "statusProcessing": "Processing",
+    "statusFailed": "Failed",
+    "nowPlaying": "Playing",
+    "loadingMusic": "Loading song",
+    "pauseMusic": "Pause song",
+    "playMusic": "Play song",
+    "playVersionA": "Play version A",
+    "playVersionB": "Play version B",
+    "downloadVersionA": "Download version A",
+    "downloadVersionB": "Download version B"
+  }
+}

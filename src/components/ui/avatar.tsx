@@ -1,48 +1,60 @@
-import * as React from "react"
-import * as AvatarPrimitive from "@radix-ui/react-avatar"
+import React from 'react';
+import { cn } from '@/lib/utils';
 
-import { cn } from "@/lib/utils"
+interface AvatarProps {
+  name?: string;
+  size?: 'sm' | 'md' | 'lg';
+  className?: string;
+  onClick?: () => void;
+  isAtTop?: boolean;
+}
 
-const Avatar = React.forwardRef<
-  React.ElementRef<typeof AvatarPrimitive.Root>,
-  React.ComponentPropsWithoutRef<typeof AvatarPrimitive.Root>
->(({ className, ...props }, ref) => (
-  <AvatarPrimitive.Root
-    ref={ref}
-    className={cn(
-      "relative flex h-10 w-10 shrink-0 overflow-hidden rounded-full",
-      className
-    )}
-    {...props}
-  />
-))
-Avatar.displayName = AvatarPrimitive.Root.displayName
+const Avatar: React.FC<AvatarProps> = ({ 
+  name, 
+  size = 'md', 
+  className, 
+  onClick,
+  isAtTop = false 
+}) => {
+  const getInitial = (fullName?: string) => {
+    if (!fullName) return 'U';
+    return fullName.charAt(0).toUpperCase();
+  };
 
-const AvatarImage = React.forwardRef<
-  React.ElementRef<typeof AvatarPrimitive.Image>,
-  React.ComponentPropsWithoutRef<typeof AvatarPrimitive.Image>
->(({ className, ...props }, ref) => (
-  <AvatarPrimitive.Image
-    ref={ref}
-    className={cn("aspect-square h-full w-full", className)}
-    {...props}
-  />
-))
-AvatarImage.displayName = AvatarPrimitive.Image.displayName
+  const sizeClasses = {
+    sm: 'w-8 h-8 text-sm',
+    md: 'w-10 h-10 text-base',
+    lg: 'w-12 h-12 text-lg'
+  };
 
-const AvatarFallback = React.forwardRef<
-  React.ElementRef<typeof AvatarPrimitive.Fallback>,
-  React.ComponentPropsWithoutRef<typeof AvatarPrimitive.Fallback>
->(({ className, ...props }, ref) => (
-  <AvatarPrimitive.Fallback
-    ref={ref}
-    className={cn(
-      "flex h-full w-full items-center justify-center rounded-full bg-muted",
-      className
-    )}
-    {...props}
-  />
-))
-AvatarFallback.displayName = AvatarPrimitive.Fallback.displayName
+  const baseClasses = 'rounded-full flex items-center justify-center font-semibold transition-all duration-300 cursor-pointer';
+  
+  const colorClasses = isAtTop 
+    ? 'bg-white/20 text-white border border-white/30 hover:bg-white/30 backdrop-blur-sm'
+    : 'bg-memora-secondary/10 text-memora-secondary border border-memora-secondary/20 hover:bg-memora-secondary/20';
 
-export { Avatar, AvatarImage, AvatarFallback }
+  return (
+    <div
+      className={cn(
+        baseClasses,
+        sizeClasses[size],
+        colorClasses,
+        onClick && 'hover:scale-105',
+        className
+      )}
+      onClick={onClick}
+      role={onClick ? 'button' : undefined}
+      tabIndex={onClick ? 0 : undefined}
+      onKeyDown={onClick ? (e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          onClick();
+        }
+      } : undefined}
+    >
+      {getInitial(name)}
+    </div>
+  );
+};
+
+export default Avatar;

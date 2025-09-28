@@ -1,78 +1,105 @@
-import { Star, Quote, ChevronLeft, ChevronRight, Sparkles } from "lucide-react";
-import { useState } from "react";
-import UserSlider from './UserSlider';
-import SectionTitle from '../ui/SectionTitle';
-import SectionSubtitle from '@/components/ui/SectionSubtitle';
+import React, { useState, useEffect, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { ChevronLeft, ChevronRight, Quote, Sparkles, Star } from 'lucide-react';
+import { useTranslation } from '@/i18n/hooks/useTranslation';
 import { Button } from '@/components/ui/button';
-import { LiquidGlassButton } from "@/components/ui/LiquidGlassButton";
-import { LiquidGlassCard } from "@/components/ui/LiquidGlassCard";
-import { useMusicStore } from "@/store/musicStore";
-import { useAuthStore } from "@/store/authStore";
-import { useNavigate } from "react-router-dom";
+import { LiquidGlassCard } from '@/components/ui/LiquidGlassCard';
+import { LiquidGlassButton } from '@/components/ui/LiquidGlassButton';
+import { SectionTitle } from '@/components/ui/SectionTitle';
+import { SectionSubtitle } from '@/components/ui/SectionSubtitle';
+import UserSlider from '@/components/memora/UserSlider';
+import { useAuthStore } from '@/store/authStore';
+import { useMusicStore } from '@/store/musicStore';
+import { useLocalizedRoutes } from '@/hooks/useLocalizedRoutes';
 
 const TestimonialSection = () => {
-  const [currentTestimonial, setCurrentTestimonial] = useState(0);
-  const { startNewCreationFlow } = useMusicStore();
-  const { token } = useAuthStore();
+  const { t: tCommon } = useTranslation('common');
+  const { t: tMarketing } = useTranslation('marketing');
   const navigate = useNavigate();
+  const { token } = useAuthStore();
+  const { startNewCreationFlow } = useMusicStore();
+  const { buildPath } = useLocalizedRoutes();
+  const [currentTestimonial, setCurrentTestimonial] = useState(0);
+  const [isAnimating, setIsAnimating] = useState(false);
 
-  const testimonials = [
-    {
-      id: 1,
-      text: "Nunca imaginei que seria tão fácil criar uma música personalizada. O resultado superou todas as minhas expectativas.",
-      author: "Carlos",
-      age: 28,
-      location: "Belo Horizonte",
-      avatar: "https://trae-api-us.mchost.guru/api/ide/v1/text_to_image?prompt=professional%20headshot%20of%20a%2028%20year%20old%20Brazilian%20man%20with%20short%20dark%20hair%2C%20warm%20smile%2C%20olive%20skin%20tone%2C%20wearing%20casual%20shirt%2C%20studio%20lighting%2C%20clean%20background&image_size=square",
-      rating: 5
-    },
-    {
-      id: 2,
-      text: "A música que criei para minha mãe no Dia das Mães foi o presente mais especial que já dei. Ela chorou de emoção!",
-      author: "Maria",
-      age: 42,
-      location: "São Paulo",
-      avatar: "https://trae-api-us.mchost.guru/api/ide/v1/text_to_image?prompt=professional%20headshot%20of%20a%2042%20year%20old%20Brazilian%20woman%20with%20shoulder%20length%20brown%20hair%2C%20gentle%20smile%2C%20warm%20brown%20skin%20tone%2C%20wearing%20elegant%20blouse%2C%20studio%20lighting%2C%20clean%20background&image_size=square",
-      rating: 5
-    },
-    {
-      id: 3,
-      text: "Incrível como a IA conseguiu capturar exatamente o sentimento que eu queria transmitir. A qualidade da música é profissional!",
-      author: "João",
-      age: 35,
-      location: "Rio de Janeiro",
-      avatar: "https://trae-api-us.mchost.guru/api/ide/v1/text_to_image?prompt=professional%20headshot%20of%20a%2035%20year%20old%20Brazilian%20man%20with%20beard%2C%20confident%20smile%2C%20medium%20brown%20skin%20tone%2C%20wearing%20button%20up%20shirt%2C%20studio%20lighting%2C%20clean%20background&image_size=square",
-      rating: 5
-    },
-    {
-      id: 4,
-      text: "Usei o Memora para criar uma música de aniversário para minha filha. Ela ficou tão feliz que pediu para tocar na festa toda!",
-      author: "Ana",
-      age: 38,
-      location: "Salvador",
-      avatar: "https://trae-api-us.mchost.guru/api/ide/v1/text_to_image?prompt=professional%20headshot%20of%20a%2038%20year%20old%20Brazilian%20woman%20with%20curly%20black%20hair%2C%20joyful%20smile%2C%20darker%20skin%20tone%2C%20wearing%20colorful%20top%2C%20studio%20lighting%2C%20clean%20background&image_size=square",
-      rating: 5
-    },
-    {
-      id: 5,
-      text: "Como músico, fiquei impressionado com a qualidade das composições. É uma ferramenta incrível para criar presentes únicos!",
-      author: "Rafael",
-      age: 31,
-      location: "Recife",
-      avatar: "https://trae-api-us.mchost.guru/api/ide/v1/text_to_image?prompt=professional%20headshot%20of%20a%2031%20year%20old%20Brazilian%20man%20with%20wavy%20dark%20hair%2C%20artistic%20look%2C%20medium%20tan%20skin%20tone%2C%20wearing%20casual%20jacket%2C%20studio%20lighting%2C%20clean%20background&image_size=square",
-      rating: 5
+  // Get testimonials from i18n
+  const rawTestimonials = tMarketing('testimonials.items', { returnObjects: true }) as unknown;
+  const testimonials = useMemo(() => {
+    if (!Array.isArray(rawTestimonials)) {
+      return [] as Array<{
+        id: number;
+        text: string;
+        author: string;
+        age: number | null;
+        location: string;
+        avatar: string;
+        rating: number;
+      }>;
     }
-  ];
+
+    return rawTestimonials
+      .map((item, index) => {
+        const data = item as Record<string, unknown>;
+
+        const text = typeof data.text === 'string' ? data.text : '';
+        const author = typeof data.author === 'string'
+          ? data.author
+          : typeof data.name === 'string'
+            ? data.name
+            : '';
+        const age = typeof data.age === 'number' ? data.age : null;
+        const location = typeof data.location === 'string'
+          ? data.location
+          : typeof data.role === 'string'
+            ? data.role
+            : '';
+        const avatar = typeof data.avatar === 'string'
+          ? data.avatar
+          : `https://i.pravatar.cc/120?img=${index + 30}`;
+        const rating = typeof data.rating === 'number' ? data.rating : 5;
+
+        return {
+          id: typeof data.id === 'number' ? data.id : index,
+          text,
+          author,
+          age,
+          location,
+          avatar,
+          rating,
+        };
+      })
+      .filter((item) => item.text && item.author);
+  }, [rawTestimonials]);
 
   const nextTestimonial = () => {
+    if (isAnimating || !testimonials?.length) return;
+    setIsAnimating(true);
     setCurrentTestimonial((prev) => (prev + 1) % testimonials.length);
+    setTimeout(() => setIsAnimating(false), 300);
   };
 
   const prevTestimonial = () => {
+    if (isAnimating || !testimonials?.length) return;
+    setIsAnimating(true);
     setCurrentTestimonial((prev) => (prev - 1 + testimonials.length) % testimonials.length);
+    setTimeout(() => setIsAnimating(false), 300);
   };
 
-  const currentTest = testimonials[currentTestimonial];
+  useEffect(() => {
+    if (!testimonials?.length) return;
+    
+    const interval = setInterval(() => {
+      nextTestimonial();
+    }, 5000);
+
+    return () => clearInterval(interval);
+  }, [isAnimating, testimonials]);
+
+  const currentTest = testimonials?.[currentTestimonial];
+
+  if (!testimonials?.length || !currentTest) {
+    return null;
+  }
 
 
 
@@ -107,10 +134,10 @@ const TestimonialSection = () => {
         {/* Section Header */}
         <div className="text-center mb-16">
           <SectionTitle>
-            Histórias que viraram <span className="bg-gradient-to-r from-yellow-400 via-purple-500 to-purple-600 bg-clip-text text-transparent">presente</span>
+            <span dangerouslySetInnerHTML={{ __html: tCommon('testimonials.title') }} />
           </SectionTitle>
           <SectionSubtitle className="max-w-3xl mx-auto">
-            Veja como nossos usuários eternizaram momentos especiais em canções personalizadas.
+            {tCommon('testimonials.subtitle')}
           </SectionSubtitle>
         </div>
 
@@ -135,7 +162,7 @@ const TestimonialSection = () => {
 
               {/* Rating */}
               <div className="flex justify-center mb-6">
-                {[...Array(currentTest.rating)].map((_, i) => (
+                {Array.from({ length: Math.max(1, Math.round(currentTest.rating || 0)) }).map((_, i) => (
                   <Star key={i} className="w-6 h-6 text-secondary fill-current" />
                 ))}
               </div>
@@ -145,17 +172,30 @@ const TestimonialSection = () => {
                 <div className="w-16 h-16 rounded-full overflow-hidden ring-4 ring-black/10">
                   <img
                     src={currentTest.avatar}
-                    alt={`Foto de ${currentTest.author}`}
+                    alt={tCommon('testimonials.altText.userPhoto', { name: currentTest.author })}
                     className="w-full h-full object-cover"
                   />
                 </div>
                 <div className="text-left">
                   <div className="text-white font-heading font-bold text-lg">
-                    {currentTest.author}, {currentTest.age} anos
+                    {currentTest.author}
                   </div>
-                  <div className="text-white/50">
-                    {currentTest.location}
-                  </div>
+                  {(() => {
+                    const details = [
+                      typeof currentTest.age === 'number' ? tCommon('testimonials.meta.age', { age: currentTest.age }) : null,
+                      currentTest.location || null,
+                    ].filter(Boolean);
+
+                    if (!details.length) {
+                      return null;
+                    }
+
+                    return (
+                      <div className="text-white/50">
+                        {details.join(' • ')}
+                      </div>
+                    );
+                  })()}
                 </div>
               </div>
             </div>
@@ -169,7 +209,7 @@ const TestimonialSection = () => {
                 variant="ghost"
                 size="sm"
                 className="absolute left-4 top-1/2 -translate-y-1/2 w-12 h-12 bg-black/10 hover:bg-black/20 backdrop-blur-sm rounded-full flex items-center justify-center transition-all duration-300 group p-0"
-                aria-label="Depoimento anterior"
+                aria-label={tCommon('testimonials.navigation.previous')}
               >
                 <ChevronLeft className="w-6 h-6 text-white/60 group-hover:scale-110 transition-transform" />
               </Button>
@@ -179,7 +219,7 @@ const TestimonialSection = () => {
                 variant="ghost"
                 size="sm"
                 className="absolute right-4 top-1/2 -translate-y-1/2 w-12 h-12 bg-black/10 hover:bg-black/20 backdrop-blur-sm rounded-full flex items-center justify-center transition-all duration-300 group p-0"
-                aria-label="Próximo depoimento"
+                aria-label={tCommon('testimonials.navigation.next')}
               >
                 <ChevronRight className="w-6 h-6 text-white/60 group-hover:scale-110 transition-transform" />
               </Button>
@@ -192,17 +232,17 @@ const TestimonialSection = () => {
           <div className="flex justify-center mt-8 space-x-3">
             {testimonials.map((_, index) => (
               <Button
-                key={index}
-                onClick={() => setCurrentTestimonial(index)}
-                variant="ghost"
-                size="sm"
-                className={`w-3 h-3 rounded-full transition-all duration-300 p-0 h-3 min-w-0 ${
-                  index === currentTestimonial
-                    ? 'bg-white/60 scale-125'
-                    : 'bg-black/20 hover:bg-black/30'
-                }`}
-                aria-label={`Ir para depoimento ${index + 1}`}
-              />
+                  key={index}
+                  onClick={() => setCurrentTestimonial(index)}
+                  variant="ghost"
+                  size="sm"
+                  className={`w-3 h-3 rounded-full transition-all duration-300 p-0 h-3 min-w-0 ${
+                    index === currentTestimonial
+                      ? 'bg-white/60 scale-125'
+                      : 'bg-black/20 hover:bg-black/30'
+                  }`}
+                  aria-label={tCommon('testimonials.navigation.goTo', { number: index + 1 })}
+                />
             ))}
           </div>
         )}
@@ -214,7 +254,7 @@ const TestimonialSection = () => {
               500+
             </div>
             <div className="text-white/50">
-              Músicas criadas
+              {tCommon('testimonials.stats.songsCreated')}
             </div>
           </div>
           
@@ -223,7 +263,7 @@ const TestimonialSection = () => {
               4.9<span className="text-yellow-500">★</span>
             </div>
             <div className="text-white/50">
-              Avaliação média
+              {tCommon('testimonials.stats.averageRating')}
             </div>
           </div>
           
@@ -232,7 +272,7 @@ const TestimonialSection = () => {
               98%
             </div>
             <div className="text-white/50">
-              Satisfação dos usuários
+              {tCommon('testimonials.stats.userSatisfaction')}
             </div>
           </div>
         </div>
@@ -240,20 +280,20 @@ const TestimonialSection = () => {
         {/* CTA */}
         <div className="text-center mt-12">
           <LiquidGlassButton
-            onClick={async () => {
+              onClick={async () => {
               try {
                 await startNewCreationFlow(navigate, token || null);
               } catch (error) {
                 console.error('[TestimonialSection] erro ao iniciar fluxo de criação', error);
-                navigate('/criar');
+                navigate(buildPath('create'));
               }
             }}
-            data-attr="testimonial-cta-create-music"
-            className="font-heading font-bold"
-          >
-            <Sparkles className="mr-3 h-5 w-5" />
-            Crie sua música agora
-          </LiquidGlassButton>
+              data-attr="testimonial-cta-create-music"
+              className="font-heading font-bold"
+            >
+              <Sparkles className="mr-3 h-5 w-5" />
+              {tCommon('testimonials.cta')}
+            </LiquidGlassButton>
         </div>
       </div>
     </section>

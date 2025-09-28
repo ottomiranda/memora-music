@@ -1,0 +1,120 @@
+{
+  "header": {
+    "title": "Help us improve!",
+    "subtitle": "Your feedback is essential for us to enhance our platform and provide the best possible experience."
+  },
+  "questions": {
+    "difficulty": {
+      "label": "How do you rate the difficulty of using our platform?",
+      "veryEasy": "Very easy",
+      "veryHard": "Very hard"
+    },
+    "recommendation": {
+      "label": "Would you recommend our platform to a friend?",
+      "yes": "Yes, definitely!",
+      "maybe": "Maybe, needs improvement",
+      "no": "No, I wouldn't recommend"
+    },
+    "price": {
+      "label": "How much would you pay for a personalized song?"
+    }
+  },
+  "button": {
+    "submit": "Send Feedback",
+    "sending": "Sending..."
+  },
+  "footer": {
+    "thankYou": "Thank you for helping us improve! 💜"
+  },
+  "errors": {
+    "submitError": "Error sending feedback. Please try again.",
+    "required": "This field is required",
+    "tooShort": "Must be at least {{min}} characters",
+    "tooLong": "Must be at most {{max}} characters",
+    "invalidEmail": "Invalid email",
+    "invalidFormat": "Invalid format"
+  },
+  "briefing": {
+    "occasion": {
+      "required": "Please select a special occasion",
+      "min": "Please select a special occasion"
+    },
+    "recipientName": {
+      "required": "Please enter the person's name",
+      "min": "Name must be at least 2 characters",
+      "max": "Name must be at most 50 characters",
+      "maxLength": "Name must be at most 50 characters"
+    },
+    "relationship": {
+      "required": "Please select the relationship type",
+      "min": "Please select the relationship type"
+    },
+    "senderName": {
+      "max": "Your name must be at most 50 characters",
+      "maxLength": "Your name must be at most 50 characters"
+    },
+    "hobbies": {
+      "required": "Please describe the hobbies",
+      "min": "Please describe the hobbies",
+      "max": "Must be at most 500 characters",
+      "maxLength": "Must be at most 500 characters"
+    },
+    "qualities": {
+      "required": "Please describe the qualities",
+      "min": "Please describe the qualities",
+      "max": "Must be at most 500 characters",
+      "maxLength": "Must be at most 500 characters"
+    },
+    "uniqueTraits": {
+      "required": "Please describe the unique traits",
+      "min": "Please describe the unique traits",
+      "max": "Must be at most 500 characters",
+      "maxLength": "Must be at most 500 characters"
+    },
+    "memories": {
+      "required": "Please share some memories",
+      "min": "Please share some memories",
+      "max": "Must be at most 1000 characters",
+      "maxLength": "Must be at most 1000 characters"
+    }
+  },
+  "lyrics": {
+    "lyrics": {
+      "required": "Song lyrics are required",
+      "min": "Lyrics must be at least 10 characters",
+      "max": "Lyrics must be at most 2000 characters"
+    },
+    "required": "Song lyrics are required",
+    "minLength": "Lyrics must be at least 10 characters",
+    "maxLength": "Lyrics must be at most 2000 characters"
+  },
+  "style": {
+    "genre": {
+      "required": "Please select a music genre",
+      "min": "Please select a music genre"
+    },
+    "emotion": {
+      "required": "Please select an emotion",
+      "min": "Please select an emotion"
+    },
+    "vocalPreference": {
+      "required": "Please select a vocal preference",
+      "min": "Please select a vocal preference"
+    }
+  },
+  "auth": {
+    "email": {
+      "required": "Email is required",
+      "invalid": "Invalid email"
+    },
+    "password": {
+      "minLength": "Password must be at least 6 characters",
+      "maxLength": "Password must be at most 100 characters"
+    },
+    "name": {
+      "minLength": "Name must be at least 2 characters",
+      "maxLength": "Name must be at most 100 characters",
+      "invalidFormat": "Name must contain only letters and spaces"
+    }
+  }
+}

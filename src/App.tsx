@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -21,6 +21,9 @@ import { useScrollToTop } from "./hooks/useScrollToTop";
 import { useUiStore } from "./store/uiStore";
 import { NAVBAR_TOTAL_OFFSET } from "./constants/layout";
 import { useAuthStore } from "./store/authStore";
+import { useLocalizedRoutes } from '@/hooks/useLocalizedRoutes';
+import { getLegacyPaths } from '@/routes/paths';
+import LegacyRouteRedirect from '@/components/routing/LegacyRouteRedirect';
 // Gerar e persistir deviceId único
 let deviceId = localStorage.getItem('deviceId');
 if (!deviceId) {
@@ -62,30 +65,32 @@ const AuthInitializer = () => {
 const AppContent = () => {
   useScrollToTop(); // Hook que faz scroll para o topo em mudanças de rota
   const { isPaymentPopupVisible, hidePaymentPopup, handleUpgrade } = useUiStore();
+  const { localizedPaths, language } = useLocalizedRoutes();
+  const legacyRoutes = useMemo(() => getLegacyPaths(language), [language]);
   
   return (
     <Layout>
       <AuthInitializer />
       <Navbar />
-      <div
-        className="flex-1 w-full"
-        style={{ paddingTop: `${NAVBAR_TOTAL_OFFSET}px` }}
-      >
+      <div className="flex-1 w-full">
         <Routes>
-          <Route path="/" element={<Index />} />
-          <Route path="/criar" element={<Criar />} />
+          <Route path={localizedPaths.home} element={<Index />} />
+          <Route path={localizedPaths.create} element={<Criar />} />
           <Route 
-            path="/minhas-musicas" 
+            path={localizedPaths.myMusic}
             element={
               <ProtectedRoute>
                 <MinhasMusicas />
               </ProtectedRoute>
             } 
           />
-          <Route path="/musica/:id" element={<MusicaPublica />} />
-          <Route path="/auth/callback" element={<AuthCallback />} />
-          <Route path="/termos-de-uso" element={<TermosDeUso />} />
-          <Route path="/politica-de-privacidade" element={<PoliticaDePrivacidade />} />
+          <Route path={localizedPaths.publicMusic} element={<MusicaPublica />} />
+          <Route path={localizedPaths.authCallback} element={<AuthCallback />} />
+          <Route path={localizedPaths.termsOfUse} element={<TermosDeUso />} />
+          <Route path={localizedPaths.privacyPolicy} element={<PoliticaDePrivacidade />} />
+          {legacyRoutes.map(({ key, path }) => (
+            <Route key={`legacy-${path}`} path={path} element={<LegacyRouteRedirect routeKey={key} />} />
+          ))}
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
@@ -101,6 +106,11 @@ const AppContent = () => {
     </Layout>
   );
 };
+
+// Expor authStore no window para facilitar testes
+if (typeof window !== 'undefined') {
+  (window as any).useAuthStore = useAuthStore;
+}
 
 const App = () => (
   <QueryClientProvider client={queryClient}>

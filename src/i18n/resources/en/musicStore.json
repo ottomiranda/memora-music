@@ -1,0 +1,46 @@
+{
+  "errors": {
+    "requiredFieldsFirstStep": "Please fill in all required fields from the first step before generating lyrics.",
+    "invalidApiResponse": "API response does not contain valid lyrics or title",
+    "connectionError": "Connection error. Check your internet and try again.",
+    "requiredFieldsPreview": "Please fill in all required fields before generating preview.",
+    "unknownPreviewError": "Unknown error generating preview",
+    "requiredFieldsMusic": "Please fill in all style fields before generating music.",
+    "invalidApiResponseMusic": "Invalid API response",
+    "invalidStatusResponse": "Invalid status response.",
+    "statusCheckError": "❌ Error checking status:",
+    "statusCheckPrefix": "Error checking status",
+    "unknownError": "Unknown error",
+    "generateLyricsCatch": "Error generating lyrics (catch)",
+    "generatePreview": "Error generating preview",
+    "generateMusicCatch": "Error generating music (catch)",
+    "statusCheckFailedAccessing": "Could not verify your status now. Accessing creator anyway.",
+    "paymentRequired": "You have used your free creations. Upgrade to continue creating new songs."
+  },
+  "success": {
+    "lyricsGenerated": "Lyrics and title generated successfully!",
+    "musicGenerationStarted": "Music generation started! Please wait while we process...",
+    "musicGenerated": "song(s) generated successfully!",
+    "allMusicGenerated": "All songs generated successfully!"
+  },
+  "debug": {
+    "validationFailedStep1": "Validation failed - Required fields from first step missing",
+    "validationFailed": "Validation failed - Required fields missing",
+    "musicReceivedOldSystem": "Music received successfully (old system): clips",
+    "generationCompleted": "🎵 Generation completed. Stopping polling.",
+    "cannotStartPollingWithoutTaskId": "⚠️ Cannot start polling without taskId",
+    "startingStatusPolling": "🔄 Starting status polling...",
+    "mvpFlowCompleting": "[MVP] Completing MVP flow - unlocking full functionality",
+    "paywallAccessGranted": "[PAYWALL] Access granted. Navigating to /create.",
+    "paywallAccessDenied": "[PAYWALL] Access denied. Showing payment modal.",
+    "paywallCheckFailed": "[PAYWALL] Failed to check status. Allowing provisional access to flow.",
+    "musicStateReset": "[resetFlow] Music state being reset.",
+    "storeReset": "[reset] Resetting store to initial state. currentStep will be set to 0."
+  },
+  "validation": {
+    "fillRequiredFieldsStep1": "Please fill all required fields from the first step before generating lyrics.",
+    "fillRequiredFields": "Please fill all required fields before generating preview.",
+    "fillStyleFields": "Please fill all style fields before generating music.",
+    "unknownPreviewError": "Unknown error generating preview"
+  }
+}

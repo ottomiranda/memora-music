@@ -7,29 +7,33 @@ import { LiquidGlassCard } from "@/components/ui/LiquidGlassCard";
 import { useMusicStore } from "@/store/musicStore";
 import { useAuthStore } from "@/store/authStore";
 import { useNavigate } from "react-router-dom";
+import { useTranslation } from '@/i18n/hooks/useTranslation';
+import { useLocalizedRoutes } from '@/hooks/useLocalizedRoutes';
 
 const PlanSection = ({ id }: { id?: string }) => {
+  const { t } = useTranslation('planSection');
   const { isFree: isFirstSong, isLoading, error } = useCreationStatus();
   const { startNewCreationFlow } = useMusicStore();
   const { token } = useAuthStore();
   const navigate = useNavigate();
+  const { buildPath } = useLocalizedRoutes();
 
   const benefits = [
     {
       icon: Music,
-      text: "Música personalizada de até 3 minutos"
+      text: t('benefits.personalizedMusic')
     },
     {
       icon: Sparkles,
-      text: "Estilos variados: Nacionais e Internacionais"
+      text: t('benefits.variedStyles')
     },
     {
       icon: Mic,
-      text: "Voz sintética avançada com qualidade profissional"
+      text: t('benefits.advancedVoice')
     },
     {
       icon: Download,
-      text: "Entrega rápida em MP3"
+      text: t('benefits.fastDelivery')
     }
   ];
 
@@ -39,9 +43,9 @@ const PlanSection = ({ id }: { id?: string }) => {
         {/* Header */}
         <div className="text-center mb-8">
           <SectionTitle>
-            Um presente que <span className="bg-gradient-to-r from-yellow-400 via-purple-500 to-purple-600 bg-clip-text text-transparent">toca</span> o <span className="bg-gradient-to-r from-yellow-400 via-purple-500 to-purple-600 bg-clip-text text-transparent">coração</span>
+            {t('header.gift')} <span className="bg-gradient-to-r from-yellow-400 via-purple-500 to-purple-600 bg-clip-text text-transparent">{t('header.touches')}</span> {t('header.the')} <span className="bg-gradient-to-r from-yellow-400 via-purple-500 to-purple-600 bg-clip-text text-transparent">{t('header.heart')}</span>
           </SectionTitle>
-          <SectionSubtitle>Crie memórias musicais únicas que ficarão para sempre</SectionSubtitle>
+          <SectionSubtitle>{t('header.subtitle')}</SectionSubtitle>
         </div>
 
         {/* Plan Card */}
@@ -51,7 +55,7 @@ const PlanSection = ({ id }: { id?: string }) => {
             <div className="absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-[100]">
               <div className="bg-memora-secondary px-7 py-2 rounded-full shadow-lg border border-white/40 text-center">
                 <span className="font-heading font-bold text-sm" style={{color: '#08060D'}}>
-                  🎉 Primeira música é grátis!
+                  {t('badge.firstFree')}
                 </span>
               </div>
             </div>
@@ -60,7 +64,7 @@ const PlanSection = ({ id }: { id?: string }) => {
               {/* Plan Name */}
               <div className="text-center mb-8">
                 <h3 className="text-2xl sm:text-3xl font-heading font-bold text-white mb-2">
-                  AI Premium
+                  {t('plan.name')}
                 </h3>
                 <div className="flex items-center justify-center space-x-2">
                   {isLoading ? (
@@ -79,13 +83,13 @@ const PlanSection = ({ id }: { id?: string }) => {
                       </div>
                     )}
                     <div className="text-sm text-white">
-                      por música
+                      {t('plan.perSong')}
                     </div>
                   </div>
                 </div>
                 {error && (
                   <div className="text-xs text-orange-600 mt-2">
-                    Erro ao carregar preço. Usando valor padrão.
+                    {t('plan.priceError')}
                   </div>
                 )}
               </div>
@@ -118,19 +122,19 @@ const PlanSection = ({ id }: { id?: string }) => {
                       await startNewCreationFlow(navigate, token || null);
                     } catch (error) {
                       console.error('[PlanSection] erro ao iniciar fluxo de criação', error);
-                      navigate('/criar');
+                      navigate(buildPath('create'));
                     }
                   }}
                 >
                   <Sparkles className="mr-3 h-5 w-5" />
-                  Crie sua música agora
+                  {t('button.createNow')}
                 </LiquidGlassButton>
               </div>
 
               {/* Timer */}
               <div className="flex items-center justify-center space-x-2 text-white/50 text-sm">
                 <Clock className="w-4 h-4" />
-                <span>Oferta limitada ao período de lançamento</span>
+                <span>{t('offer.limited')}</span>
               </div>
 
 
@@ -145,10 +149,10 @@ const PlanSection = ({ id }: { id?: string }) => {
               <Clock className="w-6 h-6 text-primary" />
             </div>
             <h4 className="font-heading font-bold text-white mb-1">
-              Entrega Rápida
+              {t('features.fastDelivery.title')}
             </h4>
             <p className="text-sm text-white/50">
-              Sua música fica pronta em menos de 5 minutos
+              {t('features.fastDelivery.description')}
             </p>
           </div>
           
@@ -157,10 +161,10 @@ const PlanSection = ({ id }: { id?: string }) => {
               <Check className="w-6 h-6 text-secondary" />
             </div>
             <h4 className="font-heading font-bold text-white mb-1">
-              100% Única
+              {t('features.unique.title')}
             </h4>
             <p className="text-sm text-white/50">
-              Cada música é criada exclusivamente para você
+              {t('features.unique.description')}
             </p>
           </div>
           
@@ -169,10 +173,10 @@ const PlanSection = ({ id }: { id?: string }) => {
               <Download className="w-6 h-6 text-accent-coral" />
             </div>
             <h4 className="font-heading font-bold text-white mb-1">
-              Formato MP3
+              {t('features.mp3Format.title')}
             </h4>
             <p className="text-sm text-white/50">
-              Compatível com todos os dispositivos
+              {t('features.mp3Format.description')}
             </p>
           </div>
         </div>

@@ -1,13 +1,18 @@
 import { Heart, Instagram, Facebook, Youtube, ArrowUp } from "lucide-react";
 import { useState, useEffect, useCallback } from "react";
 import { useLocation, useNavigate, Link } from "react-router-dom";
+import { useTranslation } from 'react-i18next';
 import FeedbackPopup from "@/components/memora/FeedbackPopup";
+import LanguageSelector from "@/components/LanguageSelector";
 import { NAVBAR_TOTAL_OFFSET } from '@/constants/layout';
+import { useLocalizedRoutes } from '@/hooks/useLocalizedRoutes';
 
 const Footer = () => {
+  const { t } = useTranslation();
   const currentYear = new Date().getFullYear();
   const location = useLocation();
   const navigate = useNavigate();
+  const { buildPath } = useLocalizedRoutes();
 
   const [isFeedbackOpen, setFeedbackOpen] = useState(false);
 
@@ -85,66 +90,65 @@ const Footer = () => {
                 className="h-8 w-auto"
               />
             </div>
-            <p className="text-white/50 max-w-md leading-relaxed">
-              Transforme suas ideias em música com inteligência artificial.
-              Crie composições únicas e personalizadas em minutos.
+            <p className="text-gray-400 mb-6 leading-relaxed">
+              {t('footer.description')}
             </p>
             <button
               onClick={() => setFeedbackOpen(true)}
               className="mt-6 text-left bg-primary/10 border border-primary/20 rounded-xl p-4 max-w-md text-secondary text-xs font-medium hover:bg-primary/15 transition"
             >
-              🚀 Sua voz faz a diferença. Diga o que achou da Memora.
+              {t('footer.feedback')}
             </button>
           </div>
 
           {/* Quick Links */}
           <div>
-            <h3 className="font-semibold text-white mb-4">Links Rápidos</h3>
+            <h3 className="font-semibold text-white mb-4">{t('footer.quickLinks.title')}</h3>
             <ul className="space-y-2">
               <li>
                 <button onClick={() => scrollToSection('como-funciona')} className="text-white/50 hover:text-white transition-colors text-left">
-                  Como Funciona
+                  {t('footer.quickLinks.howItWorks')}
                 </button>
               </li>
               <li>
                 <button onClick={() => scrollToSection('precos')} className="text-white/50 hover:text-white transition-colors text-left">
-                  Preços
+                  {t('footer.quickLinks.pricing')}
                 </button>
               </li>
               <li>
                 <button onClick={() => scrollToSection('exemplos')} className="text-white/50 hover:text-white transition-colors text-left">
-                  Exemplos
+                  {t('footer.quickLinks.examples')}
                 </button>
               </li>
               <li>
                 <button onClick={() => scrollToSection('faq')} className="text-white/50 hover:text-white transition-colors text-left">
-                  FAQ
+                  {t('footer.quickLinks.faq')}
                 </button>
               </li>
             </ul>
           </div>
 
-          {/* Legal Links */}
-          <div>
-            <h3 className="font-semibold text-white mb-4">Legal</h3>
-            <ul className="space-y-2">
-              <li>
-                <Link to="/termos-de-uso" className="text-white/50 hover:text-white transition-colors">
-                  Termos de Uso
-                </Link>
-              </li>
-              <li>
-                <Link to="/politica-de-privacidade" className="text-white/50 hover:text-white transition-colors">
-                  Política de Privacidade
-                </Link>
-              </li>
-              <li>
-                <a href="#" className="text-white/50 hover:text-white transition-colors">
-                  Cookies
-                </a>
-              </li>
-            </ul>
-          </div>
+          {/* Legal */}
+            <div>
+              <h3 className="font-semibold text-white mb-4">{t('footer.legal.title')}</h3>
+              <ul className="space-y-2">
+                <li>
+                  <Link to={buildPath('termsOfUse')} className="text-white/50 hover:text-white transition-colors">
+                    {t('footer.legal.termsOfUse')}
+                  </Link>
+                </li>
+                <li>
+                  <Link to={buildPath('privacyPolicy')} className="text-white/50 hover:text-white transition-colors">
+                    {t('footer.legal.privacyPolicy')}
+                  </Link>
+                </li>
+                <li>
+                  <Link to="/cookies" className="text-white/50 hover:text-white transition-colors">
+                    {t('footer.legal.cookies')}
+                  </Link>
+                </li>
+              </ul>
+            </div>
         </div>
 
         {/* Bottom Section */}
@@ -152,28 +156,29 @@ const Footer = () => {
           <div className="flex flex-col md:flex-row items-center justify-between space-y-6 md:space-y-0">
             <div className="flex flex-col md:flex-row items-center space-y-2 md:space-y-0 md:space-x-6">
               <p className="text-white/80 text-sm">
-                © 2025 Memora.music. Todos os direitos reservados.
+                {t('footer.copyright')}
               </p>
               <div className="flex items-center space-x-4">
                 <span className="text-white/80 text-xs">
-                  Feito com
+                  {t('footer.madeWith.text')}
                 </span>
                 <Heart className="w-4 h-4 text-memora-coral fill-current" />
                 <span className="text-white/80 text-xs">
-                  para criar memórias inesquecíveis
+                  {t('footer.madeWith.purpose')}
                 </span>
               </div>
             </div>
 
-            {/* Scroll to top and Social Links */}
+            {/* Language Selector, Scroll to top and Social Links */}
             <div className="flex flex-col sm:flex-row items-center gap-4">
+              <LanguageSelector />
               <button
                 onClick={scrollToTop}
                 className="flex items-center gap-2 px-4 py-2 rounded-full bg-white/10 hover:bg-white/20 text-white/80 text-sm font-medium transition-colors"
-                aria-label="Voltar ao topo"
+                aria-label={t('footer.altText.backToTopButton')}
               >
                 <ArrowUp className="h-4 w-4" />
-                Voltar ao topo
+                {t('footer.backToTop')}
               </button>
               <div className="flex items-center space-x-4">
                 <a

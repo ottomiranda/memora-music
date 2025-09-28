@@ -1,0 +1,43 @@
+{
+  "header": {
+    "gift": "O presente que",
+    "touches": "toca",
+    "the": "o",
+    "heart": "coração",
+    "subtitle": "Crie uma música única e personalizada que será lembrada para sempre"
+  },
+  "badge": {
+    "firstFree": "Primeira música grátis"
+  },
+  "plan": {
+    "name": "Música Personalizada",
+    "perSong": "por música",
+    "priceError": "Erro ao carregar preço"
+  },
+  "benefits": {
+    "personalizedMusic": "Música 100% personalizada para sua história",
+    "variedStyles": "Diversos estilos musicais disponíveis",
+    "advancedVoice": "Tecnologia avançada de voz e instrumentos",
+    "fastDelivery": "Entrega rápida em até 5 minutos"
+  },
+  "button": {
+    "createNow": "Criar Música Agora"
+  },
+  "offer": {
+    "limited": "Oferta por tempo limitado"
+  },
+  "features": {
+    "fastDelivery": {
+      "title": "Entrega Rápida",
+      "description": "Sua música fica pronta em até 5 minutos"
+    },
+    "unique": {
+      "title": "100% Única",
+      "description": "Cada música é criada especialmente para você"
+    },
+    "mp3Format": {
+      "title": "Formato MP3",
+      "description": "Download direto em alta qualidade"
+    }
+  }
+}

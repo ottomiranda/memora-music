@@ -7,8 +7,10 @@ import { useMusicStore } from "@/store/musicStore";
 import { useAuthStore } from "@/store/authStore";
 import ParticlesAndWaves from "./ParticlesAndWaves";
 import { useState } from "react";
+import { useTranslation } from '@/i18n/hooks/useTranslation';
 
 const Hero = () => {
+  const { t } = useTranslation('hero');
   const navigate = useNavigate();
   const { startNewCreationFlow } = useMusicStore();
   const [recipientName, setRecipientName] = useState("");
@@ -37,15 +39,15 @@ const Hero = () => {
         <div className="flex flex-col items-center text-center w-full gap-10">
           {/* Headline */}
           <h1 className="text-4xl sm:text-5xl lg:text-6xl xl:text-7xl font-heading font-bold text-white leading-tight">
-            A música que transforma{" "}
-            <span className="bg-gradient-yellow-purple bg-clip-text text-transparent">sentimentos</span>{" "}
-            em <span className="bg-gradient-yellow-purple bg-clip-text text-transparent">presente</span>
+            {t('headline.part1')}{" "}
+            <span className="bg-gradient-yellow-purple bg-clip-text text-transparent">{t('headline.feelings')}</span>{" "}
+            {t('headline.part2')} <span className="bg-gradient-yellow-purple bg-clip-text text-transparent">{t('headline.gift')}</span>
           </h1>
 
           {/* Subheadline */}
           <p className="text-xl sm:text-2xl text-white/90 leading-relaxed max-w-3xl">
-            <span className="block sm:inline">Em até 5 minutos, a Memora cria duas versões profissionais</span>
-            <span className="block sm:inline"> e únicas da sua canção para você escolher e emocionar quem ama.</span>
+            <span className="block sm:inline">{t('subheadline.part1')}</span>
+            <span className="block sm:inline">{t('subheadline.part2')}</span>
           </p>
 
           {/* CTA Card */}
@@ -53,7 +55,7 @@ const Hero = () => {
             <HeroCard>
               <div className="text-center space-y-3">
                 <h3 className="text-white text-xl sm:text-2xl font-bold font-heading leading-tight">
-                  Vamos começar?
+                  {t('cta.title')}
                 </h3>
               </div>
               
@@ -64,11 +66,11 @@ const Hero = () => {
                     id="recipient-name"
                     value={recipientName}
                     onChange={(e) => setRecipientName(e.target.value)}
-                    placeholder="Digite o nome aqui"
+                    placeholder={t('form.placeholder')}
                     aria-describedby="recipient-name-description"
                   />
                   <span id="recipient-name-description" className="sr-only">
-                    Digite o nome da pessoa para quem você quer criar a música
+                    {t('form.ariaDescription')}
                   </span>
                 </div>
                 
@@ -78,13 +80,13 @@ const Hero = () => {
                   className="w-full lg:w-auto hover:-translate-y-1"
                 >
                   <Sparkles className="mr-3 h-6 w-6" />
-                  Crie sua música agora
+                  {t('cta.button')}
                 </LiquidGlassButton>
               </div>
               
               {/* Free message */}
               <p className="text-white/70 text-sm font-medium text-center">
-                ✨ Grátis na primeira criação - Sem cartão necessário
+                {t('cta.freeMessage')}
               </p>
             </HeroCard>
           </div>

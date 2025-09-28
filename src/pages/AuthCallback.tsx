@@ -1,11 +1,16 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { getSupabaseBrowserClient } from '../lib/supabase-browser';
 import { useAuthStore } from '../store/authStore';
+import { useLocalizedRoutes } from '@/hooks/useLocalizedRoutes';
 
 const AuthCallback = () => {
   const navigate = useNavigate();
+  const { t } = useTranslation('authCallback');
   const { user, isLoggedIn } = useAuthStore();
+  const { buildPath } = useLocalizedRoutes();
+  const dashboardPath = buildPath('myMusic');
   const [status, setStatus] = useState<'loading' | 'success' | 'error'>('loading');
   const [errorMessage, setErrorMessage] = useState<string>('');
   const [countdown, setCountdown] = useState<number>(3);
@@ -14,7 +19,7 @@ const AuthCallback = () => {
     try {
       const supabase = await getSupabaseBrowserClient();
       if (!supabase) {
-        throw new Error('Falha ao inicializar cliente Supabase');
+        throw new Error(t('error.messages.supabaseInit'));
       }
 
       // Processar o hash da URL para extrair tokens de autenticação
@@ -33,7 +38,7 @@ const AuthCallback = () => {
         const syncSuccess = await syncSession();
         
         if (!syncSuccess) {
-          throw new Error('Falha ao sincronizar sessão com o sistema');
+          throw new Error(t('error.messages.sessionSync'));
         }
         
         setStatus('success');
@@ -46,7 +51,7 @@ const AuthCallback = () => {
           
           if (timeLeft <= 0) {
             clearInterval(countdownInterval);
-            navigate('/minhas-musicas', { replace: true });
+            navigate(dashboardPath, { replace: true });
           }
         }, 1000);
         
@@ -61,22 +66,22 @@ const AuthCallback = () => {
           throw new Error(errorDescription || errorParam);
         }
         
-        throw new Error('Nenhuma sessão encontrada. Verifique seu email e tente novamente.');
+        throw new Error(t('error.messages.noSession'));
       }
     } catch (error) {
       console.error('Erro no callback de autenticação:', error);
       setStatus('error');
       
-      let message = 'Erro desconhecido';
+      let message = t('error.messages.unknown');
       if (error instanceof Error) {
         message = error.message;
       }
       
       // Personalizar mensagens de erro comuns
       if (message.includes('Email not confirmed')) {
-        message = 'Email ainda não foi confirmado. Verifique sua caixa de entrada.';
+        message = t('error.messages.emailNotConfirmed');
       } else if (message.includes('Invalid login credentials')) {
-        message = 'Credenciais inválidas. Tente fazer login novamente.';
+        message = t('error.messages.invalidCredentials');
       }
       
       setErrorMessage(message);
@@ -85,14 +90,14 @@ const AuthCallback = () => {
 
   useEffect(() => {
     handleAuthCallback();
-  }, [navigate]);
+  }, [dashboardPath, navigate]);
 
   // Se o usuário já estiver logado, redirecionar imediatamente
   useEffect(() => {
     if (isLoggedIn) {
-      navigate('/minhas-musicas', { replace: true });
+      navigate(dashboardPath, { replace: true });
     }
-  }, [isLoggedIn, navigate]);
+  }, [dashboardPath, isLoggedIn, navigate]);
 
   const handleRetry = () => {
     setStatus('loading');
@@ -115,8 +120,8 @@ const AuthCallback = () => {
           {status === 'loading' && (
             <div className="space-y-4">
               <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-              <h2 className="text-xl font-semibold text-gray-900">Verificando email...</h2>
-              <p className="text-gray-600">Processando sua confirmação de email...</p>
+              <h2 className="text-xl font-semibold text-gray-900">{t('loading.title')}</h2>
+              <p className="text-gray-600">{t('loading.subtitle')}</p>
             </div>
           )}
           
@@ -127,13 +132,13 @@ const AuthCallback = () => {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                 </svg>
               </div>
-              <h2 className="text-xl font-semibold text-green-900">Email verificado com sucesso!</h2>
-              <p className="text-green-700">Redirecionando em {countdown} segundos...</p>
+              <h2 className="text-xl font-semibold text-green-900">{t('success.title')}</h2>
+              <p className="text-green-700">{t('success.subtitle', { countdown })}</p>
               <button
-                onClick={() => navigate('/minhas-musicas', { replace: true })}
+                onClick={() => navigate(dashboardPath, { replace: true })}
                 className="mt-4 px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
               >
-                Ir para Minhas Músicas
+                {t('success.button')}
               </button>
             </div>
           )}
@@ -145,26 +150,26 @@ const AuthCallback = () => {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                 </svg>
               </div>
-              <h2 className="text-xl font-semibold text-red-900">Erro na verificação</h2>
+              <h2 className="text-xl font-semibold text-red-900">{t('error.title')}</h2>
               <p className="text-red-700 mb-4">{errorMessage}</p>
               <div className="flex flex-col space-y-2">
                 <button
                   onClick={handleRetry}
                   className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
                 >
-                  Tentar novamente
+                  {t('error.buttons.retry')}
                 </button>
                 <button
                   onClick={handleGoToLogin}
                   className="px-6 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"
                 >
-                  Fazer login
+                  {t('error.buttons.login')}
                 </button>
                 <button
                   onClick={handleGoHome}
                   className="px-6 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition-colors"
                 >
-                  Voltar ao início
+                  {t('error.buttons.home')}
                 </button>
               </div>
             </div>
