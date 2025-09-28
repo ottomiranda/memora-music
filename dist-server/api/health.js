@@ -1,4 +1,4 @@
-import { testSupabaseConnection } from '../src/lib/supabase-client';
+import { testSupabaseConnection } from '../src/lib/supabase-client.js';
 export default async function handler(req, res) {
     // Configurar CORS
     res.setHeader('Access-Control-Allow-Credentials', 'true');

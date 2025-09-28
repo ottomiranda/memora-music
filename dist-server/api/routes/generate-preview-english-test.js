@@ -2,7 +2,7 @@ import express from 'express';
 import multer from 'multer';
 import { z } from 'zod';
 import OpenAI from 'openai';
-import { PromptAdapter } from '../../src/lib/services/promptAdapter';
+import { PromptAdapter } from '../../src/lib/services/promptAdapter.js';
 const router = express.Router();
 const upload = multer();
 // Schema de validação (mesmo do original)

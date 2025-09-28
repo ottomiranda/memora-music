@@ -1,9 +1,9 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { migrationApi } from '../config/api';
+import { migrationApi } from '../config/api.js';
 import getSupabaseBrowserClient from '@/lib/supabase-browser';
-import { getCurrentGuestId, clearGuestId } from '../utils/guest';
-import i18n from '../i18n';
+import { getCurrentGuestId, clearGuestId } from '../utils/guest.js';
+import i18n from '../i18n/index.js';
 /**
  * Função para migrar dados do convidado para o usuário logado
  * Agora inclui chamada automática da função merge_guest_into_user
