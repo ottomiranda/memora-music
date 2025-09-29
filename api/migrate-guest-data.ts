@@ -1,6 +1,6 @@
 import type { Request, Response } from 'express';
 import { SongService } from '../src/lib/services/songService.js';
-import { MigrateGuestDataSchema } from '../src/lib/schemas/song';
+import { MigrateGuestDataSchema } from '../src/lib/schemas/song.js';
 
 export default async function handler(req: Request, res: Response) {
   // Configurar CORS

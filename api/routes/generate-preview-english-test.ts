@@ -4,7 +4,7 @@ import { z } from 'zod';
 import OpenAI from 'openai';
 import { createClient } from '@supabase/supabase-js';
 import axios from 'axios';
-import { PromptAdapter } from '../../src/lib/services/promptAdapter';
+import { PromptAdapter } from '../../src/lib/services/promptAdapter.js';
 
 const router = express.Router();
 const upload = multer();

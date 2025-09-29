@@ -21,12 +21,14 @@ const DEFAULT_RETRY_CONFIG = {
 };
 // Classe para gerenciar conexões Supabase
 class SupabaseManager {
+    static instance;
+    serviceClient = null;
+    anonClient = null;
+    config;
+    connectionStatus = 'disconnected';
+    lastConnectionTest = 0;
+    CONNECTION_TEST_INTERVAL = 30000; // 30 segundos
     constructor() {
-        this.serviceClient = null;
-        this.anonClient = null;
-        this.connectionStatus = 'disconnected';
-        this.lastConnectionTest = 0;
-        this.CONNECTION_TEST_INTERVAL = 30000; // 30 segundos
         this.config = null;
     }
     static getInstance() {

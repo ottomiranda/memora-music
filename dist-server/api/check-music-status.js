@@ -1,5 +1,5 @@
 import { SongService } from '../src/lib/services/songService.js';
-import { CheckStatusQuerySchema } from '../src/lib/schemas/song';
+import { CheckStatusQuerySchema } from '../src/lib/schemas/song.js';
 export default async function handler(req, res) {
     // Configurar CORS
     res.setHeader('Access-Control-Allow-Credentials', 'true');

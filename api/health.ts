@@ -1,5 +1,5 @@
 import type { Request, Response } from 'express';
-import { testSupabaseConnection, getSupabaseServiceClient } from '../src/lib/supabase-client';
+import { testSupabaseConnection, getSupabaseServiceClient } from '../src/lib/supabase-client.js';
 
 export default async function handler(req: Request, res: Response) {
   // Configurar CORS

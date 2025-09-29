@@ -57,6 +57,8 @@ const SUNO_API_BASE = 'https://api.sunoapi.org/api/v1';
 const SUNO_API_KEY = process.env.SUNO_API_KEY;
 // Classe para integração com Suno API
 class SunoAPI {
+    apiKey;
+    baseUrl;
     constructor(apiKey) {
         this.apiKey = apiKey;
         this.baseUrl = SUNO_API_BASE;
