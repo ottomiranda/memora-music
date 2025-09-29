@@ -13,6 +13,7 @@ import { getAuthSchema, type AuthFormData } from "@/schemas/authSchema";
 import { useValidationSchemas } from "@/lib/validations";
 import { useTranslation } from '@/i18n/hooks/useTranslation';
 import { useLocalizedRoutes } from '@/hooks/useLocalizedRoutes';
+import { getSupabaseBrowserClient } from '@/lib/supabase-browser';
 
 interface AuthModalProps {
   isOpen: boolean;
@@ -91,13 +92,32 @@ const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
   if (!isOpen) return null;
 
   const handleGoogleAuth = async () => {
-    // TODO: Implementar autenticação com Google
-    // Por enquanto, simular login bem-sucedido
-    const success = await login({ email: "google@user.com", password: "google" });
-    if (success) {
-      executeAuthCallback();
-      hideAuthPopup();
-      onClose();
+    clearError();
+    
+    try {
+      const supabase = await getSupabaseBrowserClient();
+      if (!supabase) throw new Error('Falha ao inicializar Supabase');
+
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: `${window.location.origin}/auth/callback`,
+          queryParams: {
+            access_type: 'offline',
+            prompt: 'consent',
+          },
+        },
+      });
+
+      if (error) throw error;
+
+      // O redirecionamento será automático
+      // A autenticação será finalizada no callback
+      
+    } catch (error: unknown) {
+      console.error('[AuthModal] Erro na autenticação Google:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Erro na autenticação com Google';
+      // O erro será tratado pelo sistema de erro do authStore
     }
   };
 
