@@ -2,7 +2,7 @@
 # Multi-stage build para otimizar o tamanho da imagem final
 
 # Stage 1: Base image com Node.js LTS
-FROM public.ecr.aws/docker/library/node:20-bookworm-slim AS base
+FROM public.ecr.aws/docker/library/node:24-bookworm-slim AS base
 
 # Instalar dependências do sistema necessárias
 RUN apt-get update && \
@@ -92,7 +92,7 @@ RUN npm run build
 RUN npm run build:server
 
 # Stage 4: Produção - imagem final otimizada
-FROM public.ecr.aws/docker/library/node:20-bookworm-slim AS production
+FROM public.ecr.aws/docker/library/node:24-bookworm-slim AS production
 
 # Instalar dependências do sistema para produção
 RUN apt-get update && \
