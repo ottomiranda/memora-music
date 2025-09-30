@@ -90,6 +90,7 @@ export default defineConfig({
   preview: {
     port: 4173,
     strictPort: true,
-    host: true
+    host: true,
+    historyApiFallback: true
   }
 });

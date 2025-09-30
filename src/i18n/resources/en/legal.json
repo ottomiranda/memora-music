@@ -37,52 +37,5 @@
         "content": "If you have questions about these Terms of Use, please contact us at: contact@memoramusic.com"
       }
     }
-  },
-  "privacyPolicy": {
-    "title": "Privacy Policy – Memora Music",
-    "lastUpdated": "Last updated: January 15, 2025",
-    "introduction": "Memora Music by Twing values your privacy. This Policy clearly explains how we collect, use, store, and protect your personal data, including Google account data when you choose to use Google login.",
-    "sections": {
-      "dataCollected": {
-        "title": "1. Data Collected",
-        "content": "1.1 Data provided by the user:\n• Name, email, and password when creating an account directly.\n• Briefing information, musical preferences, and chosen styles to generate personalized songs.\n\n1.2 Data collected via Google login (Google OAuth):\nWhen you choose to register or access your account with Google, we may access:\n• First and last name.\n• Email address.\n• Profile picture (if available).\n\nThis data is used only for authentication and creating the Memora Music account.\n\n1.3 Usage and technical data:\n• Information about interactions with the platform (songs created, versions chosen).\n• Technical data such as IP address, device type, browser, and cookies.\n\n1.4 Payment data:\nIn case of purchases, payment data is processed by partners (e.g., Stripe). Memora Music does not store complete card information."
-      },
-      "dataUse": {
-        "title": "2. How We Use the Data",
-        "content": "• Authentication and access: name, email, and Google profile picture are used exclusively to authenticate your account.\n• Experience personalization: we use data provided in the briefing to generate personalized songs.\n• Communication: we may send notifications about orders, updates, and improvements.\n• Platform improvement: we analyze usage metrics to enhance the experience.\n• Legal compliance: we use data when necessary to comply with applicable laws."
-      },
-      "dataSharing": {
-        "title": "3. Data Sharing",
-        "content": "• We do not sell or rent personal data to third parties.\n• Data may be shared with:\n• Service providers (hosting, payment processing, technical support).\n• Authentication partners (Google, only for secure login).\n• Legal authorities when required by law."
-      },
-      "dataStorage": {
-        "title": "4. Data Storage and Protection",
-        "content": "• All data is stored on secure servers in compliance with LGPD (Brazil) and GDPR (Europe).\n• We implement technical and organizational measures, including encryption in transit (TLS/SSL) and at rest.\n• Access to data is restricted only to authorized employees or service providers."
-      },
-      "dataRetention": {
-        "title": "5. Data Retention and Deletion",
-        "content": "• Account data and created songs are kept while your account is active.\n• If you request deletion, all your personal data (including data obtained via Google login) will be permanently deleted from our systems, except when retention is necessary for legal obligation.\n• To request deletion, contact us at: privacidade@memoramusic.com or use the 'Delete account' function on the platform itself."
-      },
-      "userRights": {
-        "title": "6. User Rights",
-        "content": "You can, at any time:\n• Request access, correction, or deletion of your data.\n• Withdraw consent for certain uses.\n• Request data portability.\n• Object to processing in certain situations."
-      },
-      "cookies": {
-        "title": "7. Cookies and Technologies",
-        "content": "• We use functional, analytical, and preference cookies.\n• You can manage cookies in your browser settings or in our consent banner."
-      },
-      "internationalTransfer": {
-        "title": "8. International Data Transfer",
-        "content": "Your data may be processed outside Brazil or the European Union. We ensure that any transfer will be made in accordance with LGPD and GDPR, with adequate safeguards."
-      },
-      "changes": {
-        "title": "9. Changes to this Policy",
-        "content": "We may update this Policy periodically. The most recent version will always be available at https://memora.music/politica-de-privacidade."
-      },
-      "contact": {
-        "title": "10. Contact",
-        "content": "For questions or requests related to this Policy, please contact: contato@memora.music"
-      }
-    }
   }
 }

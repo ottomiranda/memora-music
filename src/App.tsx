@@ -3,6 +3,7 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { HelmetProvider } from 'react-helmet-async';
 import { v4 as uuidv4 } from 'uuid';
 import Navbar from "./components/memora/Navbar";
 import Footer from "./components/memora/Footer";
@@ -15,7 +16,9 @@ import MusicaPublica from "./pages/MusicaPublica";
 import AuthCallback from "./pages/AuthCallback";
 import NotFound from "./pages/NotFound";
 import TermosDeUso from "./pages/TermosDeUso";
-import PoliticaDePrivacidade from "./pages/PoliticaDePrivacidade";
+import PoliticaPrivacidade from "./pages/PoliticaPrivacidade";
+import PrivacyPolicy from "./pages/PrivacyPolicy";
+
 import ProtectedRoute from "./components/auth/ProtectedRoute";
 import { useScrollToTop } from "./hooks/useScrollToTop";
 import { useUiStore } from "./store/uiStore";
@@ -24,6 +27,7 @@ import { useAuthStore } from "./store/authStore";
 import { useLocalizedRoutes } from '@/hooks/useLocalizedRoutes';
 import { getLegacyPaths } from '@/routes/paths';
 import LegacyRouteRedirect from '@/components/routing/LegacyRouteRedirect';
+import { useTranslation } from '@/i18n/hooks/useTranslation';
 import { PerformanceOptimizer } from '@/components/performance/PerformanceOptimizer';
 import { AccessibilityProvider } from '@/components/accessibility/AccessibilityProvider';
 import { ScreenReaderAnnouncer } from '@/components/accessibility/ScreenReaderAnnouncer';
@@ -69,8 +73,11 @@ const AuthInitializer = () => {
 const AppContent = () => {
   useScrollToTop(); // Hook que faz scroll para o topo em mudanças de rota
   const { isPaymentPopupVisible, hidePaymentPopup, handleUpgrade } = useUiStore();
-  const { localizedPaths, language } = useLocalizedRoutes();
+  const { paths, buildPath } = useLocalizedRoutes();
+  const { language } = useTranslation();
   const legacyRoutes = useMemo(() => getLegacyPaths(language), [language]);
+  
+
   
   return (
     <AccessibilityProvider>
@@ -88,20 +95,29 @@ const AppContent = () => {
         {/* Conteúdo principal */}
         <main id="main-content" className="flex-1 w-full" role="main" tabIndex={-1}>
           <Routes>
-          <Route path={localizedPaths.home} element={<Index />} />
-          <Route path={localizedPaths.create} element={<Criar />} />
+          <Route path={paths.home} element={<Index />} />
+          <Route path={paths.create} element={<Criar />} />
           <Route 
-            path={localizedPaths.myMusic}
+            path={paths.myMusic}
             element={
               <ProtectedRoute>
                 <MinhasMusicas />
               </ProtectedRoute>
             } 
           />
-          <Route path={localizedPaths.publicMusic} element={<MusicaPublica />} />
-          <Route path={localizedPaths.authCallback} element={<AuthCallback />} />
-          <Route path={localizedPaths.termsOfUse} element={<TermosDeUso />} />
-          <Route path={localizedPaths.privacyPolicy} element={<PoliticaDePrivacidade />} />
+          <Route path={paths.publicMusic} element={<MusicaPublica />} />
+          <Route path={paths.authCallback} element={<AuthCallback />} />
+          <Route path={paths.termsOfUse} element={<TermosDeUso />} />
+          <Route path={paths.privacyPolicy} element={
+            (() => {
+              // Detectar idioma baseado na URL atual
+              const currentPath = window.location.pathname;
+              const isPortuguesePath = currentPath === '/politica-de-privacidade';
+              const component = isPortuguesePath ? <PoliticaPrivacidade /> : <PrivacyPolicy />;
+              return component;
+            })()
+          } />
+
           {legacyRoutes.map(({ key, path }) => (
             <Route key={`legacy-${path}`} path={path} element={<LegacyRouteRedirect routeKey={key} />} />
           ))}
@@ -133,21 +149,23 @@ if (typeof window !== 'undefined') {
 }
 
 const App = () => (
-  <PerformanceOptimizer enableLogging={process.env.NODE_ENV === 'development'} reportToAnalytics={true}>
-    <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        <Sonner />
-        <BrowserRouter
-          future={{
-            v7_startTransition: true,
-            v7_relativeSplatPath: true,
-          }}
-        >
-          <AppContent />
-        </BrowserRouter>
-      </TooltipProvider>
-    </QueryClientProvider>
-  </PerformanceOptimizer>
+  <HelmetProvider>
+    <PerformanceOptimizer enableLogging={process.env.NODE_ENV === 'development'} reportToAnalytics={true}>
+      <QueryClientProvider client={queryClient}>
+        <TooltipProvider>
+          <Sonner />
+          <BrowserRouter
+            future={{
+              v7_startTransition: true,
+              v7_relativeSplatPath: true,
+            }}
+          >
+            <AppContent />
+          </BrowserRouter>
+        </TooltipProvider>
+      </QueryClientProvider>
+    </PerformanceOptimizer>
+  </HelmetProvider>
 );
 
 export default App;

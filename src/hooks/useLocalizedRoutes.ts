@@ -1,28 +1,31 @@
-import { useMemo, useCallback } from 'react';
 import { useTranslation } from '@/i18n/hooks/useTranslation';
-import type { RouteKey } from '@/routes/paths';
 import { buildLocalizedPath, getLocalizedPaths } from '@/routes/paths';
-import type { SupportedLanguages } from '@/i18n';
-
-type RouteParams = Record<string, string | undefined>;
+import type { RouteKey } from '@/routes/paths';
 
 export const useLocalizedRoutes = () => {
-  const { getCurrentLanguage } = useTranslation('common');
-  const language = getCurrentLanguage();
+  const { language, isReady } = useTranslation();
 
-  const localizedPaths = useMemo(() => getLocalizedPaths(language), [language]);
+  // Return safe defaults if i18n is not ready
+  if (!isReady || !language) {
+    const fallbackPaths = getLocalizedPaths('pt');
+    const fallbackBuildPath = (key: RouteKey, params?: Record<string, string>) => {
+      return buildLocalizedPath(key, 'pt', params);
+    };
+    
+    return {
+      paths: fallbackPaths,
+      buildPath: fallbackBuildPath,
+    };
+  }
 
-  const buildPath = useCallback(
-    (key: RouteKey, params?: RouteParams, langOverride?: SupportedLanguages) => {
-      const targetLanguage = langOverride || language;
-      return buildLocalizedPath(key, targetLanguage, params);
-    },
-    [language]
-  );
+  const paths = getLocalizedPaths(language);
+
+  const buildPath = (key: RouteKey, params?: Record<string, string>) => {
+    return buildLocalizedPath(key, language, params);
+  };
 
   return {
-    language,
-    localizedPaths,
+    paths,
     buildPath,
   };
 };

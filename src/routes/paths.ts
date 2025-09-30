@@ -40,6 +40,7 @@ const ROUTE_TEMPLATES: Record<RouteKey, Record<SupportedLanguages, string>> = {
     pt: '/politica-de-privacidade',
     en: '/privacy-policy',
   },
+
 };
 
 /**
@@ -50,11 +51,18 @@ export const buildLocalizedPath = (
   language: SupportedLanguages,
   params?: RouteParams
 ): string => {
-  const template = ROUTE_TEMPLATES[key][language];
-  if (!template) {
-    throw new Error(`Missing template for route "${key}" and language "${language}"`);
+  // Fallback to 'pt' if language is undefined or invalid
+  const validLanguage = language || 'pt';
+  
+  // Check if the route key exists in ROUTE_TEMPLATES
+  if (!ROUTE_TEMPLATES[key]) {
+    console.warn(`Route key "${key}" not found in ROUTE_TEMPLATES`);
+    return '/';
   }
-
+  
+  const routeTemplates = ROUTE_TEMPLATES[key];
+  const template = routeTemplates[validLanguage] || routeTemplates['pt'] || '/';
+  
   if (!params) return template;
 
   return template.replace(/:([A-Za-z0-9_]+)/g, (match, paramKey) => {
@@ -71,8 +79,17 @@ export const buildLocalizedPath = (
  * Return the localized path mapping for all routes in a given language.
  */
 export const getLocalizedPaths = (language: SupportedLanguages): Record<RouteKey, string> => {
+  // Fallback to 'pt' if language is undefined or invalid
+  const validLanguage = language || 'pt';
+  
   return Object.entries(ROUTE_TEMPLATES).reduce<Record<RouteKey, string>>((acc, [key, value]) => {
-    acc[key as RouteKey] = value[language];
+    const template = value[validLanguage];
+    if (template) {
+      acc[key as RouteKey] = template;
+    } else {
+      // Fallback to 'pt' if the language doesn't exist in the template
+      acc[key as RouteKey] = value['pt'];
+    }
     return acc;
   }, {} as Record<RouteKey, string>);
 };

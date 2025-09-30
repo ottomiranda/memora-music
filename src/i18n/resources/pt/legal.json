@@ -37,52 +37,5 @@
         "content": "Se você tiver dúvidas sobre estes Termos de Uso, entre em contato conosco através do email: contato@memoramusic.com"
       }
     }
-  },
-  "privacyPolicy": {
-    "title": "Política de Privacidade – Memora Music",
-    "lastUpdated": "Última atualização: 15 de janeiro de 2025",
-    "introduction": "A Memora Music by Twing valoriza a sua privacidade. Esta Política explica de forma clara como coletamos, utilizamos, armazenamos e protegemos seus dados pessoais, incluindo dados de contas Google quando você escolhe utilizar o login com Google.",
-    "sections": {
-      "dataCollection": {
-        "title": "1. Dados Coletados",
-        "content": "1.1 Dados fornecidos pelo usuário: Nome, e-mail e senha ao criar uma conta diretamente. Informações de briefing, preferências musicais e estilos escolhidos para gerar canções personalizadas.\n\n1.2 Dados coletados via login com Google (Google OAuth): Quando você escolhe se registrar ou acessar sua conta com o Google, podemos acessar: Nome e sobrenome, Endereço de e-mail, Foto de perfil (se disponível). Esses dados são usados apenas para autenticação e criação da conta Memora Music.\n\n1.3 Dados de uso e técnicos: Informações sobre interações com a plataforma (músicas criadas, versões escolhidas). Dados técnicos como endereço IP, tipo de dispositivo, navegador e cookies.\n\n1.4 Dados de pagamento: Em caso de compras, os dados de pagamento são processados por parceiros (ex.: Stripe). A Memora Music não armazena informações completas de cartão."
-      },
-      "dataUse": {
-        "title": "2. Como Usamos os Dados",
-        "content": "Autenticação e acesso: nome, e-mail e foto de perfil do Google são usados exclusivamente para autenticar sua conta. Personalização da experiência: usamos dados fornecidos no briefing para gerar canções personalizadas. Comunicação: podemos enviar notificações sobre pedidos, atualizações e melhorias. Melhoria da plataforma: analisamos métricas de uso para aprimorar a experiência. Cumprimento legal: usamos dados quando necessário para cumprir leis aplicáveis."
-      },
-      "dataSharing": {
-        "title": "3. Compartilhamento de Dados",
-        "content": "Não vendemos nem alugamos dados pessoais a terceiros. Dados podem ser compartilhados com: Fornecedores de serviço (hospedagem, processamento de pagamento, suporte técnico). Parceiros de autenticação (Google, apenas para login seguro). Autoridades legais quando exigido por lei."
-      },
-      "dataSecurity": {
-        "title": "4. Armazenamento e Proteção de Dados",
-        "content": "Todos os dados são armazenados em servidores seguros em conformidade com LGPD (Brasil) e GDPR (Europa). Implementamos medidas técnicas e organizacionais, incluindo criptografia em trânsito (TLS/SSL) e em repouso. O acesso aos dados é restrito apenas a funcionários ou prestadores de serviço autorizados."
-      },
-      "dataRetention": {
-        "title": "5. Retenção e Exclusão de Dados",
-        "content": "Dados de conta e músicas criadas são mantidos enquanto sua conta estiver ativa. Caso solicite exclusão, todos os seus dados pessoais (incluindo dados obtidos via login com Google) serão apagados permanentemente de nossos sistemas, salvo quando a retenção for necessária por obrigação legal. Para solicitar exclusão, entre em contato em: privacidade@memoramusic.com ou utilize a função 'Excluir conta' na própria plataforma."
-      },
-      "userRights": {
-        "title": "6. Direitos do Usuário",
-        "content": "Você pode, a qualquer momento: Solicitar acesso, correção ou exclusão de seus dados. Retirar consentimento para determinados usos. Solicitar a portabilidade dos dados. Opor-se ao tratamento em determinadas situações."
-      },
-      "cookies": {
-        "title": "7. Cookies e Tecnologias",
-        "content": "Utilizamos cookies funcionais, analíticos e de preferência. Você pode gerenciar cookies nas configurações do navegador ou em nosso banner de consentimento."
-      },
-      "internationalTransfer": {
-        "title": "8. Transferência Internacional de Dados",
-        "content": "Seus dados podem ser processados fora do Brasil ou da União Europeia. Garantimos que qualquer transferência será feita de acordo com LGPD e GDPR, com salvaguardas adequadas."
-      },
-      "changes": {
-        "title": "9. Alterações nesta Política",
-        "content": "Podemos atualizar esta Política periodicamente. A versão mais recente estará sempre disponível em https://memora.music/politica-de-privacidade."
-      },
-      "contact": {
-        "title": "10. Contato",
-        "content": "Em caso de dúvidas ou solicitações relacionadas a esta Política, entre em contato: contato@memora.music"
-      }
-    }
   }
 }

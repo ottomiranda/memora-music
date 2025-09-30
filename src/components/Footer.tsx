@@ -154,18 +154,18 @@ export default function Footer() {
                   <ul className="space-y-2 text-xs text-primary-foreground/60">
                     <li>
                       <a 
-                        href="/privacidade" 
-                        className="hover:text-primary-foreground/80 focus:text-primary-foreground/80 focus:outline-none focus:ring-1 focus:ring-secondary transition-smooth"
-                      >
-                        Política de Privacidade
-                      </a>
-                    </li>
-                    <li>
-                      <a 
                         href="/termos" 
                         className="hover:text-primary-foreground/80 focus:text-primary-foreground/80 focus:outline-none focus:ring-1 focus:ring-secondary transition-smooth"
                       >
                         Termos de Uso
+                      </a>
+                    </li>
+                    <li>
+                      <a 
+                        href="/politica-de-privacidade" 
+                        className="hover:text-primary-foreground/80 focus:text-primary-foreground/80 focus:outline-none focus:ring-1 focus:ring-secondary transition-smooth"
+                      >
+                        Política de Privacidade
                       </a>
                     </li>
                   </ul>
