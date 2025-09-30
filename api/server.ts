@@ -229,8 +229,8 @@ const port = Number(process.env.PORT) || 3337;
 declare global { var __memoraServerStarted: boolean | undefined; }
 if (!global.__memoraServerStarted) {
   global.__memoraServerStarted = true;
-  const server = app.listen(port, () => {
-    console.log(`🚀 Backend rodando em http://localhost:${port}`);
+  const server = app.listen(port, '0.0.0.0', () => {
+    console.log(`🚀 Backend rodando em http://0.0.0.0:${port}`);
   });
 
   server.on("error", (err: Error & { code?: string }) => {
