@@ -10,9 +10,12 @@ import { NAVBAR_TOTAL_OFFSET } from "@/constants/layout";
 import { useTranslation } from '@/i18n/hooks/useTranslation';
 import { useLocalizedRoutes } from '@/hooks/useLocalizedRoutes';
 
+
 const Navbar = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  
+
   const location = useLocation();
   const navigate = useNavigate();
   const isAtTop = !isScrolled;
@@ -115,74 +118,95 @@ const Navbar = () => {
 
   return (
     <nav
+      id="main-navigation"
       className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 liquid-glass ${navVariant}`}
+      role="navigation"
+      aria-label="Navegação principal"
     >
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
           <div className="flex items-center">
-            <Link to="/">
+            <Link 
+              to="/"
+              className="focus:outline-none focus-visible:ring-2 focus-visible:ring-memora-secondary focus-visible:ring-offset-2 rounded-md"
+              aria-label="Ir para página inicial - Memora Music"
+            >
               <img 
                 src={isAtTop ? "/memora_logo_white.svg" : "/memora_logo.svg"} 
-                alt="Memora Music" 
+                alt="Memora Music - Logotipo" 
                 className="h-9 w-auto cursor-pointer"
               />
             </Link>
           </div>
 
           {/* Desktop Navigation */}
-          <div className="hidden md:flex items-center space-x-8">
+          <div className="hidden md:flex items-center space-x-8" role="menubar">
             <Button
               onClick={() => scrollToSection("como-funciona")}
               variant="ghost"
-              className={desktopNavItemClasses}
+              className={`${desktopNavItemClasses} focus-visible:ring-2 focus-visible:ring-memora-secondary focus-visible:ring-offset-2 rounded-md`}
+              role="menuitem"
+              aria-label="Ir para seção Como Funciona"
             >
               {t('navigation.howItWorks')}
             </Button>
             <Button
               onClick={() => scrollToSection("exemplos")}
               variant="ghost"
-              className={desktopNavItemClasses}
+              className={`${desktopNavItemClasses} focus-visible:ring-2 focus-visible:ring-memora-secondary focus-visible:ring-offset-2 rounded-md`}
+              role="menuitem"
+              aria-label="Ir para seção Exemplos"
             >
               {t('navigation.examples')}
             </Button>
             <Button
               onClick={() => scrollToSection("artistas")}
               variant="ghost"
-              className={desktopNavItemClasses}
+              className={`${desktopNavItemClasses} focus-visible:ring-2 focus-visible:ring-memora-secondary focus-visible:ring-offset-2 rounded-md`}
+              role="menuitem"
+              aria-label="Ir para seção Artistas"
             >
               {t('navigation.artists')}
             </Button>
             <Button
               onClick={() => scrollToSection("precos")}
               variant="ghost"
-              className={desktopNavItemClasses}
+              className={`${desktopNavItemClasses} focus-visible:ring-2 focus-visible:ring-memora-secondary focus-visible:ring-offset-2 rounded-md`}
+              role="menuitem"
+              aria-label="Ir para seção Preços"
             >
               {t('navigation.pricing')}
             </Button>
             <Button
               onClick={() => scrollToSection("faq")}
               variant="ghost"
-              className={desktopNavItemClasses}
+              className={`${desktopNavItemClasses} focus-visible:ring-2 focus-visible:ring-memora-secondary focus-visible:ring-offset-2 rounded-md`}
+              role="menuitem"
+              aria-label="Ir para seção Perguntas Frequentes"
             >
               {t('navigation.faq')}
             </Button>
             <Button
               onClick={() => goToDashboard()}
               variant="ghost"
-              className={desktopNavItemClasses}
+              className={`${desktopNavItemClasses} focus-visible:ring-2 focus-visible:ring-memora-secondary focus-visible:ring-offset-2 rounded-md`}
+              role="menuitem"
+              aria-label="Ir para Minhas Músicas"
             >
               {t('navigation.myMusic')}
             </Button>
 
             {/* Auth Section */}
             <div className="flex items-center gap-4">
+
               <Button 
                 variant="glass"
                 onClick={() => handleCreateMusicClick()}
                 className="flex items-center gap-2"
+                aria-label={t('navigation.createMusic')}
               >
-                <Sparkles className="w-4 h-4" />
+                <Sparkles className="w-4 h-4" aria-hidden="true" />
                 {t('navigation.createMusic')}
               </Button>
 
@@ -206,118 +230,149 @@ const Navbar = () => {
 
           {/* Mobile Menu Button */}
           <div className="md:hidden flex items-center gap-2">
+
             <Button
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
               variant="ghost"
               size="icon"
-              className={`${isAtTop ? 'text-white hover:text-memora-secondary' : 'text-[#08060D] hover:text-memora-secondary'} transition-colors duration-300`}
-              aria-label="Menu de navegação"
+              className={`${isAtTop ? 'text-white hover:text-memora-secondary' : 'text-[#08060D] hover:text-memora-secondary'} transition-colors duration-300 focus-visible:ring-2 focus-visible:ring-memora-secondary focus-visible:ring-offset-2 rounded-md`}
+              aria-label={isMobileMenuOpen ? "Fechar menu de navegação" : "Abrir menu de navegação"}
+              aria-expanded={isMobileMenuOpen}
+              aria-controls="mobile-menu"
+              aria-haspopup="true"
             >
               {isMobileMenuOpen ? (
-                <X className="w-6 h-6" />
+                <X className="w-6 h-6" aria-hidden="true" />
               ) : (
-                <Menu className="w-6 h-6" />
+                <Menu className="w-6 h-6" aria-hidden="true" />
               )}
             </Button>
           </div>
         </div>
 
-        {/* Mobile Menu */}
+        {/* Mobile Menu Fullscreen */}
         {isMobileMenuOpen && (
-          <div className="md:hidden px-4 pb-4">
-            <div className="liquid-glass liquid-glass--elevated border border-white/20 rounded-2xl px-2 pt-2 pb-3 space-y-1 shadow-lg">
-              <Button
-                onClick={() => scrollToSection("como-funciona")}
-                variant="ghost"
-                className="block w-full text-left px-3 py-2 text-[#08060D] hover:text-memora-secondary hover:bg-gray-100/10 transition-colors duration-300 font-medium h-auto justify-start"
-              >
-                {t('navigation.howItWorks')}
-              </Button>
-              <Button
-                onClick={() => scrollToSection("exemplos")}
-                variant="ghost"
-                className="block w-full text-left px-3 py-2 text-[#08060D] hover:text-memora-secondary hover:bg-gray-100/10 transition-colors duration-300 font-medium h-auto justify-start"
-              >
-                {t('navigation.examples')}
-              </Button>
-              <Button
-                onClick={() => scrollToSection("artistas")}
-                variant="ghost"
-                className="block w-full text-left px-3 py-2 text-[#08060D] hover:text-memora-secondary hover:bg-gray-100/10 transition-colors duration-300 font-medium h-auto justify-start"
-              >
-                {t('navigation.artists')}
-              </Button>
-              <Button
-                onClick={() => scrollToSection("precos")}
-                variant="ghost"
-                className="block w-full text-left px-3 py-2 text-[#08060D] hover:text-memora-secondary hover:bg-gray-100/10 transition-colors duration-300 font-medium h-auto justify-start"
-              >
-                {t('navigation.pricing')}
-              </Button>
-              <Button
-                onClick={() => scrollToSection("faq")}
-                variant="ghost"
-                className="block w-full text-left px-3 py-2 text-[#08060D] hover:text-memora-secondary hover:bg-gray-100/10 transition-colors duration-300 font-medium h-auto justify-start"
-              >
-                {t('navigation.faq')}
-              </Button>
-              <Button
-                onClick={() => goToDashboard()}
-                variant="ghost"
-                className="block w-full text-left px-3 py-2 text-[#08060D] hover:text-memora-secondary hover:bg-gray-100/10 transition-colors duration-300 font-medium h-auto justify-start"
-              >
-                {t('navigation.myMusic')}
-              </Button>
+          <div 
+            id="mobile-menu"
+            className="md:hidden fixed inset-0 top-16 z-[9998] bg-white/95 backdrop-blur-lg"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="mobile-menu-title"
 
-              
+          >
+            <div className="flex flex-col h-full px-6 py-8">
+              {/* Navigation Links */}
+              <div className="flex-1 space-y-2" role="menu">
+                <h2 id="mobile-menu-title" className="sr-only">Menu de Navegação</h2>
+                <Button
+                  onClick={() => scrollToSection("como-funciona")}
+                  variant="ghost"
+                  className="w-full text-left px-4 py-4 text-lg text-[#08060D] hover:text-memora-secondary hover:bg-memora-secondary/10 transition-all duration-300 font-medium h-auto justify-start rounded-xl min-h-[44px] active:scale-95 focus-visible:ring-2 focus-visible:ring-memora-secondary focus-visible:ring-offset-2"
+                  role="menuitem"
+                  aria-label="Ir para seção Como Funciona"
+                >
+                  {t('navigation.howItWorks')}
+                </Button>
+                <Button
+                  onClick={() => scrollToSection("exemplos")}
+                  variant="ghost"
+                  className="w-full text-left px-4 py-4 text-lg text-[#08060D] hover:text-memora-secondary hover:bg-memora-secondary/10 transition-all duration-300 font-medium h-auto justify-start rounded-xl min-h-[44px] active:scale-95 focus-visible:ring-2 focus-visible:ring-memora-secondary focus-visible:ring-offset-2"
+                  role="menuitem"
+                  aria-label="Ir para seção Exemplos"
+                >
+                  {t('navigation.examples')}
+                </Button>
+                <Button
+                  onClick={() => scrollToSection("artistas")}
+                  variant="ghost"
+                  className="w-full text-left px-4 py-4 text-lg text-[#08060D] hover:text-memora-secondary hover:bg-memora-secondary/10 transition-all duration-300 font-medium h-auto justify-start rounded-xl min-h-[44px] active:scale-95 focus-visible:ring-2 focus-visible:ring-memora-secondary focus-visible:ring-offset-2"
+                  role="menuitem"
+                  aria-label="Ir para seção Artistas"
+                >
+                  {t('navigation.artists')}
+                </Button>
+                <Button
+                  onClick={() => scrollToSection("precos")}
+                  variant="ghost"
+                  className="w-full text-left px-4 py-4 text-lg text-[#08060D] hover:text-memora-secondary hover:bg-memora-secondary/10 transition-all duration-300 font-medium h-auto justify-start rounded-xl min-h-[44px] active:scale-95 focus-visible:ring-2 focus-visible:ring-memora-secondary focus-visible:ring-offset-2"
+                  role="menuitem"
+                  aria-label="Ir para seção Preços"
+                >
+                  {t('navigation.pricing')}
+                </Button>
+                <Button
+                  onClick={() => scrollToSection("faq")}
+                  variant="ghost"
+                  className="w-full text-left px-4 py-4 text-lg text-[#08060D] hover:text-memora-secondary hover:bg-memora-secondary/10 transition-all duration-300 font-medium h-auto justify-start rounded-xl min-h-[44px] active:scale-95 focus-visible:ring-2 focus-visible:ring-memora-secondary focus-visible:ring-offset-2"
+                  role="menuitem"
+                  aria-label="Ir para seção Perguntas Frequentes"
+                >
+                  {t('navigation.faq')}
+                </Button>
+                <Button
+                  onClick={() => goToDashboard()}
+                  variant="ghost"
+                  className="w-full text-left px-4 py-4 text-lg text-[#08060D] hover:text-memora-secondary hover:bg-memora-secondary/10 transition-all duration-300 font-medium h-auto justify-start rounded-xl min-h-[44px] active:scale-95 focus-visible:ring-2 focus-visible:ring-memora-secondary focus-visible:ring-offset-2"
+                  role="menuitem"
+                  aria-label="Ir para Minhas Músicas"
+                >
+                  {t('navigation.myMusic')}
+                </Button>
+              </div>
+
+
+
               {/* Auth Section Mobile */}
-              {isLoggedIn ? (
-                // --- Estado Logado Mobile ---
-                <div className="mt-2 space-y-2">
-                  <div className="px-3 py-2">
-                    <span className="font-medium text-[#08060D] transition-colors duration-300">
-                      Olá, {getFirstName(user?.name) || 'Usuário'}!
-                    </span>
-                  </div>
+              <div className="border-t border-gray-200 pt-6 space-y-4" role="group" aria-labelledby="auth-section-title">
+                <h3 id="auth-section-title" className="sr-only">Seção de Autenticação</h3>
+                {isLoggedIn ? (
+                  // --- Estado Logado Mobile ---
+                  <>
+                    <div className="px-4 py-2">
+                      <span className="text-lg font-medium text-[#08060D]">
+                        Olá, {getFirstName(user?.name) || 'Usuário'}!
+                      </span>
+                    </div>
+                    <Button
+                      variant="glass"
+                      onClick={() => {
+                        handleCreateMusicClick();
+                        setIsMobileMenuOpen(false);
+                      }}
+                      className="w-full flex items-center justify-center gap-3 py-4 text-lg min-h-[44px] active:scale-95 transition-transform duration-200 focus-visible:ring-2 focus-visible:ring-memora-secondary focus-visible:ring-offset-2"
+                      aria-label={t('navigation.createMusic')}
+                    >
+                      <Sparkles className="w-5 h-5" aria-hidden="true" />
+                      {t('navigation.createMusic')}
+                    </Button>
+                    <Button
+                      onClick={() => {
+                        logout().catch(console.error);
+                        setIsMobileMenuOpen(false);
+                      }}
+                      variant="ghost"
+                      className="w-full text-left px-4 py-4 text-lg text-[#08060D] hover:text-red-600 hover:bg-red-50 transition-all duration-300 font-medium h-auto justify-start flex items-center gap-3 rounded-xl min-h-[44px] active:scale-95 focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:ring-offset-2"
+                      aria-label="Fazer logout da conta"
+                    >
+                      <LogOut className="w-5 h-5" aria-hidden="true" />
+                      Sair
+                    </Button>
+                  </>
+                ) : (
+                  // --- Estado Deslogado Mobile ---
                   <Button
                     variant="glass"
                     onClick={() => {
                       handleCreateMusicClick();
                       setIsMobileMenuOpen(false);
                     }}
-                    className="w-full flex items-center justify-center gap-2"
+                    className="w-full flex items-center justify-center gap-3 py-4 text-lg min-h-[44px] active:scale-95 transition-transform duration-200"
                   >
-                    <Sparkles className="w-4 h-4" />
+                    <Sparkles className="w-5 h-5" />
                     {t('navigation.createMusic')}
                   </Button>
-                  <Button
-                    onClick={() => {
-                      logout().catch(console.error);
-                      setIsMobileMenuOpen(false);
-                    }}
-                    variant="ghost"
-                    className="block w-full text-left px-3 py-2 text-[#08060D] hover:text-memora-secondary hover:bg-gray-100/10 transition-colors duration-300 font-medium h-auto justify-start flex items-center gap-2"
-                  >
-                    <LogOut className="w-4 h-4" />
-                    Sair
-                  </Button>
-                </div>
-              ) : (
-                // --- Estado Deslogado Mobile ---
-                <div className="mt-2 space-y-2">
-                  <Button
-                    variant="glass"
-                    onClick={() => {
-                      handleCreateMusicClick();
-                      setIsMobileMenuOpen(false);
-                    }}
-                    className="w-full flex items-center justify-center gap-2"
-                  >
-                    <Sparkles className="w-4 h-4" />
-                    {t('navigation.createMusic')}
-                  </Button>
-                </div>
-              )}
+                )}
+              </div>
             </div>
           </div>
         )}

@@ -1337,10 +1337,10 @@ export default function Criar() {
 
   return (
     <div className="min-h-screen flex flex-col">
-      <main className="flex-1 pt-40 pb-12">
-        <div className="container mx-auto px-4">
-          <div className="max-w-2xl mx-auto">
-            <div className="text-center mb-8">
+      <main className="flex-1 pt-24 sm:pt-32 lg:pt-40 pb-6 sm:pb-8 lg:pb-12">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="max-w-sm sm:max-w-lg md:max-w-2xl lg:max-w-3xl mx-auto">
+            <div className="text-center mb-6 sm:mb-8">
               <SectionTitle>
                 <span dangerouslySetInnerHTML={{ __html: t('page.title') }} />
               </SectionTitle>
@@ -1351,20 +1351,21 @@ export default function Criar() {
             
             <StepIndicator steps={steps} currentStep={currentStep} />
             
-            <ParticlesAndWaves className="h-32 -mt-4" maxParticles={60} reducedMotion={false} disableWaves={true} />
+            <ParticlesAndWaves className="h-24 sm:h-32 -mt-2 sm:-mt-4" maxParticles={60} reducedMotion={false} disableWaves={true} />
             
-            <div className="space-y-6">
+            <div className="space-y-4 sm:space-y-6">
               <div ref={currentStep === 1 ? lyricsSectionRef : null}>
                 {renderStepContent(currentStep, isLoading, musicStore.audioClips || [])}
               </div>
               
-              {/* Navigation Buttons */}
-              <div className={`flex ${currentStep === 0 ? 'justify-end' : 'justify-between'}`}>
+              {/* Navigation Buttons - Layout responsivo melhorado */}
+              <div className={`flex flex-col sm:flex-row gap-4 sm:gap-6 ${currentStep === 0 ? 'sm:justify-end' : 'sm:justify-between'} items-stretch sm:items-center`}>
                 {currentStep > 0 && currentStep !== steps.length - 1 && (
                   <LiquidGlassButtonWhiteSmall
                     onClick={handlePrevStep}
+                    className="w-full sm:w-auto min-w-[120px] min-h-[48px] px-6 py-3 touch-manipulation text-sm font-medium"
                   >
-                    <ArrowLeft className="w-4 h-4" />
+                    <ArrowLeft className="w-4 h-4 mr-2" />
                     {t('navigation.previous')}
                   </LiquidGlassButtonWhiteSmall>
                 )}
@@ -1381,14 +1382,18 @@ export default function Criar() {
                         nextStep();
                       }}
                       disabled={isEditingLyrics || !formData.lyrics || isLoading}
+                      className="w-full sm:w-auto min-w-[160px] min-h-[48px] px-6 py-3 touch-manipulation text-sm font-medium order-first sm:order-last"
                     >
-                      <ArrowRight className="w-4 h-4" />
                       {t('navigation.approveAndContinue')}
+                      <ArrowRight className="w-4 h-4 ml-2" />
                     </LiquidGlassButtonSmall>
                   ) : (
-                    <LiquidGlassButtonSmall onClick={handleNextStep}>
+                    <LiquidGlassButtonSmall 
+                      onClick={handleNextStep}
+                      className="w-full sm:w-auto min-w-[120px] min-h-[48px] px-6 py-3 touch-manipulation text-sm font-medium order-first sm:order-last"
+                    >
                       {currentStep === 2 ? t('style.continueButton') : t('navigation.next')}
-                      <ArrowRight className="w-4 h-4" />
+                      <ArrowRight className="w-4 h-4 ml-2" />
                     </LiquidGlassButtonSmall>
                   )
                 ) : null}

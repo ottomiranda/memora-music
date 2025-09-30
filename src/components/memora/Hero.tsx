@@ -35,17 +35,17 @@ const Hero = () => {
         <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-[#7B3FE4]/10 rounded-full blur-3xl" />
       </div>
 
-      <div className="relative z-10 max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="relative z-10 max-w-6xl mx-auto px-4 xs:px-6 sm:px-8 lg:px-12 overflow-hidden">
         <div className="flex flex-col items-center text-center w-full gap-10">
-          {/* Headline */}
-          <h1 className="text-4xl sm:text-5xl lg:text-6xl xl:text-7xl font-heading font-bold text-white leading-tight">
-            {t('headline.part1')}{" "}
-            <span className="bg-gradient-yellow-purple bg-clip-text text-transparent">{t('headline.feelings')}</span>{" "}
-            {t('headline.part2')} <span className="bg-gradient-yellow-purple bg-clip-text text-transparent">{t('headline.gift')}</span>
+          {/* Headline - Hierarquia responsiva corrigida */}
+          <h1 className="text-3xl xs:text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-heading font-bold text-white leading-tight px-4 xs:px-6 sm:px-8 break-words hyphens-auto max-w-full overflow-hidden">
+            <span className="block xs:inline">{t('headline.part1')}</span>{" "}
+            <span className="bg-gradient-yellow-purple bg-clip-text text-transparent break-words">{t('headline.feelings')}</span>{" "}
+            <span className="block xs:inline">{t('headline.part2')}</span> <span className="bg-gradient-yellow-purple bg-clip-text text-transparent break-words">{t('headline.gift')}</span>
           </h1>
 
-          {/* Subheadline */}
-          <p className="text-xl sm:text-2xl text-white/90 leading-relaxed max-w-3xl">
+          {/* Subheadline - Padding responsivo implementado */}
+          <p className="text-lg xs:text-xl sm:text-2xl md:text-3xl text-white/90 leading-relaxed max-w-4xl px-4 xs:px-6 sm:px-8 break-words">
             <span className="block sm:inline">{t('subheadline.part1')}</span>
             <span className="block sm:inline">{t('subheadline.part2')}</span>
           </p>
@@ -54,7 +54,7 @@ const Hero = () => {
           <div className="relative mt-8 text-center">
             <HeroCard>
               <div className="text-center space-y-3">
-                <h3 className="text-white text-xl sm:text-2xl font-bold font-heading leading-tight">
+                <h3 className="text-white xs:text-lg sm:text-xl md:text-2xl font-bold font-heading leading-tight">
                   {t('cta.title')}
                 </h3>
               </div>

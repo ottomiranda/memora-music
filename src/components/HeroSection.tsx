@@ -4,7 +4,78 @@ import { Link, useNavigate } from "react-router-dom";
 import { useTranslation } from 'react-i18next';
 import { useMusicStore } from "@/store/musicStore";
 import { useAuthStore } from "@/store/authStore";
+import { useComponentCache } from "@/hooks/useComponentCache";
+import { memo } from 'react';
 import heroImage from "@/assets/hero-music.jpg";
+
+// Cached floating elements component
+const FloatingElements = memo(() => {
+  const { component } = useComponentCache(
+    'hero-floating-elements',
+    () => (
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute top-1/4 left-1/4 w-4 h-4 bg-primary rounded-full opacity-60 float-gentle"></div>
+        <div className="absolute top-1/3 right-1/3 w-6 h-6 bg-accent-coral rounded-full opacity-40 float-gentle" style={{ animationDelay: '1s' }}></div>
+        <div className="absolute bottom-1/3 left-1/5 w-3 h-3 bg-accent-turquoise rounded-full opacity-70 float-gentle" style={{ animationDelay: '2s' }}></div>
+        <div className="absolute bottom-1/4 right-1/4 w-5 h-5 bg-secondary rounded-full opacity-50 float-gentle" style={{ animationDelay: '0.5s' }}></div>
+      </div>
+    ),
+    {
+      ttl: 15 * 60 * 1000, // 15 minutes - static content
+      enableMemoryCache: true,
+    }
+  );
+  
+  return component;
+});
+
+// Cached background component
+const HeroBackground = memo(() => {
+  const { t } = useTranslation('common');
+  
+  const { component } = useComponentCache(
+    'hero-background',
+    () => (
+      <div className="absolute inset-0 z-0">
+        <img
+          src={heroImage}
+          alt={t('heroSection.altText.heroImage')}
+          className="w-full h-full object-cover opacity-20"
+          loading="eager"
+          decoding="async"
+        />
+        <div className="absolute inset-0 bg-gradient-to-b from-background/50 via-background/30 to-background"></div>
+      </div>
+    ),
+    {
+      ttl: 30 * 60 * 1000, // 30 minutes - static background
+      dependencies: [t('heroSection.altText.heroImage')],
+      enableMemoryCache: true,
+    }
+  );
+  
+  return component;
+});
+
+// Cached scroll indicator
+const ScrollIndicator = memo(() => {
+  const { component } = useComponentCache(
+    'hero-scroll-indicator',
+    () => (
+      <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 animate-bounce">
+        <div className="w-6 h-10 border-2 border-primary rounded-full flex justify-center">
+          <div className="w-1 h-3 bg-primary rounded-full mt-2 animate-pulse"></div>
+        </div>
+      </div>
+    ),
+    {
+      ttl: 20 * 60 * 1000, // 20 minutes - static indicator
+      enableMemoryCache: true,
+    }
+  );
+  
+  return component;
+});
 
 export default function HeroSection() {
   const { t } = useTranslation('common');
@@ -18,23 +89,11 @@ export default function HeroSection() {
 
   return (
     <section className="relative min-h-screen bg-gradient-to-br from-slate-700 via-slate-800 to-purple-900 overflow-hidden flex items-center justify-center">
-      {/* Background Image with Overlay */}
-      <div className="absolute inset-0 z-0">
-        <img
-          src={heroImage}
-          alt={t('heroSection.altText.heroImage')}
-          className="w-full h-full object-cover opacity-20"
-        />
-        <div className="absolute inset-0 bg-gradient-to-b from-background/50 via-background/30 to-background"></div>
-      </div>
+      {/* Cached Background */}
+      <HeroBackground />
 
-      {/* Floating Musical Elements */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-1/4 left-1/4 w-4 h-4 bg-primary rounded-full opacity-60 float-gentle"></div>
-        <div className="absolute top-1/3 right-1/3 w-6 h-6 bg-accent-coral rounded-full opacity-40 float-gentle" style={{ animationDelay: '1s' }}></div>
-        <div className="absolute bottom-1/3 left-1/5 w-3 h-3 bg-accent-turquoise rounded-full opacity-70 float-gentle" style={{ animationDelay: '2s' }}></div>
-        <div className="absolute bottom-1/4 right-1/4 w-5 h-5 bg-secondary rounded-full opacity-50 float-gentle" style={{ animationDelay: '0.5s' }}></div>
-      </div>
+      {/* Cached Floating Musical Elements */}
+      <FloatingElements />
 
       {/* Main Content */}
       <div className="relative z-10 container mx-auto px-4 text-center space-y-8">
@@ -78,12 +137,8 @@ export default function HeroSection() {
         </div>
       </div>
 
-      {/* Scroll Indicator */}
-      <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 animate-bounce">
-        <div className="w-6 h-10 border-2 border-primary rounded-full flex justify-center">
-          <div className="w-1 h-3 bg-primary rounded-full mt-2 animate-pulse"></div>
-        </div>
-      </div>
+      {/* Cached Scroll Indicator */}
+      <ScrollIndicator />
     </section>
   );
 }

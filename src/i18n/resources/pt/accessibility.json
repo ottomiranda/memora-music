@@ -1,0 +1,37 @@
+{
+  "menu": {
+    "title": "Configurações de Acessibilidade",
+    "open": "Abrir menu de acessibilidade",
+    "close": "Fechar Menu",
+    "opened": "Menu de acessibilidade aberto",
+    "closed": "Menu de acessibilidade fechado"
+  },
+  "highContrast": {
+    "label": "Alto Contraste",
+    "toggle": "Alternar alto contraste",
+    "enabled": "Alto contraste ativado",
+    "disabled": "Alto contraste desativado"
+  },
+  "fontSize": {
+    "label": "Tamanho da Fonte",
+    "normal": "Normal",
+    "large": "Grande",
+    "extraLarge": "Extra",
+    "changed": "Tamanho da fonte alterado para {{size}}",
+    "sizes": {
+      "normal": "normal",
+      "large": "grande",
+      "extra-large": "extra grande"
+    }
+  },
+  "reducedMotion": {
+    "title": "Movimento Reduzido Ativo",
+    "description": "Detectado pela configuração do sistema"
+  },
+  "shortcuts": {
+    "title": "Atalhos de Teclado",
+    "closeModals": "Fechar modais:",
+    "navigate": "Navegar:",
+    "skipToContent": "Pular para conteúdo:"
+  }
+}

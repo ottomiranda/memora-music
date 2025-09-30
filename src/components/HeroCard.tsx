@@ -32,18 +32,20 @@ interface GlassSelectProps {
 export function HeroCard({ title, children, className }: HeroCardProps) {
   return (
     <div className={cn(
-      "relative overflow-hidden rounded-2xl",
-      "bg-gradient-to-br from-white/20 via-white/10 to-white/5",
-      "backdrop-blur-xl border border-white/20",
-      "shadow-2xl shadow-black/10",
+      "relative overflow-hidden",
+      "bg-gradient-to-br from-white/10 via-white/5 to-transparent",
+      "backdrop-blur-xl",
+      "border border-white/20",
+      "rounded-2xl sm:rounded-3xl",
+      "shadow-2xl shadow-black/20",
       "transition-all duration-700 ease-out",
-      "hover:shadow-3xl hover:shadow-black/20",
+      "hover:shadow-3xl hover:shadow-black/30",
       "hover:border-white/30",
-      "before:absolute before:inset-0",
-      "before:bg-gradient-to-br before:from-white/10 before:via-transparent before:to-transparent",
-      "before:opacity-0 before:transition-opacity before:duration-300",
-      "hover:before:opacity-100",
+      "hover:bg-gradient-to-br hover:from-white/15 hover:via-white/8 hover:to-white/5",
+      "transform hover:scale-[1.02]",
       "group",
+      "w-full max-w-sm sm:max-w-md md:max-w-lg lg:max-w-xl xl:max-w-2xl",
+      "mx-auto",
       className
     )}>
       {/* Background effects */}
@@ -53,13 +55,13 @@ export function HeroCard({ title, children, className }: HeroCardProps) {
       {/* Animated border glow */}
       <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-blue-400/20 via-purple-400/20 to-pink-400/20 opacity-0 group-hover:opacity-100 transition-opacity duration-700 blur-sm" />
       
-      <CardHeader className="relative z-10 pb-4">
-        <CardTitle className="text-xl font-heading font-semibold text-white drop-shadow-sm transition-all duration-500 group-hover:text-white/95 group-hover:drop-shadow-xl">
+      <CardHeader className="relative z-10 pb-3 sm:pb-4 px-4 sm:px-6 pt-4 sm:pt-6">
+        <CardTitle className="text-xl sm:text-2xl font-bold text-white/95 drop-shadow-lg">
           {title}
         </CardTitle>
       </CardHeader>
       
-      <CardContent className="relative z-10 space-y-6">
+      <CardContent className="relative z-10 space-y-4 sm:space-y-6 px-4 sm:px-6 pb-4 sm:pb-6">
         {children}
       </CardContent>
     </div>
@@ -78,10 +80,10 @@ export function GlassInput({ label, error, className, ...props }: GlassInputProp
       <Input
         {...props}
         className={cn(
-          "h-12 px-4",
+          "h-10 sm:h-12 px-3 sm:px-4", // Altura e padding responsivos
           "bg-white/10 backdrop-blur-md",
           "border border-white/20",
-          "text-white placeholder:text-white/60",
+          "text-sm sm:text-base text-white placeholder:text-white/60", // Tamanho de texto responsivo
           "shadow-lg shadow-black/5",
           "transition-all duration-500 ease-out",
           "hover:bg-white/15 hover:border-white/30",
@@ -111,10 +113,10 @@ export function GlassTextarea({ label, error, className, ...props }: GlassTextar
       <Textarea
         {...props}
         className={cn(
-          "min-h-[100px] px-4 py-3",
+          "min-h-[80px] sm:min-h-[100px] px-3 sm:px-4 py-2 sm:py-3", // Altura mínima e padding responsivos
           "bg-white/10 backdrop-blur-md",
           "border border-white/20",
-          "text-white placeholder:text-white/60",
+          "text-sm sm:text-base text-white placeholder:text-white/60", // Tamanho de texto responsivo
           "shadow-lg shadow-black/5",
           "transition-all duration-500 ease-out",
           "hover:bg-white/15 hover:border-white/30",
@@ -137,7 +139,7 @@ export function GlassTextarea({ label, error, className, ...props }: GlassTextar
 export function GlassButtonGroup({ children, className }: { children: React.ReactNode; className?: string }) {
   return (
     <div className={cn(
-      "flex flex-wrap gap-2",
+      "flex flex-wrap gap-1.5 sm:gap-2", // Gap responsivo
       className
     )}>
       {children}
@@ -166,13 +168,13 @@ export function GlassButton({
   // Determinar se deve usar o estilo gold sólido
   const shouldUseGoldSolid = isMemorialButton || isOccasionSecondaryButton;
   
-  // Estilos base para variantes
+  // Estilos base para variantes com responsividade
   const baseStyles = variant === 'secondary' ? [
-    "px-3 py-2 rounded-lg", // Tamanho menor
-    "text-xs font-normal", // Texto menor e peso normal
+    "px-2 sm:px-3 py-1.5 sm:py-2 rounded-md sm:rounded-lg", // Tamanho menor responsivo
+    "text-xs sm:text-xs font-normal", // Texto menor e peso normal
   ] : [
-    "px-4 py-2.5 rounded-xl",
-    "text-sm font-medium",
+    "px-3 sm:px-4 py-2 sm:py-2.5 rounded-lg sm:rounded-xl", // Tamanho responsivo
+    "text-xs sm:text-sm font-medium", // Texto responsivo
   ];
   
   // Estilos de borda para variantes

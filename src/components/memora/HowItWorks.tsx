@@ -66,9 +66,9 @@ const HowItWorks = () => {
 
         {/* Interactive Timeline */}
         <div className="relative">
-          {/* Timeline Navigation */}
-          <div className="flex justify-center mb-12">
-            <div className="relative flex items-center space-x-8 md:space-x-16">
+          {/* Desktop Timeline Navigation */}
+          <div className="hidden md:flex justify-center mb-12">
+            <div className="relative flex items-center space-x-8 lg:space-x-16">
               {/* Timeline Line */}
               <div className="absolute top-1/2 left-0 right-0 h-1 bg-gradient-to-r from-memora-primary/20 via-memora-secondary/20 to-memora-coral/20 rounded-full transform -translate-y-1/2" />
               
@@ -88,7 +88,7 @@ const HowItWorks = () => {
                   <button
                     key={step.number}
                     onClick={() => handleStepClick(index)}
-                    className={`relative z-10 w-16 h-16 rounded-full flex items-center justify-center transition-all duration-500 transform hover:scale-110 focus:outline-none focus:ring-4 focus:ring-memora-primary/30 ${
+                    className={`relative z-10 w-16 h-16 rounded-full flex items-center justify-center transition-all duration-500 transform hover:scale-110 focus:outline-none focus:ring-4 focus:ring-memora-primary/30 min-h-[44px] ${
                       isActive 
                         ? 'bg-gradient-to-br from-memora-primary to-memora-secondary shadow-2xl scale-110' 
                         : isPassed 
@@ -116,18 +116,106 @@ const HowItWorks = () => {
             </div>
           </div>
 
-          {/* Active Step Content */}
-          <div className="max-w-4xl mx-auto">
-            <LiquidGlassCard className="p-8 md:p-12 text-center space-y-4">
-              <h3 className="text-3xl md:text-4xl font-heading font-bold" style={{color: '#B69FE7'}}>
+          {/* Mobile Timeline Navigation - Vertical */}
+          <div className="md:hidden mb-8">
+            <div className="relative max-w-sm mx-auto">
+              {/* Vertical Timeline Line */}
+              <div className="absolute left-8 top-0 bottom-0 w-1 bg-gradient-to-b from-memora-primary/20 via-memora-secondary/20 to-memora-coral/20 rounded-full" />
+              
+              {/* Active Progress Line */}
+              <div 
+                className="absolute left-8 top-0 w-1 bg-gradient-to-b from-memora-primary via-memora-secondary to-memora-coral rounded-full transition-all duration-1000 ease-out"
+                style={{ height: `${((activeStep + 1) / steps.length) * 100}%` }}
+              />
+              
+              {/* Step Cards */}
+              <div className="space-y-6">
+                {steps.map((step, index) => {
+                  const IconComponent = step.icon;
+                  const isActive = index === activeStep;
+                  const isPassed = index < activeStep;
+                  
+                  return (
+                    <div key={step.number} className="relative flex items-start space-x-4">
+                      {/* Step Indicator */}
+                      <button
+                        onClick={() => handleStepClick(index)}
+                        className={`relative z-10 w-16 h-16 rounded-full flex items-center justify-center transition-all duration-500 transform active:scale-95 focus:outline-none focus:ring-4 focus:ring-memora-primary/30 min-h-[44px] min-w-[44px] ${
+                          isActive 
+                            ? 'bg-gradient-to-br from-memora-primary to-memora-secondary shadow-2xl scale-110' 
+                            : isPassed 
+                            ? 'bg-memora-primary/80 shadow-lg' 
+                            : 'bg-white/10 backdrop-blur-sm border-2 border-white/20'
+                        }`}
+                      >
+                        <IconComponent className={`w-6 h-6 transition-colors duration-300 ${
+                            isActive || isPassed ? 'text-white' : 'text-yellow-500'
+                          }`} />
+                        
+                        {/* Step Number Badge */}
+                        <div className={`absolute -top-2 -right-2 w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold transition-all duration-300 ${
+                          isActive 
+                            ? 'bg-white text-memora-primary shadow-lg' 
+                            : isPassed 
+                            ? 'bg-memora-primary text-white' 
+                            : 'bg-white/20 text-white/60'
+                        }`}>
+                          {step.number}
+                        </div>
+                      </button>
+                      
+                      {/* Step Content Card */}
+                      <div 
+                        className={`flex-1 p-4 rounded-xl transition-all duration-500 cursor-pointer min-h-[44px] ${
+                          isActive 
+                            ? 'bg-white/10 backdrop-blur-sm border border-memora-primary/30 shadow-lg' 
+                            : 'bg-white/5 backdrop-blur-sm border border-white/10 hover:bg-white/8'
+                        }`}
+                        onClick={() => handleStepClick(index)}
+                      >
+                        <h4 className={`font-semibold text-lg mb-2 transition-colors duration-300 ${
+                          isActive ? 'text-memora-primary' : 'text-white/80'
+                        }`}>
+                          {step.title}
+                        </h4>
+                        <p className={`text-sm leading-relaxed transition-colors duration-300 ${
+                          isActive ? 'text-white/90' : 'text-white/60'
+                        }`}>
+                          {step.description}
+                        </p>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+
+          {/* Active Step Content - Hidden on Mobile (content shown in cards) */}
+          <div className="hidden md:block max-w-4xl mx-auto">
+            <LiquidGlassCard className="p-6 md:p-8 lg:p-12 text-center space-y-4">
+              <h3 className="text-2xl md:text-3xl lg:text-4xl font-heading font-bold" style={{color: '#B69FE7'}}>
                 {steps[activeStep].title}
               </h3>
               
-              <p className="text-xl text-white/90 leading-relaxed">
+              <p className="text-lg md:text-xl text-white/90 leading-relaxed">
                 {steps[activeStep].description}
               </p>
               
-              <p className="text-lg text-white/50 max-w-2xl mx-auto leading-relaxed">
+              <p className="text-base md:text-lg text-white/50 max-w-2xl mx-auto leading-relaxed">
+                {steps[activeStep].details}
+              </p>
+            </LiquidGlassCard>
+          </div>
+
+          {/* Mobile Active Step Details */}
+          <div className="md:hidden mt-6">
+            <LiquidGlassCard className="p-6 text-center space-y-4">
+              <h3 className="text-xl font-heading font-bold" style={{color: '#B69FE7'}}>
+                {steps[activeStep].title}
+              </h3>
+              
+              <p className="text-base text-white/50 leading-relaxed">
                 {steps[activeStep].details}
               </p>
             </LiquidGlassCard>

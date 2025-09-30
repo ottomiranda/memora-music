@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState, useMemo } from "react";
 import { Play, Heart, Calendar, Users, Gift, Music, Sparkles } from "lucide-react";
 import { Swiper, SwiperSlide } from "swiper/react";
 import { EffectCoverflow, Autoplay } from "swiper/modules";
@@ -17,6 +17,8 @@ import { useMusicStore } from "@/store/musicStore";
 import { useNavigate } from "react-router-dom";
 import { useAuthStore } from "@/store/authStore";
 import { useTranslation } from "@/i18n/hooks/useTranslation";
+import { LazyWrapper, LazyImage } from '@/hooks/useLazyLoading';
+import { ExampleCardSkeleton } from '@/components/ui/skeleton';
 
 
 const ExamplesGrid = () => {
@@ -204,11 +206,13 @@ const ExamplesGrid = () => {
     }
   ];
 
-  const examples = examplesBase.map((item) => ({
-    ...item,
-    title: tMarketing(`examples.cards.${item.id}.title`),
-    subtitle: tMarketing(`examples.cards.${item.id}.subtitle`),
-  }));
+  const examples = useMemo(() => 
+    examplesBase.map((item) => ({
+      ...item,
+      title: tMarketing(`examples.cards.${item.id}.title`),
+      subtitle: tMarketing(`examples.cards.${item.id}.subtitle`),
+    })), [tMarketing]
+  );
 
   const handlePlayPause = (id: string) => {
     if (playingId === id) {
@@ -223,10 +227,10 @@ const ExamplesGrid = () => {
   };
 
   return (
-    <section id="exemplos" className="py-[120px]">
+    <section id="exemplos" className="py-16 xs:py-20 sm:py-24 md:py-28 lg:py-32 xl:py-[120px]">
       <div className="container mx-auto px-4">
         {/* Header */}
-        <div className="text-center mb-16">
+        <div className="text-center mb-8 xs:mb-10 sm:mb-12 md:mb-14 lg:mb-16">
           <SectionTitle>
             {tMarketing('examples.title').split(' ').map((word, index, array) => 
               index === array.length - 1 ? (
@@ -240,28 +244,33 @@ const ExamplesGrid = () => {
         </div>
 
         {/* Examples Slider (Swiper Coverflow) */}
-        <ExamplesSwiper
-          examples={examples}
-          playingId={playingId}
-          onTogglePlay={handlePlayPause}
-          linked={linked}
-        />
+        <LazyWrapper
+          fallback={<ExampleCardSkeleton />}
+          className="min-h-[300px] xs:min-h-[350px] sm:min-h-[400px]"
+        >
+          <ExamplesSwiper
+            examples={examples}
+            playingId={playingId}
+            onTogglePlay={handlePlayPause}
+            linked={linked}
+          />
+        </LazyWrapper>
 
         {/* Bottom CTA */}
-        <div className="text-center mt-16">
+        <div className="text-center mt-12 xs:mt-14 sm:mt-16">
           <div className="inline-flex flex-col sm:flex-row items-center space-y-4 sm:space-y-0 sm:space-x-6">
             <div className="flex items-center space-x-2 text-white/50">
-              <Music className="w-5 h-5" />
-              <span className="font-medium">
+              <Music className="w-4 h-4 xs:w-5 xs:h-5" />
+              <span className="font-medium text-sm xs:text-base">
                 {tMarketing('examples.cta.meta')}
               </span>
             </div>
             <LiquidGlassButton
               onClick={handleCreateMusic}
               data-attr="examples-cta-button"
-              className="w-full sm:w-auto font-heading font-bold"
+              className="w-full sm:w-auto font-heading font-bold min-h-[48px] px-6 xs:px-8 text-sm xs:text-base touch-manipulation"
             >
-              <Sparkles className="mr-3 h-5 w-5" />
+              <Sparkles className="mr-2 xs:mr-3 h-4 w-4 xs:h-5 xs:w-5" />
               {tMarketing('examples.cta.button')}
             </LiquidGlassButton>
           </div>
@@ -369,12 +378,54 @@ function ExamplesSwiper({
         slidesPerView="auto"
         grabCursor
         loop
-        spaceBetween={32}
-        coverflowEffect={{ rotate: 15, stretch: 0, depth: 140, modifier: 1.1, slideShadows: false }}
-        autoplay={{ delay: 4000, disableOnInteraction: false, pauseOnMouseEnter: true }}
-
-
-        className="px-10"
+        spaceBetween={16}
+        coverflowEffect={{ 
+          rotate: 15, 
+          stretch: 0, 
+          depth: 100, 
+          modifier: 1, 
+          slideShadows: false 
+        }}
+        autoplay={{ 
+          delay: 5000, 
+          disableOnInteraction: false, 
+          pauseOnMouseEnter: true 
+        }}
+        breakpoints={{
+          320: {
+            spaceBetween: 12,
+            coverflowEffect: {
+              rotate: 10,
+              depth: 80,
+              modifier: 0.8
+            }
+          },
+          640: {
+            spaceBetween: 20,
+            coverflowEffect: {
+              rotate: 12,
+              depth: 90,
+              modifier: 0.9
+            }
+          },
+          768: {
+            spaceBetween: 24,
+            coverflowEffect: {
+              rotate: 15,
+              depth: 100,
+              modifier: 1
+            }
+          },
+          1024: {
+            spaceBetween: 32,
+            coverflowEffect: {
+              rotate: 15,
+              depth: 140,
+              modifier: 1.1
+            }
+          }
+        }}
+        className="px-4 sm:px-6 md:px-8 lg:px-10"
       >
         {examples.map((example) => {
           const IconComponent = example.icon;
@@ -385,36 +436,38 @@ function ExamplesSwiper({
           const isLoading = assocId ? loadingSongId === assocId : false;
 
           return (
-            <SwiperSlide key={example.id} className="!w-[92%] sm:!w-[78%] md:!w-[66%] lg:!w-[58%] xl:!w-[52%]">
+            <SwiperSlide key={example.id} className="!w-[85%] xs:!w-[82%] sm:!w-[78%] md:!w-[66%] lg:!w-[58%] xl:!w-[52%]">
               <div className="relative rounded-[22px] overflow-hidden shadow-2xl ring-1 ring-white/20">
-                <div className="relative aspect-[1.62/1] sm:aspect-[1.85/1] overflow-hidden">
-                  <img
+                <div className="relative aspect-[1.4/1] xs:aspect-[1.5/1] sm:aspect-[1.62/1] md:aspect-[1.75/1] lg:aspect-[1.85/1] overflow-hidden">
+                  <LazyImage
                     src={example.image}
                     alt={`Exemplo de música para ${example.title}`}
-                    className="w-full h-full object-cover object-center"
+                    className="w-full h-full object-cover object-center transition-opacity duration-300"
+                    loading="lazy"
+                    decoding="async"
                   />
 
                   {/* Overlay gradient */}
                   <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/20 to-transparent" />
 
                   {/* Text + CTA (vertically centered) */}
-                  <div className="absolute inset-0 flex flex-col justify-center pl-8 sm:pl-12 pr-8 py-2">
-                    <h3 className="font-heading text-white font-semibold drop-shadow-sm text-xl sm:text-2xl md:text-3xl lg:text-4xl max-w-[75%] mb-2">
+                  <div className="absolute inset-0 flex flex-col justify-center pl-4 xs:pl-6 sm:pl-8 md:pl-10 lg:pl-12 pr-4 xs:pr-6 sm:pr-8 py-2">
+                    <h3 className="font-heading text-white font-semibold drop-shadow-sm text-base xs:text-lg sm:text-xl md:text-2xl lg:text-3xl xl:text-4xl max-w-[75%] mb-1 xs:mb-2 leading-tight">
                       {example.title}
                     </h3>
-                    <p className="text-white/80 text-sm sm:text-base mt-2 max-w-[85%] drop-shadow-sm">
+                    <p className="text-white/80 text-xs xs:text-sm sm:text-base mt-1 xs:mt-2 max-w-[85%] drop-shadow-sm leading-relaxed">
                       {example.subtitle}
                     </p>
-                  <div className="mt-6">
+                  <div className="mt-3 xs:mt-4 sm:mt-6">
                     <button
                       onClick={() => {
                         void handleCardPlay(example.id, song);
                       }}
                       disabled={isLoading}
-                      className={`inline-flex items-center gap-2 rounded-lg px-5 py-2.5 text-sm sm:text-base font-semibold transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-white/60 shadow-[inset_0_1px_0_rgba(255,255,255,0.3)] ${
+                      className={`inline-flex items-center gap-1.5 xs:gap-2 rounded-lg px-3 xs:px-4 sm:px-5 py-2 xs:py-2.5 text-xs xs:text-sm sm:text-base font-semibold transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/60 shadow-[inset_0_1px_0_rgba(255,255,255,0.3)] min-h-[44px] touch-manipulation ${
                         isCardPlaying || simulatedPlaying
-                          ? "bg-white text-neutral-900"
-                          : "bg-white/20 hover:bg-white/30 text-white border border-white/40 backdrop-blur"
+                          ? "bg-white text-neutral-900 scale-105"
+                          : "bg-white/20 hover:bg-white/30 active:bg-white/40 text-white border border-white/40 backdrop-blur hover:scale-105 active:scale-95"
                       } ${isLoading ? 'opacity-70 cursor-wait' : ''}`}
                       aria-label={isLoading
                         ? tMarketing('examples.cardCta.aria.loading', { title: example.title })
@@ -428,13 +481,13 @@ function ExamplesSwiper({
                           ? tMarketing('examples.cardCta.loading')
                           : tMarketing('examples.cardCta.play')}
                       </span>
-                      <span className={`ml-1 inline-flex h-5 w-5 items-center justify-center rounded-full ${
+                      <span className={`ml-0.5 xs:ml-1 inline-flex h-4 w-4 xs:h-5 xs:w-5 items-center justify-center rounded-full ${
                         (isCardPlaying || simulatedPlaying) ? "bg-neutral-900 text-white" : "bg-yellow-400 text-neutral-900"
                       }`}>
                         {isLoading ? (
-                          <div className="h-3.5 w-3.5 border-2 border-current/40 border-t-current rounded-full animate-spin" />
+                          <div className="h-2.5 w-2.5 xs:h-3.5 xs:w-3.5 border-2 border-current/40 border-t-current rounded-full animate-spin" />
                         ) : (
-                          <Play className="h-3.5 w-3.5 translate-x-[1px]" />
+                          <Play className="h-2.5 w-2.5 xs:h-3.5 xs:w-3.5 translate-x-[1px]" />
                         )}
                       </span>
                     </button>
@@ -442,18 +495,18 @@ function ExamplesSwiper({
                   </div>
 
                   {/* Icon Badge */}
-                  <div className={`absolute top-4 right-4 w-9 h-9 rounded-full flex items-center justify-center bg-${example.color}/90`}>
-                    <IconComponent className="w-4 h-4 text-white" />
+                  <div className={`absolute top-2 xs:top-3 sm:top-4 right-2 xs:right-3 sm:right-4 w-7 h-7 xs:w-8 xs:h-8 sm:w-9 sm:h-9 rounded-full flex items-center justify-center bg-${example.color}/90 backdrop-blur-sm`}>
+                    <IconComponent className="w-3 h-3 xs:w-3.5 xs:h-3.5 sm:w-4 sm:h-4 text-white" />
                   </div>
 
                   {/* Playing Indicator */}
                   {(isCardPlaying || simulatedPlaying || isLoading) && (
-                    <div className="absolute bottom-3 left-3 flex items-center space-x-1">
-                      <div className="flex space-x-1">
+                    <div className="absolute bottom-2 xs:bottom-3 left-2 xs:left-3 flex items-center space-x-1">
+                      <div className="flex space-x-0.5 xs:space-x-1">
                         {[...Array(3)].map((_, i) => (
                           <div
                             key={i}
-                            className="w-1 h-4 bg-white rounded-full animate-pulse"
+                            className="w-0.5 xs:w-1 h-3 xs:h-4 bg-white rounded-full animate-pulse"
                             style={{
                               animationDelay: `${i * 0.2}s`,
                               animationDuration: "1s",
@@ -461,7 +514,7 @@ function ExamplesSwiper({
                           />
                         ))}
                       </div>
-                      <Music className="w-4 h-4 text-white" />
+                      <Music className="w-3 h-3 xs:w-4 xs:h-4 text-white" />
                     </div>
                   )}
                 </div>

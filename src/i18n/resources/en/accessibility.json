@@ -1,0 +1,37 @@
+{
+  "menu": {
+    "title": "Accessibility Settings",
+    "open": "Open accessibility menu",
+    "close": "Close Menu",
+    "opened": "Accessibility menu opened",
+    "closed": "Accessibility menu closed"
+  },
+  "highContrast": {
+    "label": "High Contrast",
+    "toggle": "Toggle high contrast",
+    "enabled": "High contrast enabled",
+    "disabled": "High contrast disabled"
+  },
+  "fontSize": {
+    "label": "Font Size",
+    "normal": "Normal",
+    "large": "Large",
+    "extraLarge": "Extra",
+    "changed": "Font size changed to {{size}}",
+    "sizes": {
+      "normal": "normal",
+      "large": "large",
+      "extra-large": "extra large"
+    }
+  },
+  "reducedMotion": {
+    "title": "Reduced Motion Active",
+    "description": "Detected by system settings"
+  },
+  "shortcuts": {
+    "title": "Keyboard Shortcuts",
+    "closeModals": "Close modals:",
+    "navigate": "Navigate:",
+    "skipToContent": "Skip to content:"
+  }
+}

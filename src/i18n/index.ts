@@ -23,6 +23,7 @@ import ptMinhasMusicas from './resources/pt/minhasMusicas.json';
 import authCallbackPt from './resources/pt/authCallback.json';
 import musicaPublicaPt from './resources/pt/musicaPublica.json';
 import ptLegal from './resources/pt/legal.json';
+import ptAccessibility from './resources/pt/accessibility.json';
 
 // Import English translations
 import enCommon from './resources/en/common.json';
@@ -45,6 +46,7 @@ import enMinhasMusicas from './resources/en/minhasMusicas.json';
 import authCallbackEn from './resources/en/authCallback.json';
 import musicaPublicaEn from './resources/en/musicaPublica.json';
 import enLegal from './resources/en/legal.json';
+import enAccessibility from './resources/en/accessibility.json';
 
 // Define resources structure
 const resources = {
@@ -69,6 +71,7 @@ const resources = {
     authCallback: authCallbackPt,
     musicaPublica: musicaPublicaPt,
     legal: ptLegal,
+    accessibility: ptAccessibility,
   },
   en: {
     common: enCommon,
@@ -91,6 +94,7 @@ const resources = {
     authCallback: authCallbackEn,
     musicaPublica: musicaPublicaEn,
     legal: enLegal,
+    accessibility: enAccessibility,
   },
 };
 
@@ -115,12 +119,11 @@ const detectionOptions = {
 
 // Language normalization function
 const normalizeLanguage = (lng: string): SupportedLanguages => {
-  // Normalize common language variants
-  if (lng.startsWith('en')) return 'en';
+  // Only return Portuguese for Portuguese languages
   if (lng.startsWith('pt')) return 'pt';
   
-  // Default fallback
-  return 'pt';
+  // All other languages default to English
+  return 'en';
 };
 
 // Initialize i18next
@@ -132,7 +135,7 @@ i18n
     resources,
     
     // Default language
-    fallbackLng: 'pt',
+    fallbackLng: 'en',
     
     // Supported languages
     supportedLngs: ['pt', 'en'],
@@ -146,7 +149,7 @@ i18n
       'common', 'auth', 'authStore', 'forms', 'marketing', 'errors', 
       'criar', 'finalCta', 'hero', 'howItWorks', 'musicStore', 
       'payment', 'planSection', 'validation', 'validations', 'useAutoMigration', 'minhasMusicas',
-      'authCallback', 'musicaPublica', 'legal'
+      'authCallback', 'musicaPublica', 'legal', 'accessibility'
     ],
     
     // Interpolation options

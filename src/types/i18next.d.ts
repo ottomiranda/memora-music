@@ -6,6 +6,7 @@ import type ptAuth from '../i18n/resources/pt/auth.json';
 import type ptForms from '../i18n/resources/pt/forms.json';
 import type ptMarketing from '../i18n/resources/pt/marketing.json';
 import type ptErrors from '../i18n/resources/pt/errors.json';
+import type ptAccessibility from '../i18n/resources/pt/accessibility.json';
 
 /**
  * TypeScript module augmentation for react-i18next
@@ -40,7 +41,7 @@ export type SupportedLanguages = 'pt' | 'en';
 /**
  * Available namespaces type
  */
-export type Namespaces = 'common' | 'auth' | 'forms' | 'marketing' | 'errors';
+export type Namespaces = 'common' | 'auth' | 'forms' | 'marketing' | 'errors' | 'accessibility';
 
 /**
  * Translation key types for each namespace
@@ -50,6 +51,7 @@ export type AuthKeys = keyof typeof ptAuth;
 export type FormsKeys = keyof typeof ptForms;
 export type MarketingKeys = keyof typeof ptMarketing;
 export type ErrorsKeys = keyof typeof ptErrors;
+export type AccessibilityKeys = keyof typeof ptAccessibility;
 
 /**
  * Nested key extraction utility type
@@ -67,7 +69,8 @@ export type CommonTranslationKeys = NestedKeyOf<typeof ptCommon>;
 export type AuthTranslationKeys = NestedKeyOf<typeof ptAuth>;
 export type FormsTranslationKeys = NestedKeyOf<typeof ptForms>;
 export type MarketingTranslationKeys = NestedKeyOf<typeof ptMarketing>;
-export type ErrorsTranslationKeys = NestedKeyOf<typeof ptErrors>;
+export type ErrorsTranslationKeys = DeepKeys<typeof ptErrors>;
+export type AccessibilityTranslationKeys = DeepKeys<typeof ptAccessibility>;
 
 /**
  * Union of all translation keys
@@ -88,6 +91,7 @@ export interface TranslationFunction {
   (key: `forms:${FormsTranslationKeys}`, options?: any): string;
   (key: `marketing:${MarketingTranslationKeys}`, options?: any): string;
   (key: `errors:${ErrorsTranslationKeys}`, options?: any): string;
+  (key: `accessibility:${AccessibilityTranslationKeys}`, options?: any): string;
   (key: string, options?: any): string; // Fallback for dynamic keys
 }
 
@@ -184,7 +188,7 @@ export const AVAILABLE_LANGUAGES: LanguageInfo[] = [
 /**
  * Default language
  */
-export const DEFAULT_LANGUAGE: SupportedLanguages = 'pt';
+export const DEFAULT_LANGUAGE: SupportedLanguages = 'en';
 
 /**
  * Default namespace

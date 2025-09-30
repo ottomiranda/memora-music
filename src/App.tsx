@@ -24,6 +24,10 @@ import { useAuthStore } from "./store/authStore";
 import { useLocalizedRoutes } from '@/hooks/useLocalizedRoutes';
 import { getLegacyPaths } from '@/routes/paths';
 import LegacyRouteRedirect from '@/components/routing/LegacyRouteRedirect';
+import { PerformanceOptimizer } from '@/components/performance/PerformanceOptimizer';
+import { AccessibilityProvider } from '@/components/accessibility/AccessibilityProvider';
+import { ScreenReaderAnnouncer } from '@/components/accessibility/ScreenReaderAnnouncer';
+import { SkipToMainContent, SkipToNavigation } from '@/components/accessibility/SkipLink';
 // Gerar e persistir deviceId único
 let deviceId = localStorage.getItem('deviceId');
 if (!deviceId) {
@@ -69,11 +73,21 @@ const AppContent = () => {
   const legacyRoutes = useMemo(() => getLegacyPaths(language), [language]);
   
   return (
-    <Layout>
-      <AuthInitializer />
-      <Navbar />
-      <div className="flex-1 w-full">
-        <Routes>
+    <AccessibilityProvider>
+      <Layout>
+        <AuthInitializer />
+        {/* Links para pular conteúdo - aparecem apenas no foco do teclado */}
+        <SkipToMainContent />
+        <SkipToNavigation />
+        
+        {/* Cabeçalho com navegação */}
+        <header role="banner">
+          <Navbar id="navigation" />
+        </header>
+        
+        {/* Conteúdo principal */}
+        <main id="main-content" className="flex-1 w-full" role="main" tabIndex={-1}>
+          <Routes>
           <Route path={localizedPaths.home} element={<Index />} />
           <Route path={localizedPaths.create} element={<Criar />} />
           <Route 
@@ -93,17 +107,23 @@ const AppContent = () => {
           ))}
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
-        </Routes>
-      </div>
-      <Footer />
-      
-      {/* Payment Modal */}
-      <PaymentModal 
-        isOpen={isPaymentPopupVisible} 
-        onClose={hidePaymentPopup}
-        onConfirm={handleUpgrade}
-      />
-    </Layout>
+          </Routes>
+        </main>
+        
+        {/* Rodapé */}
+        <Footer />
+        
+        {/* Componentes de acessibilidade */}
+        <ScreenReaderAnnouncer />
+        
+        {/* Payment Modal */}
+        <PaymentModal 
+          isOpen={isPaymentPopupVisible} 
+          onClose={hidePaymentPopup}
+          onConfirm={handleUpgrade}
+        />
+      </Layout>
+    </AccessibilityProvider>
   );
 };
 
@@ -113,19 +133,21 @@ if (typeof window !== 'undefined') {
 }
 
 const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Sonner />
-      <BrowserRouter
-        future={{
-          v7_startTransition: true,
-          v7_relativeSplatPath: true,
-        }}
-      >
-        <AppContent />
-      </BrowserRouter>
-    </TooltipProvider>
-  </QueryClientProvider>
+  <PerformanceOptimizer enableLogging={process.env.NODE_ENV === 'development'} reportToAnalytics={true}>
+    <QueryClientProvider client={queryClient}>
+      <TooltipProvider>
+        <Sonner />
+        <BrowserRouter
+          future={{
+            v7_startTransition: true,
+            v7_relativeSplatPath: true,
+          }}
+        >
+          <AppContent />
+        </BrowserRouter>
+      </TooltipProvider>
+    </QueryClientProvider>
+  </PerformanceOptimizer>
 );
 
 export default App;
