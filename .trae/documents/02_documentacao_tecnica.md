@@ -319,7 +319,7 @@ const generateResponse = await fetch(`${SUNO_API_BASE}/generate`, {
     style: `${genre}, ${mood}, ${vocalPreference} vocals`,
     title: songTitle,
     customMode: true,
-    model: 'V4_5PLUS'
+    model: 'V5'
   })
 });
 

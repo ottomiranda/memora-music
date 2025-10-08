@@ -675,7 +675,7 @@ export default async function handler(req: Request, res: Response) {
           title: formData.songTitle,
           customMode: true,
           instrumental: false,
-          model: 'V4_5PLUS', // Modelo V4_5PLUS "Advanced" conforme documentação oficial
+          model: 'V5', // Modelo V5 "Advanced" conforme documentação oficial
           callBackUrl: `${process.env.FRONTEND_URL || 'http://localhost:5173'}/api/suno-callback` // URL de callback obrigatória
         };
         
@@ -692,7 +692,7 @@ export default async function handler(req: Request, res: Response) {
         
         // ---> PASSO 1 DE DEBUG: Logar o que estamos enviando
         console.log('[DEBUG SUNO] Enviando payload para /generate:', JSON.stringify(generatePayload, null, 2));
-        console.log('[DEBUG SUNO] Modelo utilizado: chirp-bluejay (V4_5PLUS)');
+        console.log('[DEBUG SUNO] Modelo utilizado: chirp-crow (V5)');
         
         const generateResponse = await fetchWithRetry(`${SUNO_API_BASE}/generate`, {
           method: 'POST',
@@ -774,7 +774,7 @@ export default async function handler(req: Request, res: Response) {
             occasion: formData.occasion,
             genre: formData.genre,
             duration: formData.duration,
-            model: 'V4_5PLUS'
+            model: 'V5'
           },
           startTime: Date.now(),
           lastUpdate: Date.now()

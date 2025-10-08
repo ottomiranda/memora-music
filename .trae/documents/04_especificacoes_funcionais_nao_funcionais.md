@@ -92,7 +92,7 @@ Este documento define os requisitos funcionais e não-funcionais da plataforma M
 
 **Critérios de Aceitação**:
 - ✅ Deve integrar com Suno AI API
-- ✅ Deve usar modelo V4_5PLUS para qualidade superior
+- ✅ Deve usar modelo V5 para qualidade superior
 - ✅ Deve gerar múltiplas variações (2 clipes esperados)
 - ✅ Deve implementar sistema de polling para status
 - ✅ Deve exibir progresso em tempo real

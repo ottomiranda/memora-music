@@ -55,7 +55,7 @@ function createEnglishLyricsPrompt(data: z.infer<typeof generatePreviewSchema>):
     instruments: data.instruments
   };
   
-  return PromptAdapter.createLyricsPrompt(language, request);
+  return PromptAdapter.adaptPrompt('generateLyrics', language, request);
 }
 
 // FUNÇÃO MODIFICADA PARA USAR PROMPT ADAPTER COM TÍTULO

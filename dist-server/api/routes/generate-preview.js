@@ -494,10 +494,10 @@ function mapDurationToSunoLength(duration) {
 function mapDurationToModel(duration) {
     // Durações mais longas usam modelos mais avançados
     if (duration.includes('4-6') || duration.includes('6-8')) {
-        return 'V4_5PLUS'; // Suporta até 8 minutos
+        return 'V5'; // Suporta até 8 minutos
     }
     else if (duration.includes('3-4')) {
-        return 'V4'; // Melhor qualidade de áudio
+        return 'V5'; // Melhor qualidade de áudio
     }
     else {
         return 'V3_5'; // Diversidade criativa
@@ -1004,16 +1004,16 @@ router.post('/', upload.none(), async (req, res) => {
             // Preparar parâmetros para chamada da API oficial da Suno
             const style = `${formData.genre}, ${formData.mood}, ${formData.vocalPreference || 'male'} vocals`;
             const generatePayload = {
-                prompt: lyrics,
+                prompt: createSunoPrompt(formData, lyrics),
                 style: style,
                 title: formData.songTitle,
                 customMode: true,
                 instrumental: false,
-                model: 'V4_5PLUS', // Modelo V4_5PLUS "Advanced" conforme documentação oficial
+                model: 'V5', // Modelo V5 "Advanced" conforme documentação oficial
                 callBackUrl: `${process.env.FRONTEND_URL || 'http://localhost:5173'}/api/suno-callback` // URL de callback obrigatória
             };
             console.log('[DEBUG SUNO] Payload para API oficial:');
-            console.log('  - prompt:', lyrics.substring(0, 100) + '...');
+            console.log('  - prompt:', createSunoPrompt(formData, lyrics).substring(0, 100) + '...');
             console.log('  - style:', style);
             console.log('  - title:', formData.songTitle);
             console.log('  - customMode:', generatePayload.customMode);
@@ -1025,7 +1025,7 @@ router.post('/', upload.none(), async (req, res) => {
             console.log('🎵 Fazendo chamada POST para /generate...');
             // ---> PASSO 1 DE DEBUG: Logar o que estamos enviando
             console.log('[DEBUG SUNO] Enviando payload para /generate:', JSON.stringify(generatePayload, null, 2));
-            console.log('[DEBUG SUNO] Modelo utilizado: chirp-bluejay (V4_5PLUS)');
+            console.log('[DEBUG SUNO] Modelo utilizado: chirp-crow (V5)');
             const generateResponse = await fetchWithRetry(`${SUNO_API_BASE}/generate`, {
                 method: 'POST',
                 headers: {
@@ -1099,7 +1099,7 @@ router.post('/', upload.none(), async (req, res) => {
                     occasion: formData.occasion,
                     genre: formData.genre,
                     duration: formData.duration,
-                    model: 'V4_5PLUS',
+                    model: 'V5',
                     userId: userId,
                     guestId: guestId,
                     deviceId: deviceId, // Incluir deviceId nos metadados

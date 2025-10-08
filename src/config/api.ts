@@ -212,7 +212,7 @@ export const sunoApi = {
     const requestBody: SunoGenerateRequest = {
       customMode: false, // Modo simples por padrão
       instrumental: false,
-      model: 'V4',
+      model: 'V5',
       callBackUrl: `${window.location.origin}/api/suno-callback`, // Callback fictício
       prompt,
       ...options

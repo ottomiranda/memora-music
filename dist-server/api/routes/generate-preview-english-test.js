@@ -49,7 +49,7 @@ function createEnglishLyricsPrompt(data) {
         duration: data.duration,
         instruments: data.instruments
     };
-    return PromptAdapter.createLyricsPrompt(language, request);
+    return PromptAdapter.adaptPrompt('generateLyrics', language, request);
 }
 // FUNÇÃO MODIFICADA PARA USAR PROMPT ADAPTER COM TÍTULO
 function createEnglishLyricsAndTitlePrompt(data) {

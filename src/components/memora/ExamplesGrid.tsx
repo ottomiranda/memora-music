@@ -227,7 +227,7 @@ const ExamplesGrid = () => {
   };
 
   return (
-    <section id="exemplos" className="py-16 xs:py-20 sm:py-24 md:py-28 lg:py-32 xl:py-[120px]">
+    <section id="exemplos" className="py-16 xs:py-20 sm:py-24 md:py-28 lg:py-32 relative overflow-hidden">
       <div className="container mx-auto px-4">
         {/* Header */}
         <div className="text-center mb-8 xs:mb-10 sm:mb-12 md:mb-14 lg:mb-16">
