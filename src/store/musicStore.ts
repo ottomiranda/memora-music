@@ -226,14 +226,14 @@ export const useMusicStore = create<MusicStore>()(
     
     // Validação usando apenas os campos obrigatórios do briefingSchema (primeira etapa)
     if (!formData.recipientName || !formData.occasion || !formData.relationship) {
-      const errorMsg = toast.error(i18n.t('validation.fillRequiredFieldsStep1', { ns: 'musicStore' }));
+      const errorMsg = i18n.t('validation.fillRequiredFieldsStep1', { ns: 'musicStore' });
       console.log(i18n.t('debug.validationFailedStep1', { ns: 'musicStore' }), {
           recipientName: formData.recipientName,
           occasion: formData.occasion,
           relationship: formData.relationship
         });
       set({ error: errorMsg });
-      toast.error(errorMsg);
+      toast.error(errorMsg, { duration: 6000 });
       return;
     }
     
@@ -303,7 +303,7 @@ export const useMusicStore = create<MusicStore>()(
         !formData.mood || !formData.tempo || !formData.duration) {
       const errorMsg = i18n.t('validation.fillRequiredFields', { ns: 'musicStore' });
       set({ error: errorMsg });
-      toast.error(errorMsg);
+      toast.error(errorMsg, { duration: 6000 });
       return;
     }
     
@@ -383,7 +383,7 @@ export const useMusicStore = create<MusicStore>()(
         vocalPreference: formData.vocalPreference
       });
       set({ error: errorMsg });
-      toast.error(errorMsg);
+      toast.error(errorMsg, { duration: 6000 });
       return;
     }
     
@@ -402,6 +402,7 @@ export const useMusicStore = create<MusicStore>()(
       isLoading: true,
       error: null,
       audioClips: [],
+      generatedLyrics: formData.lyrics,
       musicGenerationStatus: 'processing',
       completedClips: 0,
       currentTaskId: null
@@ -518,31 +519,74 @@ export const useMusicStore = create<MusicStore>()(
     try {
       console.log('[DEBUG] Verificando status para taskId:', currentTaskId);
       
-      const result = await apiRequest(`${API_ENDPOINTS.CHECK_MUSIC_STATUS}/${currentTaskId}`, {
+      type CheckMusicStatusResponse = {
+        success: boolean;
+        taskId: string;
+        status: 'PROCESSING' | 'COMPLETED' | 'FAILED' | 'PARTIAL' | string;
+        audioClips?: AudioClip[];
+        completedClips?: number;
+        totalExpected?: number;
+        lyrics?: string;
+        error?: string;
+        metadata?: Record<string, unknown>;
+      };
+
+      const result = await apiRequest<CheckMusicStatusResponse>(`${API_ENDPOINTS.CHECK_MUSIC_STATUS}/${currentTaskId}`, {
         method: 'GET',
       });
       
       console.log('[DEBUG STATUS CHECK] Resposta recebida:', result);
       
-      // Receber e Validar a Resposta
-      if (!result.success || typeof result.data !== 'object') {
-        console.error('Resposta de status inválida.');
-        return; // Continua tentando na próxima iteração
+      if (!result || typeof result !== 'object' || result.success !== true) {
+        console.error('Resposta de status inválida ou sem sucesso.', result);
+        return;
       }
       
-      const statusData = result.data;
-      
-      // Acesso correto aos dados da resposta do backend
-      const completeCount = statusData.completedClips || 0;
-      const totalExpected = statusData.totalExpected || get().totalExpected || 0;
-      const clips = Array.isArray(statusData.audioClips) ? statusData.audioClips : [];
+      const clips = Array.isArray(result.audioClips) ? result.audioClips : [];
+      const completeCount = typeof result.completedClips === 'number' ? result.completedClips : 0;
+      const totalExpected = typeof result.totalExpected === 'number'
+        ? result.totalExpected
+        : get().totalExpected || 0;
+      const taskStatus = result.status?.toUpperCase?.() ?? 'PROCESSING';
+      const lyricsFromTask = typeof result.lyrics === 'string' ? result.lyrics : null;
       
       console.log(`[DEBUG] Clipes completos: ${completeCount}/${totalExpected}`);
       
-      // ATUALIZAÇÃO PROGRESSIVA DO ESTADO (SEMPRE)
-      set({ audioClips: clips, completedClips: completeCount });
+      set((state) => ({
+        audioClips: clips,
+        completedClips: completeCount,
+        totalExpected,
+        ...(lyricsFromTask
+          ? {
+              generatedLyrics: lyricsFromTask,
+              formData: state.formData.lyrics === lyricsFromTask
+                ? state.formData
+                : { ...state.formData, lyrics: lyricsFromTask },
+            }
+          : {}),
+      }));
 
-      // CONDIÇÃO DE PARADA PRECISA
+      if (lyricsFromTask) {
+        console.log('[DEBUG] Letra preservada no polling:', lyricsFromTask.substring(0, 120));
+      }
+
+      if (taskStatus === 'FAILED') {
+        console.warn('[DEBUG] Geração marcada como FAILED pelo backend.');
+        get().stopPolling();
+        set({
+          isLoading: false,
+          isPreviewLoading: false,
+          isPolling: false,
+          musicGenerationStatus: 'failed',
+          currentTaskId: null,
+          error: result.error || i18n.t('errors.generationFailed', { ns: 'musicStore' }),
+        });
+        if (result.error) {
+          toast.error(result.error);
+        }
+        return;
+      }
+
       if (totalExpected > 0 && completeCount >= totalExpected) {
         console.log(i18n.t('debug.generationCompleted', { ns: 'musicStore' }));
         

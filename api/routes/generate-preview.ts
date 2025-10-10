@@ -1075,92 +1075,99 @@ router.post('/', upload.none(), async (req: Request, res: Response) => {
       
       console.log('✅ Configurações de API verificadas com sucesso!');
 
-      // Gerar letra com OpenAI
+      // Gerar letra com OpenAI (reutilizando letra existente quando disponível)
       console.log('🎵 Iniciando geração de letra com OpenAI...');
       
-      let lyrics;
-      try {
-        const prompt = createLyricsPrompt(formData);
-        
-        console.log('🎵 Prompt criado para OpenAI:');
-        console.log('---START PROMPT---');
-        console.log(prompt);
-        console.log('---END PROMPT---');
-        
-        console.log('🎵 Fazendo chamada para OpenAI...');
-        const completion = await getOpenAIClient().chat.completions.create({
-          model: 'gpt-4',
-          messages: [
-            {
-              role: 'system',
-              content: 'Você é um compositor profissional especializado em criar letras de música personalizadas e emocionais.'
-            },
-            {
-              role: 'user',
-              content: prompt
-            }
-          ],
-          max_tokens: 1000,
-          temperature: 0.8
-        });
-        
-        console.log('🎵 Resposta completa da OpenAI:', JSON.stringify(completion, null, 2));
-        lyrics = completion.choices[0]?.message?.content;
-        console.log('🎵 Letra extraída:', lyrics);
-        console.log('🎵 Tamanho da letra:', lyrics?.length || 0, 'caracteres');
-        
-        console.log('=== RESPOSTA DA OPENAI ===');
-        console.log('Prompt enviado:', prompt.substring(0, 200) + '...');
-        console.log('Letra gerada:', lyrics?.substring(0, 300) + '...');
-        console.log('Tokens usados:', completion.usage?.total_tokens);
-        console.log('========================');
-        
-        if (!lyrics) {
-          return res.status(500).json({
-            success: false,
-            error: 'Não foi possível gerar a letra da música. Tente novamente.'
+      let lyrics: string | undefined = typeof formData.lyrics === 'string' ? formData.lyrics : undefined;
+
+      if (lyrics && lyrics.trim().length > 0) {
+        console.log('🎵 Utilizando letra fornecida pelo frontend (sem regenerar).');
+      } else {
+        try {
+          const prompt = createLyricsPrompt(formData);
+          
+          console.log('🎵 Prompt criado para OpenAI:');
+          console.log('---START PROMPT---');
+          console.log(prompt);
+          console.log('---END PROMPT---');
+          
+          console.log('🎵 Fazendo chamada para OpenAI...');
+          const completion = await getOpenAIClient().chat.completions.create({
+            model: 'gpt-4',
+            messages: [
+              {
+                role: 'system',
+                content: 'Você é um compositor profissional especializado em criar letras de música personalizadas e emocionais.'
+              },
+              {
+                role: 'user',
+                content: prompt
+              }
+            ],
+            max_tokens: 1000,
+            temperature: 0.8
           });
-        }
-        
-      } catch (error) {
-        console.error('[OPENAI_ERROR] Erro na geração de letra (modo completo):', error);
-        
-        // Verificar se é um erro da API da OpenAI
-        if (error instanceof OpenAI.APIError) {
-          if (error.status === 429) {
-            // Erro de cota/faturamento
-            console.error('[OPENAI_QUOTA] Cota da OpenAI excedida! Verificar faturamento.');
-            return res.status(503).json({
-              success: false,
-              error: 'SERVICE_UNAVAILABLE',
-              message: 'Nosso serviço de criação está com uma demanda muito alta no momento. Por favor, tente novamente em alguns minutos.'
-            });
-          } else if (error.status === 401) {
-            // Erro de autenticação
-            console.error('[OPENAI_AUTH] Erro de autenticação da OpenAI:', error.message);
+          
+          console.log('🎵 Resposta completa da OpenAI:', JSON.stringify(completion, null, 2));
+          lyrics = completion.choices[0]?.message?.content || undefined;
+          console.log('🎵 Letra extraída:', lyrics);
+          console.log('🎵 Tamanho da letra:', lyrics?.length || 0, 'caracteres');
+          
+          console.log('=== RESPOSTA DA OPENAI ===');
+          console.log('Prompt enviado:', prompt.substring(0, 200) + '...');
+          console.log('Letra gerada:', lyrics?.substring(0, 300) + '...');
+          console.log('Tokens usados:', completion.usage?.total_tokens);
+          console.log('========================');
+          
+          if (!lyrics) {
             return res.status(500).json({
               success: false,
-              error: 'INTERNAL_SERVER_ERROR',
-              message: 'Ocorreu um erro de configuração. Nossa equipe já foi notificada.'
+              error: 'Não foi possível gerar a letra da música. Tente novamente.'
             });
+          }
+          
+        } catch (error) {
+          console.error('[OPENAI_ERROR] Erro na geração de letra (modo completo):', error);
+          
+          if (error instanceof OpenAI.APIError) {
+            if (error.status === 429) {
+              console.error('[OPENAI_QUOTA] Cota da OpenAI excedida! Verificar faturamento.');
+              return res.status(503).json({
+                success: false,
+                error: 'SERVICE_UNAVAILABLE',
+                message: 'Nosso serviço de criação está com uma demanda muito alta no momento. Por favor, tente novamente em alguns minutos.'
+              });
+            } else if (error.status === 401) {
+              console.error('[OPENAI_AUTH] Erro de autenticação da OpenAI:', error.message);
+              return res.status(500).json({
+                success: false,
+                error: 'INTERNAL_SERVER_ERROR',
+                message: 'Ocorreu um erro de configuração. Nossa equipe já foi notificada.'
+              });
+            } else {
+              console.error('[OPENAI_API] Erro da API OpenAI:', error.status, error.message);
+              return res.status(500).json({
+                success: false,
+                error: 'INTERNAL_SERVER_ERROR',
+                message: 'Ocorreu um erro inesperado ao gerar a letra. Nossa equipe já foi notificada.'
+              });
+            }
           } else {
-            // Outros erros da API da OpenAI
-            console.error('[OPENAI_API] Erro da API OpenAI:', error.status, error.message);
+            console.error('[OPENAI_NETWORK] Erro de rede ou timeout:', (error as Error)?.message);
             return res.status(500).json({
               success: false,
               error: 'INTERNAL_SERVER_ERROR',
               message: 'Ocorreu um erro inesperado ao gerar a letra. Nossa equipe já foi notificada.'
             });
           }
-        } else {
-          // Outros tipos de erro (rede, timeout, etc.)
-          console.error('[OPENAI_NETWORK] Erro de rede ou timeout:', error.message);
-          return res.status(500).json({
-            success: false,
-            error: 'INTERNAL_SERVER_ERROR',
-            message: 'Ocorreu um erro inesperado ao gerar a letra. Nossa equipe já foi notificada.'
-          });
         }
+      }
+
+      if (!lyrics || lyrics.trim().length === 0) {
+        return res.status(500).json({
+          success: false,
+          error: 'Não foi possível identificar a letra para geração da música.'
+        });
       }
 
       // === PARTE A: INICIAR GERAÇÃO COM SUNO API ===
@@ -1284,7 +1291,7 @@ router.post('/', upload.none(), async (req: Request, res: Response) => {
         audioClips: [],
         completedClips: 0,
         totalExpected: 2, // Esperamos 2 músicas
-        lyrics: lyrics.trim(),
+        lyrics,
         metadata: {
           songTitle: formData.songTitle,
           recipientName: formData.recipientName,

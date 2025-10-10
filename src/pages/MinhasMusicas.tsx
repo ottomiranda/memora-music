@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { API_BASE_URL, songsApi } from '../config/api';
@@ -9,7 +9,8 @@ import { Loader2, Music, Download, Share2, Edit3, Trash2, Search, Link as LinkIc
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
-import { triggerDownload, ensureMp3Extension } from '@/utils/download';
+import { forceDownload } from '@/utils/download';
+import { buildMp3Filename } from '@/utils/filename';
 import { useAudioPlayerStore } from '@/store/audioPlayerStore';
 import { toast } from 'sonner';
 import { getSunoAudioLinks } from '@/lib/sunoAudio';
@@ -48,56 +49,73 @@ const MinhasMusicas: React.FC = () => {
   const [statusFilter, setStatusFilter] = useState<'all' | 'completed' | 'processing' | 'failed'>('all');
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [songPendingDelete, setSongPendingDelete] = useState<Song | null>(null);
+  const isLoggedIn = useAuthStore((state) => state.isLoggedIn);
+  const userId = useAuthStore((state) => state.user?.id);
 
   const handleCreateFirstSong = async () => {
     const { token } = useAuthStore.getState();
     await startNewCreationFlow(navigate, token);
   };
 
-  useEffect(() => {
-    const loadSongs = async () => {
-      try {
-        setLoading(true);
-        setError(null);
-        const response: any = await songsApi.list();
-        // Aceitar diferentes formatos: {success, data:{songs:[]}} ou array direto
-        const items: any[] = response?.data?.songs || response?.songs || response || [];
-        const normalized: Song[] = items.map((s: any) => {
-          const option1 = s.audioUrlOption1 || s.audio_url_option1 || s.audioUrl || s.audio_url || '';
-          const option2 = s.audioUrlOption2 || s.audio_url_option2 || '';
-          return {
-            id: s.id,
-            title: s.title || t('minhasMusicas:messages.noTitle'),
-            lyrics: s.lyrics || undefined,
-            audioUrlOption1: option1 || undefined,
-            audioUrlOption2: option2 || undefined,
-            // compat: manter campo único apontando para a opção 1 por padrão
-            audioUrl: option1 || option2 || undefined,
-            imageUrl: s.imageUrl || s.image_url || undefined,
-            createdAt: (typeof s.createdAt === 'string' ? s.createdAt : (s.created_at || new Date().toISOString())),
-            userId: s.userId || s.user_id,
-            guestId: s.guestId || s.guest_id,
-            // status/generation
-            // normalize various possible fields
-            // backend uses generation_status; keep a simple string for filtering
-            // fallback to 'completed' to keep existing visuals pleasant
-            status: s.status || s.generationStatus || s.generation_status || 'completed',
-            sunoTaskId: s.sunoTaskId || s.suno_task_id || s.taskId || s.task_id || null,
-          };
-        });
-        // Ordenar por mais recentes
-        normalized.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-        setSongs(normalized);
-      } catch (err) {
-        console.error('Erro ao carregar músicas:', err);
-        setError(t('minhasMusicas:messages.loadError'));
-      } finally {
-        setLoading(false);
-      }
-    };
+  const loadSongs = useCallback(async () => {
+    if (!isLoggedIn || !userId) {
+      return;
+    }
 
+    try {
+      setLoading(true);
+      setError(null);
+      const response: any = await songsApi.list();
+      // Aceitar diferentes formatos: {success, data:{songs:[]}} ou array direto
+      const items: any[] = response?.data?.songs || response?.songs || response || [];
+      const normalized: Song[] = items.map((s: any) => {
+        const option1 = s.audioUrlOption1 || s.audio_url_option1 || s.audioUrl || s.audio_url || '';
+        const option2 = s.audioUrlOption2 || s.audio_url_option2 || '';
+        return {
+          id: s.id,
+          title: s.title || t('minhasMusicas:messages.noTitle'),
+          lyrics: s.lyrics || undefined,
+          audioUrlOption1: option1 || undefined,
+          audioUrlOption2: option2 || undefined,
+          // compat: manter campo único apontando para a opção 1 por padrão
+          audioUrl: option1 || option2 || undefined,
+          imageUrl: s.imageUrl || s.image_url || undefined,
+          createdAt: (typeof s.createdAt === 'string' ? s.createdAt : (s.created_at || new Date().toISOString())),
+          userId: s.userId || s.user_id,
+          guestId: s.guestId || s.guest_id,
+          // status/generation
+          // normalize vários campos possíveis
+          // backend usa generation_status; manter string simples para filtros
+          // fallback para 'completed' para manter visual consistente
+          status: s.status || s.generationStatus || s.generation_status || 'completed',
+          sunoTaskId: s.sunoTaskId || s.suno_task_id || s.taskId || s.task_id || null,
+        };
+      });
+      // Ordenar por mais recentes
+      normalized.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+      setSongs(normalized);
+    } catch (err) {
+      console.error('Erro ao carregar músicas:', err);
+      setError(t('minhasMusicas:messages.loadError'));
+    } finally {
+      setLoading(false);
+    }
+  }, [isLoggedIn, userId, t]);
+
+  useEffect(() => {
     loadSongs();
-  }, []);
+  }, [loadSongs]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const handleMigrationComplete = () => {
+      loadSongs();
+    };
+    window.addEventListener('guest-data-migrated', handleMigrationComplete);
+    return () => {
+      window.removeEventListener('guest-data-migrated', handleMigrationComplete);
+    };
+  }, [loadSongs]);
 
   const resolveAudioForSong = async (song: Song) => {
     const cached = audioCache.current.get(song.id);
@@ -224,14 +242,14 @@ const MinhasMusicas: React.FC = () => {
     }
 
     const baseName = `${song.title || t('minhasMusicas:messages.defaultFilename')}${filenameSuffix ? `_${filenameSuffix}` : ''}`;
-    const friendly = ensureMp3Extension(baseName);
+    const friendly = buildMp3Filename(baseName);
     
     try {
       const proxyUrl = `${API_BASE_URL}/api/download?url=${encodeURIComponent(downloadUrl)}&filename=${encodeURIComponent(friendly)}`;
-      await triggerDownload(proxyUrl, friendly);
+      await forceDownload(proxyUrl, friendly);
     } catch (e) {
       console.error('Erro no download via proxy, tentando direto:', e);
-      await triggerDownload(downloadUrl, friendly);
+      await forceDownload(downloadUrl, friendly);
     }
   };
 

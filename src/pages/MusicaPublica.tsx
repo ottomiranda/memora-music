@@ -3,7 +3,8 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Music, Share2, Download, Loader2, ArrowLeft, Play, Pause } from 'lucide-react';
 import { songsApi, API_BASE_URL } from '@/config/api';
-import { triggerDownload, ensureMp3Extension } from '@/utils/download';
+import { forceDownload } from '@/utils/download';
+import { buildMp3Filename } from '@/utils/filename';
 import { useAudioPlayerStore } from '@/store/audioPlayerStore';
 import { getSunoAudioLinks } from '@/lib/sunoAudio';
 import { toast } from 'sonner';
@@ -179,7 +180,7 @@ const MusicaPublica: React.FC = () => {
     }
 
     const baseName = `${song.title}${label ? `_${label}` : ''}`;
-    const friendly = ensureMp3Extension(baseName);
+    const friendly = buildMp3Filename(baseName);
     
     // Debug logs para verificar o nome do arquivo
     console.log('🔍 Debug Download:');
@@ -191,10 +192,10 @@ const MusicaPublica: React.FC = () => {
     try {
       const proxyUrl = `${API_BASE_URL}/api/download?url=${encodeURIComponent(url)}&filename=${encodeURIComponent(friendly)}`;
       console.log('  - proxyUrl:', proxyUrl);
-      await triggerDownload(proxyUrl, friendly);
+      await forceDownload(proxyUrl, friendly);
     } catch (e) {
       console.log('  - Fallback para URL direta');
-      await triggerDownload(url, friendly);
+      await forceDownload(url, friendly);
     }
   };
 

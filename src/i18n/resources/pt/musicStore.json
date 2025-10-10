@@ -38,9 +38,9 @@
     "storeReset": "[reset] Resetando store para estado inicial. currentStep será definido como 0."
   },
   "validation": {
-    "fillRequiredFieldsStep1": "Por favor, preencha todos os campos obrigatórios da primeira etapa antes de gerar a letra.",
-    "fillRequiredFields": "Por favor, preencha todos os campos obrigatórios antes de gerar a prévia.",
-    "fillStyleFields": "Por favor, preencha todos os campos de estilo antes de gerar a música.",
+    "fillRequiredFieldsStep1": "Há campo(s) obrigatório(s) não preenchido(s)",
+    "fillRequiredFields": "Há campo(s) obrigatório(s) não preenchido(s)",
+    "fillStyleFields": "Há campo(s) obrigatório(s) não preenchido(s)",
     "unknownPreviewError": "Erro desconhecido ao gerar prévia"
   }
 }

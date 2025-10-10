@@ -7,7 +7,8 @@ import { PurpleFormButton } from '@/components/ui/PurpleFormButton';
 import { useMusicStore } from '@/store/musicStore';
 import { useAuthStore } from '@/store/authStore';
 import { useUiStore } from '@/store/uiStore';
-import { triggerDownload, ensureMp3Extension } from '@/utils/download';
+import { forceDownload } from '@/utils/download';
+import { buildMp3Filename } from '@/utils/filename';
 import { API_BASE_URL } from '@/config/api';
 import { AudioClip } from '@/store/musicStore';
 
@@ -153,9 +154,9 @@ const NewMusicPlayer: React.FC<NewMusicPlayerProps> = ({ clips }) => {
     const startDownload = () => {
       if (clip.audio_url) {
         const baseFilename = clip.title || 'Musica_Personalizada';
-        const friendlyFilename = ensureMp3Extension(baseFilename);
+        const friendlyFilename = buildMp3Filename(baseFilename);
         const proxyUrl = `${API_BASE_URL}/api/download?url=${encodeURIComponent(clip.audio_url)}&filename=${encodeURIComponent(friendlyFilename)}`;
-        triggerDownload(proxyUrl, friendlyFilename);
+        forceDownload(proxyUrl, friendlyFilename);
       }
     };
 

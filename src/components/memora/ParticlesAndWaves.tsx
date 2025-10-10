@@ -8,6 +8,7 @@ interface ParticlesAndWavesProps {
   reducedMotion?: boolean;
   maxParticles?: number;
   disableWaves?: boolean;
+  anchorBottom?: boolean;
 }
 
 // Noise functions adapted from the original script
@@ -415,7 +416,8 @@ const ParticlesAndWaves: React.FC<ParticlesAndWavesProps> = ({
   className = '', 
   reducedMotion, 
   maxParticles = 100,
-  disableWaves = false
+  disableWaves = false,
+  anchorBottom = false
 }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const animationRef = useRef<ParticlesAnimation | null>(null);
@@ -503,7 +505,7 @@ const ParticlesAndWaves: React.FC<ParticlesAndWavesProps> = ({
   return (
     <div 
       ref={containerRef}
-      className={`absolute inset-0 w-full h-full pointer-events-none ${className}`}
+      className={`${anchorBottom ? 'absolute inset-x-0 bottom-0' : 'absolute inset-0'} w-full h-full pointer-events-none z-0 ${className}`}
     >
       <canvas
         ref={canvasRef}

@@ -4,7 +4,6 @@ import { useTranslation } from 'react-i18next';
 import type { TFunction } from 'i18next';
 
 import StepIndicator from "@/components/StepIndicator";
-import ParticlesAndWaves from "@/components/memora/ParticlesAndWaves";
 import NewMusicPlayer from "@/components/NewMusicPlayer";
 import FeedbackPopup, { type FeedbackSubmissionPayload } from "@/components/memora/FeedbackPopup";
 import HighlightedTextarea from "@/components/HighlightedTextarea";
@@ -325,6 +324,7 @@ export default function Criar() {
   const [findText, setFindText] = useState("");
   // Animação de confetes
   const [showConfetti, setShowConfetti] = useState(false);
+  const previousClipsCountRef = React.useRef<number>(0);
   // Campo de busca para destaque
   const [replaceText, setReplaceText] = useState(""); // deprecated (mantido para compat, não exibido)
   const saveTimerRef = React.useRef<number | null>(null);
@@ -501,19 +501,34 @@ export default function Criar() {
     };
   }, []);
 
-  // useEffect para disparar animação de confetes quando a letra é gerada
-  useEffect(() => {
-    if (formData.lyrics && !isLoading && currentStep === 1) {
-      setShowConfetti(true);
-    }
-  }, [formData.lyrics, isLoading, currentStep]);
-
+  // Disparar confetes somente quando a letra for gerada automaticamente (AI),
+  // evitando disparo durante edição manual da letra.
+  // Usamos generatedLyrics para detectar geração automática.
   useEffect(() => {
     if (currentStep === 1 && generatedLyrics && previousGeneratedLyricsRef.current !== generatedLyrics) {
+      setShowConfetti(true);
       scrollToLyricsSection();
     }
     previousGeneratedLyricsRef.current = generatedLyrics;
   }, [generatedLyrics, currentStep, scrollToLyricsSection]);
+
+  // Disparar confetes quando opções de música (previews) forem carregadas
+  useEffect(() => {
+    const clips = musicStore.audioClips || [];
+    const readyCount = clips.filter((clip) => !!clip?.audio_url).length;
+    const prevCount = previousClipsCountRef.current;
+    const isOnPreviewStep = currentStep === steps.length - 1; // "Prévia"
+
+    // Removemos a dependência de !isLoading para garantir confetes
+    // também na primeira música gerada, enquanto ainda há processamento.
+    if (isOnPreviewStep && readyCount > prevCount && readyCount >= 1) {
+      setShowConfetti(true);
+    }
+
+    previousClipsCountRef.current = readyCount;
+  }, [musicStore.audioClips, currentStep]);
+
+  // (Mantido acima com confetes + scroll)
 
   useEffect(() => {
     if (currentStep === 1 && previousIsLoadingRef.current && !isLoading) {
@@ -601,6 +616,14 @@ export default function Criar() {
       // Usar a função getValidationErrors para processar os erros do Zod
       const errors = getValidationErrors(validationResult.error as any);
       setValidationErrors(errors);
+      // Exibir toast padronizado para campos obrigatórios não preenchidos
+      const ns = 'musicStore';
+      const message = currentStep === 0
+        ? i18n.t('validation.fillRequiredFieldsStep1', { ns })
+        : currentStep === 2
+        ? i18n.t('validation.fillStyleFields', { ns })
+        : i18n.t('validation.fillRequiredFields', { ns });
+      toast.error(message, { duration: 6000 });
       return;
     }
     
@@ -892,8 +915,6 @@ export default function Criar() {
 
               {formData.lyrics && !isLoading && (
                 <div className="space-y-4">
-                  {/* Animação de confetes */}
-                  <ConfettiAnimation show={showConfetti} onComplete={() => setShowConfetti(false)} />
                   
                   <LiquidGlassCard variant="primary" size="lg" className="p-6 sm:p-8">
                     {/* Cabeçalho da seção */}
@@ -1350,8 +1371,8 @@ export default function Criar() {
             </div>
             
             <StepIndicator steps={steps} currentStep={currentStep} />
-            
-            <ParticlesAndWaves className="h-24 sm:h-32 -mt-2 sm:-mt-4" maxParticles={60} reducedMotion={false} disableWaves={true} />
+            {/* Confetes em escopo global para qualquer etapa */}
+            <ConfettiAnimation show={showConfetti} onComplete={() => setShowConfetti(false)} />
             
             <div className="space-y-4 sm:space-y-6">
               <div ref={currentStep === 1 ? lyricsSectionRef : null}>
@@ -1402,9 +1423,6 @@ export default function Criar() {
           </div>
         </div>
       </main>
-      
-
-      
       {/* FeedbackPopup renderizado condicionalmente */}
       {isValidationPopupVisible && (
         <FeedbackPopup

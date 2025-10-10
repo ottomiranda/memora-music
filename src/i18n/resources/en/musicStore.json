@@ -38,9 +38,9 @@
     "storeReset": "[reset] Resetting store to initial state. currentStep will be set to 0."
   },
   "validation": {
-    "fillRequiredFieldsStep1": "Please fill all required fields from the first step before generating lyrics.",
-    "fillRequiredFields": "Please fill all required fields before generating preview.",
-    "fillStyleFields": "Please fill all style fields before generating music.",
+    "fillRequiredFieldsStep1": "There are required field(s) not filled in.",
+    "fillRequiredFields": "There are required field(s) not filled in.",
+    "fillStyleFields": "There are required field(s) not filled in.",
     "unknownPreviewError": "Unknown error generating preview"
   }
 }

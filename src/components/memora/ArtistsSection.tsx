@@ -13,7 +13,6 @@ import { getSunoAudioLinks } from "@/lib/sunoAudio";
 import { LiquidGlassButton } from "@/components/ui/LiquidGlassButton";
 import { useTranslation } from "@/i18n/hooks/useTranslation";
 import { useLocalizedRoutes } from '@/hooks/useLocalizedRoutes';
-import { useComponentCache } from "@/hooks/useComponentCache";
 
 const fallbackGenres = [
   "Pop", "R&B", "Soul", "Hip hop", "Latin Pop", "Ballad",
@@ -40,127 +39,110 @@ const hasAudio = (s: Song) => Boolean((s as any).audioUrlOption1 || (s as any).a
 const hasCover = (s: Song) => Boolean(s.imageUrl);
 
 // Cached music card component
-const MusicCard = memo(({ 
-  song, 
-  genre, 
-  active, 
-  isLoading, 
-  onPlay 
-}: { 
-  song: Song; 
-  genre: string; 
-  active: boolean; 
-  isLoading: boolean; 
-  onPlay: () => void; 
-}) => {
-  const { component } = useComponentCache(
-    `music-card-${song.id}`,
-    () => (
-      <button
-        onClick={onPlay}
-        disabled={isLoading}
-        className={`group relative aspect-square rounded-2xl overflow-hidden shadow-[0_10px_20px_rgba(0,0,0,0.25)] bg-black/30 ring-1 ring-white/10 hover:ring-white/30 transition spotlight ${isLoading ? 'opacity-80 cursor-wait' : ''}`}
-        aria-label={`Reproduzir ${song.title}`}
-      >
-        {/* Cover */}
-        <img 
-          src={song.imageUrl || ''} 
-          alt={song.title} 
-          className="absolute inset-0 w-full h-full object-cover"
-          loading="lazy"
-          decoding="async"
-        />
-        {/* Gradient overlay */}
-        <div className="absolute inset-0 bg-gradient-to-tr from-black/40 via-black/10 to-transparent" />
-        {/* Genre pill */}
-        <div className="absolute top-2 left-2 px-2.5 py-1 rounded-md text-[11px] font-semibold text-white bg-black/60 backdrop-blur text-left">
-          {genre}
-        </div>
-        {/* Play button */}
-        <div className="absolute bottom-2 right-2">
-          <div className="w-11 h-11 rounded-full bg-yellow-400/90 group-hover:bg-yellow-400 flex items-center justify-center shadow-md">
-            {isLoading ? (
-              <div className="w-4 h-4 border-2 border-black/40 border-t-black rounded-full animate-spin" />
-            ) : active ? (
-              <Pause className="w-5 h-5 text-black" />
-            ) : (
-              <Play className="w-5 h-5 text-black ml-0.5" />
-            )}
-          </div>
-        </div>
-      </button>
-    ),
-    {
-      ttl: 5 * 60 * 1000, // 5 minutes - music cards change less frequently
-      dependencies: [song.imageUrl, song.title, genre, active, isLoading],
-      enableMemoryCache: true,
-    }
-  );
-  
-  return component;
-});
+const MusicCard = memo(({
+  song,
+  genre,
+  active,
+  isLoading,
+  onPlay
+}: {
+  song: Song;
+  genre: string;
+  active: boolean;
+  isLoading: boolean;
+  onPlay: () => void;
+}) => (
+  <button
+    onClick={onPlay}
+    disabled={isLoading}
+    className={`group relative aspect-square rounded-2xl overflow-hidden shadow-[0_10px_20px_rgba(0,0,0,0.25)] bg-black/30 ring-1 ring-white/10 hover:ring-white/30 transition spotlight ${isLoading ? 'opacity-80 cursor-wait' : ''}`}
+    aria-label={`Reproduzir ${song.title}`}
+  >
+    {/* Cover */}
+    <img
+      src={song.imageUrl || ''}
+      alt={song.title}
+      className="absolute inset-0 w-full h-full object-cover"
+      loading="lazy"
+      decoding="async"
+    />
+    {/* Gradient overlay */}
+    <div className="absolute inset-0 bg-gradient-to-tr from-black/40 via-black/10 to-transparent" />
+    {/* Genre pill */}
+    <div className="absolute top-2 left-2 px-2.5 py-1 rounded-md text-[11px] font-semibold text-white bg-black/60 backdrop-blur text-left">
+      {genre}
+    </div>
+    {/* Play button */}
+    <div className="absolute bottom-2 right-2">
+      <div className="w-11 h-11 rounded-full bg-yellow-400/90 group-hover:bg-yellow-400 flex items-center justify-center shadow-md">
+        {isLoading ? (
+          <div className="w-4 h-4 border-2 border-black/40 border-t-black rounded-full animate-spin" />
+        ) : active ? (
+          <Pause className="w-5 h-5 text-black" />
+        ) : (
+          <Play className="w-5 h-5 text-black ml-0.5" />
+        )}
+      </div>
+    </div>
+  </button>
+));
 
 // Cached section header
 const ArtistsSectionHeader = memo(() => {
   const { t: tMarketing } = useTranslation('marketing');
   
-  const { component } = useComponentCache(
-    'artists-section-header',
-    () => (
-      <div className="text-center mb-16 lg:mb-20 space-y-6">
-        <SectionTitle className="text-memora-brand-purple drop-shadow leading-tight">
-          {tMarketing('artists.title').split(' ').map((word, index) => {
-            const normalized = word.toLowerCase();
-            if (['variados', 'memórias', 'varied', 'memories'].includes(normalized)) {
-              return <span key={index} className="bg-gradient-to-r from-yellow-400 via-purple-500 to-purple-600 bg-clip-text text-transparent">{word}</span>;
-            }
-            return <span key={index}>{word} </span>;
-          })}
-        </SectionTitle>
-        <SectionSubtitle className="text-white/90 max-w-3xl mx-auto leading-relaxed">
-          {tMarketing('artists.subtitle')}
-        </SectionSubtitle>
-      </div>
-    ),
-    {
-      ttl: 15 * 60 * 1000, // 15 minutes - header content is static
-      dependencies: [tMarketing('artists.title'), tMarketing('artists.subtitle')],
-      enableMemoryCache: true,
-    }
+  const titleChunks = tMarketing('artists.title').split(' ');
+
+  return (
+    <div className="text-center mb-16 lg:mb-20 space-y-6">
+      <SectionTitle className="text-memora-brand-purple drop-shadow leading-tight">
+        {titleChunks.map((word, index) => {
+          const normalized = word.toLowerCase();
+          if (['variados', 'memórias', 'varied', 'memories'].includes(normalized)) {
+            return (
+              <span
+                key={`${word}-${index}`}
+                className="bg-gradient-to-r from-yellow-400 via-purple-500 to-purple-600 bg-clip-text text-transparent"
+              >
+                {word}
+                {' '}
+              </span>
+            );
+          }
+          return (
+            <span key={`${word}-${index}`} className="inline-block">
+              {word}
+              {' '}
+            </span>
+          );
+        })}
+      </SectionTitle>
+      <SectionSubtitle className="text-white/90 max-w-3xl mx-auto leading-relaxed">
+        {tMarketing('artists.subtitle')}
+      </SectionSubtitle>
+    </div>
   );
-  
-  return component;
 });
 
 // Cached CTA section
 const ArtistsCTASection = memo(() => {
   const { t: tMarketing } = useTranslation('marketing');
   
-  const { component } = useComponentCache(
-    'artists-cta-section',
-    () => (
-      <div className="relative text-center">
-        <div className="inline-flex flex-col items-center gap-8 bg-gradient-to-br from-purple-900/30 via-indigo-900/25 to-pink-900/20 backdrop-blur-xl border border-white/20 rounded-3xl px-12 py-12 lg:px-16 lg:py-14 shadow-2xl shadow-purple-500/10 hover:shadow-purple-500/20 transition-all duration-300 max-w-2xl mx-auto">
-          <div className="text-center space-y-4">
-            <h3 className="text-white text-xl sm:text-2xl lg:text-3xl font-bold font-heading leading-tight">
-              {tMarketing('artists.cta.title')}
-            </h3>
-            <p className="text-white/80 text-lg sm:text-xl font-medium leading-relaxed">
-              {tMarketing('artists.cta.subtitle')}
-            </p>
-          </div>
-          <ArtistsCTAButton />
+  return (
+    <div className="relative text-center">
+      <div className="inline-flex flex-col items-center gap-8 bg-gradient-to-br from-purple-900/30 via-indigo-900/25 to-pink-900/20 backdrop-blur-xl border border-white/20 rounded-3xl px-12 py-12 lg:px-16 lg:py-14 shadow-2xl shadow-purple-500/10 hover:shadow-purple-500/20 transition-all duration-300 max-w-2xl mx-auto">
+        <div className="text-center space-y-4">
+          <h3 className="text-white text-xl sm:text-2xl lg:text-3xl font-bold font-heading leading-tight">
+            {tMarketing('artists.cta.title')}
+          </h3>
+          <p className="text-white/80 text-lg sm:text-xl font-medium leading-relaxed">
+            {tMarketing('artists.cta.subtitle')}
+          </p>
         </div>
+        <ArtistsCTAButton />
       </div>
-    ),
-    {
-      ttl: 15 * 60 * 1000, // 15 minutes - CTA content is static
-      dependencies: [tMarketing('artists.cta.title'), tMarketing('artists.cta.subtitle')],
-      enableMemoryCache: true,
-    }
+    </div>
   );
-  
-  return component;
 });
 
 const ArtistsSection: React.FC = () => {
@@ -291,41 +273,64 @@ const ArtistsSection: React.FC = () => {
 
   const sectionBgStyle = useMemo(() => (
     bgUrl
-      ? { backgroundImage: `url(${bgUrl})` }
-      : undefined
+      ? { backgroundImage: `url(${bgUrl})`, willChange: 'opacity', transform: 'translateZ(0)', backfaceVisibility: 'hidden' }
+      : { willChange: 'opacity', transform: 'translateZ(0)', backfaceVisibility: 'hidden' }
   ), [bgUrl]);
 
   return (
-    <section id="artistas" className="py-24 lg:py-32 relative overflow-hidden">
+    <section id="artistas" className="py-24 lg:py-32 relative overflow-hidden isolate">
       
       {/* Dynamic cover background */}
       <div
-        className="absolute inset-0 bg-cover bg-center opacity-20 blur-lg transition-[background-image] duration-500"
+        className="absolute inset-0 bg-cover bg-center opacity-20 blur-md transition-opacity duration-500 z-0 pointer-events-none"
         style={sectionBgStyle}
         aria-hidden="true"
       />
 
-      <div className="relative container mx-auto px-6 lg:px-8">
+      <div className="relative z-10 container mx-auto px-6 lg:px-8">
         {/* Cached Header */}
         <ArtistsSectionHeader />
 
         {/* Grid 2 linhas x 6 colunas (12 itens) - Cached Music Cards */}
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-6 sm:gap-8 lg:gap-6 mb-20 lg:mb-24">
-          {items.slice(0, 12).map((song, idx) => {
-            const genre = extractChosenStyle(song.genre) || fallbackGenres[idx % fallbackGenres.length];
-            const active = currentId === song.id && isPlaying;
-            const isLoading = loadingSongId === song.id;
-            return (
-              <MusicCard
-                key={song.id}
-                song={song}
-                genre={genre}
-                active={active}
-                isLoading={isLoading}
-                onPlay={() => handlePlay(song)}
-              />
-            );
-          })}
+          {items.length === 0 ? (
+            // Fallback quando não há músicas carregadas
+            Array.from({ length: 12 }).map((_, idx) => (
+              <div
+                key={`fallback-${idx}`}
+                className="group relative aspect-square rounded-2xl overflow-hidden shadow-[0_10px_20px_rgba(0,0,0,0.25)] bg-gradient-to-br from-purple-900/30 via-indigo-900/25 to-pink-900/20 ring-1 ring-white/10 hover:ring-white/30 transition spotlight animate-pulse"
+              >
+                <div className="absolute inset-0 bg-gradient-to-tr from-black/40 via-black/10 to-transparent" />
+                <div className="absolute top-2 left-2 px-2.5 py-1 rounded-md text-[11px] font-semibold text-white bg-black/60 backdrop-blur">
+                  {fallbackGenres[idx % fallbackGenres.length]}
+                </div>
+                <div className="absolute bottom-2 right-2">
+                  <div className="w-11 h-11 rounded-full bg-yellow-400/50 flex items-center justify-center shadow-md">
+                    <Play className="w-5 h-5 text-black/50 ml-0.5" />
+                  </div>
+                </div>
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <div className="text-white/60 text-sm font-medium">Carregando...</div>
+                </div>
+              </div>
+            ))
+          ) : (
+            items.slice(0, 12).map((song, idx) => {
+              const genre = extractChosenStyle(song.genre) || fallbackGenres[idx % fallbackGenres.length];
+              const active = currentId === song.id && isPlaying;
+              const isLoading = loadingSongId === song.id;
+              return (
+                <MusicCard
+                  key={song.id}
+                  song={song}
+                  genre={genre}
+                  active={active}
+                  isLoading={isLoading}
+                  onPlay={() => handlePlay(song)}
+                />
+              );
+            })
+          )}
         </div>
 
         {/* Cached CTA */}

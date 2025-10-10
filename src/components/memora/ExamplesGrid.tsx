@@ -17,7 +17,7 @@ import { useMusicStore } from "@/store/musicStore";
 import { useNavigate } from "react-router-dom";
 import { useAuthStore } from "@/store/authStore";
 import { useTranslation } from "@/i18n/hooks/useTranslation";
-import { LazyWrapper, LazyImage } from '@/hooks/useLazyLoading';
+import { LazyWrapper } from '@/hooks/useLazyLoading';
 import { ExampleCardSkeleton } from '@/components/ui/skeleton';
 
 
@@ -58,7 +58,11 @@ const ExamplesGrid = () => {
     const httpOnly = urls.find((u) => /^https?:\/\//.test(u));
     return httpOnly || null;
   };
-  const hasAudio = (s: Song) => Boolean(chooseAudioUrl(s));
+  const hasAudio = (s: Song) => {
+    const hasLocal = Boolean(chooseAudioUrl(s));
+    const hasSuno = Boolean((s as any).sunoTaskId || (typeof s.id === 'string' && s.id.startsWith('suno_')));
+    return hasLocal || hasSuno;
+  };
   const hasCover = (s: Song) => Boolean((s as any).imageUrl);
 
   const matchByKeywords = (song: Song, words: string[]) => {
@@ -102,10 +106,11 @@ const ExamplesGrid = () => {
         const getNextUnique = (cands: Song[]): Song | null => {
           for (const s of cands) {
             const url = chooseAudioUrl(s);
-            if (!url) continue;
-            if (usedIds.has(s.id) || usedUrls.has(url)) continue;
+            const canPlay = Boolean(url || (s as any).sunoTaskId || (typeof s.id === 'string' && s.id.startsWith('suno_')));
+            if (!canPlay) continue;
+            if (usedIds.has(s.id) || (url && usedUrls.has(url))) continue;
             usedIds.add(s.id);
-            usedUrls.add(url);
+            if (url) usedUrls.add(url);
             return s;
           }
           return null;
@@ -244,17 +249,14 @@ const ExamplesGrid = () => {
         </div>
 
         {/* Examples Slider (Swiper Coverflow) */}
-        <LazyWrapper
-          fallback={<ExampleCardSkeleton />}
-          className="min-h-[300px] xs:min-h-[350px] sm:min-h-[400px]"
-        >
+        <div className="min-h-[300px] xs:min-h-[350px] sm:min-h-[400px]">
           <ExamplesSwiper
             examples={examples}
             playingId={playingId}
             onTogglePlay={handlePlayPause}
             linked={linked}
           />
-        </LazyWrapper>
+        </div>
 
         {/* Bottom CTA */}
         <div className="text-center mt-12 xs:mt-14 sm:mt-16">
@@ -439,10 +441,10 @@ function ExamplesSwiper({
             <SwiperSlide key={example.id} className="!w-[85%] xs:!w-[82%] sm:!w-[78%] md:!w-[66%] lg:!w-[58%] xl:!w-[52%]">
               <div className="relative rounded-[22px] overflow-hidden shadow-2xl ring-1 ring-white/20">
                 <div className="relative aspect-[1.4/1] xs:aspect-[1.5/1] sm:aspect-[1.62/1] md:aspect-[1.75/1] lg:aspect-[1.85/1] overflow-hidden">
-                  <LazyImage
+                  <img
                     src={example.image}
                     alt={`Exemplo de música para ${example.title}`}
-                    className="w-full h-full object-cover object-center transition-opacity duration-300"
+                    className="w-full h-full object-cover object-center"
                     loading="lazy"
                     decoding="async"
                   />

@@ -3,7 +3,8 @@ import { Download } from 'lucide-react';
 import { useMusicStore } from '@/store/musicStore';
 import { useAuthStore } from '@/store/authStore';
 import { useUiStore } from '@/store/uiStore';
-import { triggerDownload, ensureMp3Extension } from '@/utils/download';
+import { forceDownload } from '@/utils/download';
+import { buildMp3Filename } from '@/utils/filename';
 import { API_BASE_URL } from '@/config/api';
 import { AudioClip } from '@/store/musicStore';
 
@@ -83,7 +84,7 @@ const MusicPreview: React.FC<MusicPreviewProps> = ({ clip, index }) => {
 
   const getFileName = () => {
     const baseName = clip.title || `Musica_Personalizada_${index + 1}`;
-    return ensureMp3Extension(baseName);
+    return buildMp3Filename(baseName);
   };
 
   const handleDownloadClick = (e: React.MouseEvent) => {
@@ -97,8 +98,8 @@ const MusicPreview: React.FC<MusicPreviewProps> = ({ clip, index }) => {
         // Constrói a URL do nosso próprio backend para proxy
         const proxyUrl = `${API_BASE_URL}/api/download?url=${encodeURIComponent(clip.audio_url)}&filename=${encodeURIComponent(friendlyFilename)}`;
         
-        // Chama a função de download com a nossa URL de proxy
-        triggerDownload(proxyUrl, friendlyFilename);
+        // Chama a função de download com a nossa URL de proxy usando fetch+Blob
+        forceDownload(proxyUrl, friendlyFilename);
       }
     };
 

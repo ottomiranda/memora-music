@@ -2,6 +2,7 @@ import { Heart, Instagram, Facebook, Youtube, ArrowUp } from "lucide-react";
 import { useState, useEffect, useCallback, memo } from "react";
 import { useLocation, useNavigate, Link } from "react-router-dom";
 import { useTranslation } from 'react-i18next';
+import ParticlesAndWaves from "@/components/memora/ParticlesAndWaves";
 import FeedbackPopup from "@/components/memora/FeedbackPopup";
 import LanguageSelector from "@/components/LanguageSelector";
 import { AccessibilityMenu } from "@/components/accessibility/AccessibilityMenu";
@@ -142,7 +143,8 @@ const Footer = () => {
   const currentYear = new Date().getFullYear();
   const location = useLocation();
   const navigate = useNavigate();
-  const { buildPath } = useLocalizedRoutes();
+  const { paths, buildPath } = useLocalizedRoutes();
+  const isCreatePage = location.pathname === paths.create;
 
   const [isFeedbackOpen, setFeedbackOpen] = useState(false);
 
@@ -208,8 +210,8 @@ const Footer = () => {
   }, [location.pathname, location.state, navigate, performScrollToSection]);
 
   return (
-    <footer className="py-12 xs:py-16 text-foreground">
-      <div className="container mx-auto px-4 xs:px-6">
+    <footer className="relative py-12 xs:py-16 text-foreground">
+      <div className="container relative z-10 mx-auto px-4 xs:px-6">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 xs:gap-8 mb-8">
           {/* Logo and Description */}
           <div className="sm:col-span-2 lg:col-span-2">
@@ -283,6 +285,14 @@ const Footer = () => {
         {/* Feedback Modal */}
         <FeedbackPopup isOpen={isFeedbackOpen} onClose={() => setFeedbackOpen(false)} />
       </div>
+      {isCreatePage && (
+        <ParticlesAndWaves
+          anchorBottom
+          className="h-full min-h-[36rem] sm:min-h-[44rem] lg:min-h-[52rem]"
+          maxParticles={60}
+          disableWaves={true}
+        />
+      )}
     </footer>
   );
 };

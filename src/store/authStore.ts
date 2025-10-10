@@ -7,6 +7,14 @@ import { LoginResponse, SignupResponse, SignupData, MigrationResult } from '../t
 import i18n from '../i18n';
 import { useUiStore } from './uiStore';
 
+const MIGRATION_EVENT_NAME = 'guest-data-migrated';
+
+const notifyGuestMigrationSuccess = (migratedCount: number = 0) => {
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(new CustomEvent(MIGRATION_EVENT_NAME, { detail: { migratedCount } }));
+  }
+};
+
 /**
  * Função para migrar dados do convidado para o usuário logado
  * Agora inclui chamada automática da função merge_guest_into_user
@@ -26,6 +34,9 @@ const migrateGuestData = async (guestId: string): Promise<MigrationResult | null
     const result = await migrationApi.migrateGuestData(guestId);
     
     console.log(i18n.t('migration.completedSuccessfully', { ns: 'authStore' }), result);
+    if (result && (result.success === true || result.data?.migratedCount >= 0)) {
+      notifyGuestMigrationSuccess(result.data?.migratedCount ?? 0);
+    }
     return result;
   } catch (error) {
     console.error(i18n.t('migration.errorMigratingData', { ns: 'authStore' }), error);
@@ -306,6 +317,27 @@ export const useAuthStore = create<AuthState>()(
               isLoggedIn: true, 
               error: null 
             });
+
+            // Migrar dados do convidado para logins via OAuth (ex.: Google)
+            const guestId = getCurrentGuestId();
+            const deviceId = localStorage.getItem('deviceId');
+            if ((guestId || deviceId) && userData.id) {
+              console.log('[AuthStore] Iniciando migração automática após syncSession');
+              try {
+                const migrationResult = await migrateGuestData(guestId || userData.id);
+                if (migrationResult && (migrationResult.success === true || migrationResult.data?.migratedCount >= 0)) {
+                  console.log('[AuthStore] Migração concluída durante syncSession:', migrationResult);
+                  if (guestId) {
+                    clearGuestId();
+                    console.log(i18n.t('migration.guestIdRemoved', { ns: 'authStore' }));
+                  }
+                } else {
+                  console.warn('[AuthStore] Migração não concluída durante syncSession. GuestId será mantido para nova tentativa.');
+                }
+              } catch (migrationError) {
+                console.warn('[AuthStore] Migração falhou durante syncSession. GuestId será mantido:', migrationError);
+              }
+            }
 
             console.log('[AuthStore] Sessão sincronizada:', userData);
             return true;
