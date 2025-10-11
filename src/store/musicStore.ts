@@ -519,10 +519,9 @@ export const useMusicStore = create<MusicStore>()(
     try {
       console.log('[DEBUG] Verificando status para taskId:', currentTaskId);
       
-      type CheckMusicStatusResponse = {
-        success: boolean;
-        taskId: string;
-        status: 'PROCESSING' | 'COMPLETED' | 'FAILED' | 'PARTIAL' | string;
+      type CheckMusicStatusPayload = {
+        taskId?: string;
+        status?: 'PROCESSING' | 'COMPLETED' | 'FAILED' | 'PARTIAL' | string;
         audioClips?: AudioClip[];
         completedClips?: number;
         totalExpected?: number;
@@ -531,24 +530,58 @@ export const useMusicStore = create<MusicStore>()(
         metadata?: Record<string, unknown>;
       };
 
-      const result = await apiRequest<CheckMusicStatusResponse>(`${API_ENDPOINTS.CHECK_MUSIC_STATUS}/${currentTaskId}`, {
+      type CheckMusicStatusEnvelope = CheckMusicStatusPayload & {
+        success?: boolean;
+        data?: CheckMusicStatusPayload | null;
+        error?: string;
+      };
+
+      const result = await apiRequest<CheckMusicStatusEnvelope>(`${API_ENDPOINTS.CHECK_MUSIC_STATUS}/${currentTaskId}`, {
         method: 'GET',
       });
       
       console.log('[DEBUG STATUS CHECK] Resposta recebida:', result);
       
-      if (!result || typeof result !== 'object' || result.success !== true) {
-        console.error('Resposta de status inválida ou sem sucesso.', result);
+      if (!result || typeof result !== 'object') {
+        console.error('Resposta de status inválida ou não processável.', result);
+        return;
+      }
+
+      const successFlag = 'success' in result ? result.success !== false : true;
+      const payload: CheckMusicStatusPayload | undefined =
+        result.data && typeof result.data === 'object'
+          ? result.data
+          : result;
+
+      if (!payload || typeof payload !== 'object') {
+        console.error('Payload de status ausente ou inválido.', result);
+        return;
+      }
+
+      if (!successFlag) {
+        const errorMessage = result.error || payload.error || i18n.t('errors.generationFailed', { ns: 'musicStore' });
+        console.error('Resposta de status retornou sucesso = false.', result);
+        get().stopPolling();
+        set({
+          isLoading: false,
+          isPreviewLoading: false,
+          isPolling: false,
+          musicGenerationStatus: 'failed',
+          currentTaskId: null,
+          error: errorMessage,
+        });
+        toast.error(errorMessage);
         return;
       }
       
-      const clips = Array.isArray(result.audioClips) ? result.audioClips : [];
-      const completeCount = typeof result.completedClips === 'number' ? result.completedClips : 0;
-      const totalExpected = typeof result.totalExpected === 'number'
-        ? result.totalExpected
+      const clips = Array.isArray(payload.audioClips) ? payload.audioClips : [];
+      const completeCount = typeof payload.completedClips === 'number' ? payload.completedClips : 0;
+      const totalExpected = typeof payload.totalExpected === 'number'
+        ? payload.totalExpected
         : get().totalExpected || 0;
-      const taskStatus = result.status?.toUpperCase?.() ?? 'PROCESSING';
-      const lyricsFromTask = typeof result.lyrics === 'string' ? result.lyrics : null;
+      const taskStatus = payload.status?.toUpperCase?.() ?? 'PROCESSING';
+      const lyricsFromTask = typeof payload.lyrics === 'string' ? payload.lyrics : null;
+      const errorMessage = payload.error || result.error;
       
       console.log(`[DEBUG] Clipes completos: ${completeCount}/${totalExpected}`);
       
@@ -579,10 +612,10 @@ export const useMusicStore = create<MusicStore>()(
           isPolling: false,
           musicGenerationStatus: 'failed',
           currentTaskId: null,
-          error: result.error || i18n.t('errors.generationFailed', { ns: 'musicStore' }),
+          error: errorMessage || i18n.t('errors.generationFailed', { ns: 'musicStore' }),
         });
-        if (result.error) {
-          toast.error(result.error);
+        if (errorMessage) {
+          toast.error(errorMessage);
         }
         return;
       }
@@ -634,7 +667,7 @@ export const useMusicStore = create<MusicStore>()(
       await get().checkMusicStatus();
     }, 7000); // Verifica a cada 7 segundos
     
-    set({ pollingInterval: newInterval });
+    set({ pollingInterval: newInterval, isPolling: true });
   },
 
   // Para o loop
@@ -644,8 +677,8 @@ export const useMusicStore = create<MusicStore>()(
     if (currentInterval) {
       console.log('[DEBUG] Parando polling...');
       clearInterval(currentInterval);
-      set({ pollingInterval: null });
     }
+    set({ pollingInterval: null, isPolling: false });
   },
 
   // Funções para fluxo de validação MVP
