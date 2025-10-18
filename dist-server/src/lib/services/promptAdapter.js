@@ -107,7 +107,7 @@ export class PromptAdapter {
      * @returns Idioma no formato do adaptador (pt-BR, en-US)
      */
     static mapI18nLanguage(i18nLanguage) {
-        return LANGUAGE_MAPPING[i18nLanguage] || 'pt-BR';
+        return LANGUAGE_MAPPING[i18nLanguage] || 'en-US';
     }
     /**
      * Obtém template de prompt para um idioma específico
@@ -115,7 +115,7 @@ export class PromptAdapter {
      * @returns Template de prompts para o idioma
      */
     static getTemplate(language) {
-        return PROMPT_TEMPLATES[language] || PROMPT_TEMPLATES['pt-BR'];
+        return PROMPT_TEMPLATES[language] || PROMPT_TEMPLATES['en-US'];
     }
     /**
      * Verifica se um idioma é suportado

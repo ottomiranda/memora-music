@@ -130,14 +130,13 @@ router.get('/creation-status', optionalAuthMiddleware, async (req, res) => {
             const ttlDays = Number(process.env.IP_FALLBACK_TTL_DAYS || '7');
             const cutoff = new Date(Date.now() - ttlDays * 24 * 60 * 60 * 1000).toISOString();
             console.log('[DEBUG] Fallback por IP (prioridade 3):', { clientIp, ttlDays, cutoff });
-            const { data, error } = await supabase
-                .from('user_creations')
-                .select('freesongsused')
-                .eq('last_used_ip', clientIp)
-                .is('user_id', null)
-                .gte('created_at', cutoff)
-                .order('created_at', { ascending: false })
-                .maybeSingle();
+        const { data, error } = await supabase
+            .from('user_creations')
+            .select('freesongsused')
+            .eq('last_used_ip', clientIp)
+            .gte('created_at', cutoff)
+            .order('created_at', { ascending: false })
+            .maybeSingle();
             recordIpFallback(!!data, ttlDays);
             if (data) {
                 foundUser = { freesongsused: data.freesongsused || 0, device_id: null };
@@ -162,11 +161,11 @@ router.get('/creation-status', optionalAuthMiddleware, async (req, res) => {
         if (!foundUser) {
             console.log('[DEBUG] Nenhum usuário encontrado - novo convidado');
             const premiumDeviceCandidates = [deviceId, guestId];
-            const hasPremiumAccess = await hasUnlimitedAccess(supabase, {
+            const premiumAccess = await hasUnlimitedAccess(supabase, {
                 userId,
                 deviceIds: premiumDeviceCandidates,
             });
-            if (hasPremiumAccess) {
+            if (premiumAccess.hasAccess) {
                 console.log('[PAYWALL] Plano ativo detectado para convidado sem registro - acesso ilimitado liberado');
                 res.status(200).json({
                     success: true,
@@ -196,11 +195,11 @@ router.get('/creation-status', optionalAuthMiddleware, async (req, res) => {
             foundUser.device_id ?? null,
             ...usageDeviceIds,
         ]);
-        const hasPremiumAccess = await hasUnlimitedAccess(supabase, {
+        const premiumAccess = await hasUnlimitedAccess(supabase, {
             userId,
             deviceIds: premiumDeviceCandidates,
         });
-        if (hasPremiumAccess) {
+        if (premiumAccess.hasAccess) {
             console.log('[PAYWALL] Plano ativo detectado - ignorando limite de criações gratuitas');
             res.status(200).json({
                 success: true,

@@ -6,10 +6,10 @@
  * 1. Gere um accessToken no console do Supabase:
  *    - Vá para Settings > API
  *    - Copie o service_role key (este é seu accessToken)
- * 2. Execute: node scripts/supabase-manual-migration.js <migration-file> <access-token>
+ * 2. Execute: node scripts/supabase-manual-migration.cjs <migration-file> [access-token]
  * 
  * Exemplo:
- * node scripts/supabase-manual-migration.js supabase/migrations/010_add_device_id_column.sql your-service-role-key
+ * node scripts/supabase-manual-migration.cjs supabase/migrations/010_add_device_id_column.sql your-service-role-key
  */
 
 const fs = require('fs');
@@ -32,7 +32,7 @@ function executeSQL(sql, accessToken) {
     const url = new URL('/rest/v1/rpc/exec_sql', SUPABASE_URL);
     
     const postData = JSON.stringify({
-      sql: sql
+      query: sql
     });
 
     const options = {
@@ -100,10 +100,10 @@ async function applyMigration(migrationFile, accessToken) {
 }
 
 // Verificar argumentos da linha de comando
-if (process.argv.length < 4) {
-  console.log('📖 Uso: node scripts/supabase-manual-migration.js <migration-file> <access-token>');
+if (process.argv.length < 3) {
+  console.log('📖 Uso: node scripts/supabase-manual-migration.cjs <migration-file> [access-token]');
   console.log('\n📝 Exemplo:');
-  console.log('node scripts/supabase-manual-migration.js supabase/migrations/010_add_device_id_column.sql your-service-role-key');
+  console.log('node scripts/supabase-manual-migration.cjs supabase/migrations/010_add_device_id_column.sql your-service-role-key');
   console.log('\n🔑 Como obter o accessToken:');
   console.log('1. Acesse o console do Supabase');
   console.log('2. Vá para Settings > API');
@@ -112,7 +112,12 @@ if (process.argv.length < 4) {
 }
 
 const migrationFile = process.argv[2];
-const accessToken = process.argv[3];
+let accessToken = process.argv[3] || process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+if (!accessToken) {
+  console.error('❌ accessToken ausente. Passe via argumento ou defina SUPABASE_SERVICE_ROLE_KEY no .env');
+  process.exit(1);
+}
 
 // Executar migração
 applyMigration(migrationFile, accessToken);

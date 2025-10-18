@@ -165,7 +165,6 @@ router.get('/creation-status', optionalAuthMiddleware, async (req: Request, res:
         .from('user_creations')
         .select('freesongsused')
         .eq('last_used_ip', clientIp)
-        .is('user_id', null)
         .gte('created_at', cutoff)
         .order('created_at', { ascending: false })
         .maybeSingle();
@@ -197,12 +196,12 @@ router.get('/creation-status', optionalAuthMiddleware, async (req: Request, res:
     if (!foundUser) {
       console.log('[DEBUG] Nenhum usuário encontrado - novo convidado');
       const premiumDeviceCandidates = [deviceId, guestId];
-      const hasPremiumAccess = await hasUnlimitedAccess(supabase, {
+      const premiumAccess = await hasUnlimitedAccess(supabase, {
         userId,
         deviceIds: premiumDeviceCandidates,
       });
 
-      if (hasPremiumAccess) {
+      if (premiumAccess.hasAccess) {
         console.log('[PAYWALL] Plano ativo detectado para convidado sem registro - acesso ilimitado liberado');
         res.status(200).json({
           success: true,
@@ -235,12 +234,12 @@ router.get('/creation-status', optionalAuthMiddleware, async (req: Request, res:
       foundUser.device_id ?? null,
       ...usageDeviceIds,
     ]);
-    const hasPremiumAccess = await hasUnlimitedAccess(supabase, {
+    const premiumAccess = await hasUnlimitedAccess(supabase, {
       userId,
       deviceIds: premiumDeviceCandidates,
     });
 
-    if (hasPremiumAccess) {
+    if (premiumAccess.hasAccess) {
       console.log('[PAYWALL] Plano ativo detectado - ignorando limite de criações gratuitas');
       res.status(200).json({
         success: true,

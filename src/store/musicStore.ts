@@ -249,9 +249,9 @@ export const useMusicStore = create<MusicStore>()(
     set({ isLoading: true, error: null });
     
     try {
-      const result = await apiRequest(API_ENDPOINTS.GENERATE_PREVIEW, {
-        method: 'POST',
-        body: payload,
+      const result: any = await apiRequest(API_ENDPOINTS.GENERATE_PREVIEW, {
+      method: 'POST',
+      body: payload,
       });
       
       console.log('📥 Response JSON:', JSON.stringify(result, null, 2));
@@ -282,10 +282,28 @@ export const useMusicStore = create<MusicStore>()(
     } catch (error) {
       console.error(i18n.t('errors.generateLyricsCatch', { ns: 'musicStore' }), error);
       console.error('❌ Stack trace:', error instanceof Error ? error.stack : 'N/A');
-      const errorMsg = error instanceof Error ? 
-        error.message : 
-        i18n.t('errors.connectionError', { ns: 'musicStore' });
-      set({ error: errorMsg });
+
+      const status = error && typeof error === 'object' && 'status' in error
+        ? (error as { status?: number }).status
+        : undefined;
+      const errorData = error && typeof error === 'object' && 'data' in error
+        ? (error as { data?: any }).data
+        : undefined;
+
+      if (status === 402 && (errorData?.error === 'PAYMENT_REQUIRED' || errorData?.requiresPayment)) {
+        const uiStore = useUiStore.getState();
+        const paywallMessage = i18n.t('errors.paymentRequired', { ns: 'musicStore' });
+        set({ error: paywallMessage });
+        uiStore.blockCreationFlow();
+        uiStore.showPaymentPopup();
+        toast.error(paywallMessage);
+      } else {
+        const errorMsg = error instanceof Error ? 
+          error.message : 
+          i18n.t('errors.connectionError', { ns: 'musicStore' });
+        set({ error: errorMsg });
+        toast.error(errorMsg);
+      }
     } finally {
       // Garante que o loading seja sempre resetado
       set({ isLoading: false });
@@ -339,6 +357,27 @@ export const useMusicStore = create<MusicStore>()(
       }
     } catch (error) {
       console.error(i18n.t('errors.generatePreview', { ns: 'musicStore' }), error);
+
+      const status = error && typeof error === 'object' && 'status' in error
+        ? (error as { status?: number }).status
+        : undefined;
+      const errorData = error && typeof error === 'object' && 'data' in error
+        ? (error as { data?: any }).data
+        : undefined;
+
+      if (status === 402 && (errorData?.error === 'PAYMENT_REQUIRED' || errorData?.requiresPayment)) {
+        const uiStore = useUiStore.getState();
+        const paywallMessage = i18n.t('errors.paymentRequired', { ns: 'musicStore' });
+        set({
+          error: paywallMessage,
+          isPreviewLoading: false,
+        });
+        uiStore.blockCreationFlow();
+        uiStore.showPaymentPopup();
+        toast.error(paywallMessage);
+        return;
+      }
+
       const errorMsg = i18n.t('errors.connectionError', { ns: 'musicStore' });
       set({
         error: errorMsg,
@@ -409,7 +448,7 @@ export const useMusicStore = create<MusicStore>()(
     });
     
     try {
-      const result = await apiRequest(API_ENDPOINTS.GENERATE_PREVIEW, {
+      const result: any = await apiRequest(API_ENDPOINTS.GENERATE_PREVIEW, {
         method: 'POST',
         body: payload,
       });
@@ -477,7 +516,8 @@ export const useMusicStore = create<MusicStore>()(
         ? (error as { data?: any }).data
         : undefined;
 
-      if (status === 402 && errorData?.error === 'PAYMENT_REQUIRED') {
+      if (status === 402 && (errorData?.error === 'PAYMENT_REQUIRED' || errorData?.requiresPayment)) {
+        const uiStore = useUiStore.getState();
         const paywallMessage = i18n.t('errors.paymentRequired', { ns: 'musicStore' });
 
         set({
@@ -487,6 +527,8 @@ export const useMusicStore = create<MusicStore>()(
           musicGenerationStatus: 'failed',
         });
 
+        uiStore.blockCreationFlow();
+        uiStore.showPaymentPopup();
         toast.error(paywallMessage);
         return;
       }

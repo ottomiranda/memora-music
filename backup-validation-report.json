@@ -1,0 +1,35 @@
+{
+  "tablesStatus": {
+    "songs": {
+      "status": "ok",
+      "count": 93
+    },
+    "user_creations": {
+      "status": "ok",
+      "count": 0
+    },
+    "stripe_transactions": {
+      "status": "ok",
+      "count": 0
+    }
+  },
+  "dataIntegrity": {
+    "songs_structure": "ok",
+    "stripe_structure": "ok",
+    "migration_027_applied": true,
+    "rls_policies": "warning",
+    "consume_paid_credit_function": true
+  },
+  "functionalTests": {
+    "insert": "success",
+    "read": "success",
+    "cleanup": "success"
+  },
+  "summary": {
+    "success": true,
+    "issues": [
+      "Tabela user_creations está vazia",
+      "Tabela stripe_transactions está vazia"
+    ]
+  }
+}

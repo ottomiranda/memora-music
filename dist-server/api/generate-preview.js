@@ -533,7 +533,7 @@ export default async function handler(req, res) {
                 // Preparar parâmetros para chamada da API oficial da Suno
                 const style = `${formData.genre}, ${formData.mood}, ${formData.vocalPreference || 'male'} vocals`;
                 const generatePayload = {
-                    prompt: createSunoPrompt(formData, lyrics),
+                    prompt: lyrics,
                     style: style,
                     title: formData.songTitle,
                     customMode: true,
@@ -542,7 +542,7 @@ export default async function handler(req, res) {
                     callBackUrl: `${process.env.FRONTEND_URL || 'http://localhost:5173'}/api/suno-callback` // URL de callback obrigatória
                 };
                 console.log('[DEBUG SUNO] Payload para API oficial:');
-                console.log('  - prompt:', createSunoPrompt(formData, lyrics).substring(0, 100) + '...');
+                console.log('  - prompt:', lyrics.substring(0, 100) + '...');
                 console.log('  - style:', style);
                 console.log('  - title:', formData.songTitle);
                 console.log('  - customMode:', generatePayload.customMode);

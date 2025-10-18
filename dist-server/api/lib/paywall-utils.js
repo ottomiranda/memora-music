@@ -13,8 +13,6 @@ export const normalizeIds = (ids) => {
 export const hasUnlimitedAccess = async (supabase, options) => {
     const { userId, deviceIds = [] } = options;
     const normalizedDeviceIds = normalizeIds(deviceIds);
-    // Verificar se há pagamentos bem-sucedidos recentes (últimas 24 horas)
-    const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
     try {
         // Construir filtros para buscar transações do usuário ou dispositivo
         const orFilters = [];
@@ -24,34 +22,68 @@ export const hasUnlimitedAccess = async (supabase, options) => {
         normalizedDeviceIds.forEach(deviceId => {
             if (deviceId) {
                 orFilters.push(`metadata->>deviceId.eq.${deviceId}`);
+                orFilters.push(`stripe_payment_intent_data->metadata->>deviceId.eq.${deviceId}`);
             }
         });
-        if (orFilters.length === 0) {
-            return false;
+        if (userId && userId !== 'guest') {
+            orFilters.push(`stripe_payment_intent_data->metadata->>userId.eq.${userId}`);
         }
-        // Buscar transações bem-sucedidas recentes
-        const { data: recentPayments, error } = await supabase
+        if (orFilters.length === 0) {
+            return { hasAccess: false, transaction: null };
+        }
+        const { data: availablePayments, error } = await supabase
             .from('stripe_transactions')
-            .select('payment_intent_id, status, created_at, user_id, metadata')
+            .select('id, payment_intent_id, available_credits, credit_consumed_at, metadata')
             .eq('status', 'succeeded')
-            .gte('created_at', twentyFourHoursAgo)
+            .gt('available_credits', 0)
+            .is('credit_consumed_at', null)
             .or(orFilters.join(','))
             .order('created_at', { ascending: false })
             .limit(1);
         if (error) {
-            console.error('[PAYWALL] Erro ao verificar pagamentos recentes:', error);
-            return false;
+            console.error('[PAYWALL] Erro ao verificar créditos pagos disponíveis:', error);
+            return { hasAccess: false, transaction: null };
         }
-        // Se encontrou pagamento recente bem-sucedido, liberar acesso
-        if (recentPayments && recentPayments.length > 0) {
-            console.log('[PAYWALL] Acesso liberado por pagamento recente:', recentPayments[0].payment_intent_id);
-            return true;
+        const record = availablePayments?.[0];
+        if (!record) {
+            return { hasAccess: false, transaction: null };
         }
-        return false;
+        return {
+            hasAccess: true,
+            transaction: {
+                id: record.id,
+                payment_intent_id: record.payment_intent_id,
+                available_credits: record.available_credits ?? 0,
+            }
+        };
     }
     catch (error) {
         console.error('[PAYWALL] Exceção ao verificar acesso premium:', error);
-        return false;
+        return { hasAccess: false, transaction: null };
+    }
+};
+export const consumePaidCredit = async (supabase, transactionId) => {
+    try {
+        const { data, error } = await supabase.rpc('consume_paid_credit', {
+            transaction_id: transactionId,
+        });
+        if (error) {
+            console.error('[PAYWALL] Erro ao consumir crédito pago:', error);
+            return { success: false, remainingCredits: 0 };
+        }
+        const record = Array.isArray(data) ? data[0] : data;
+        if (!record) {
+            console.warn('[PAYWALL] Nenhum crédito disponível para consumir (possível uso duplo).', transactionId);
+            return { success: false, remainingCredits: 0 };
+        }
+        return {
+            success: true,
+            remainingCredits: record.remaining_credits ?? 0,
+        };
+    }
+    catch (error) {
+        console.error('[PAYWALL] Exceção ao consumir crédito pago:', error);
+        return { success: false, remainingCredits: 0 };
     }
 };
 export const resolveFreeUsage = async (supabase, options) => {

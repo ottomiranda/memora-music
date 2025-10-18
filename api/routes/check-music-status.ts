@@ -48,12 +48,9 @@ router.get('/health', (req, res) => {
   });
 });
 
-// GET /api/check-music-status/:taskId
-// Verificar o status de uma tarefa de geração de música
-router.get('/:taskId', async (req, res) => {
+async function resolveTaskStatus(taskId: string, res: express.Response) {
   const startTime = Date.now();
-  const { taskId } = req.params;
-  
+
   console.log(`🔍 [${taskId}] Verificando status da tarefa...`);
   
   try {
@@ -123,6 +120,28 @@ router.get('/:taskId', async (req, res) => {
       taskId
     });
   }
+}
+
+// GET /api/check-music-status
+// Suporta taskId via query string (?taskId=...)
+router.get('/', async (req, res) => {
+  const taskIdParam = req.query.taskId;
+
+  if (!taskIdParam || typeof taskIdParam !== 'string') {
+    return res.status(400).json({
+      success: false,
+      error: 'O parâmetro taskId é obrigatório na query string (?taskId=...)'
+    });
+  }
+
+  await resolveTaskStatus(taskIdParam, res);
+});
+
+// GET /api/check-music-status/:taskId
+// Verificar o status de uma tarefa de geração de música via parâmetro de rota
+router.get('/:taskId', async (req, res) => {
+  const { taskId } = req.params;
+  await resolveTaskStatus(taskId, res);
 });
 
 export default router;

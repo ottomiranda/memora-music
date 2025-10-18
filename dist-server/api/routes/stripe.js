@@ -54,11 +54,31 @@ router.post('/finalize', paymentRateLimit, optionalAuthMiddleware, async (req, r
         }
         const supabase = getSupabaseServiceClient();
         const clientIp = req.ip;
-        // Update transaction row if exists
-        await supabase
+        const { data: existingTransaction, error: fetchError } = await supabase
             .from('stripe_transactions')
-            .update({ status: 'succeeded', stripe_payment_intent_data: pi, updated_at: new Date().toISOString() })
+            .select('id, available_credits, credit_consumed_at')
+            .eq('payment_intent_id', paymentIntentId)
+            .maybeSingle();
+        if (fetchError) {
+            console.error('[STRIPE_FINALIZE] Erro ao buscar transação:', fetchError);
+        }
+        const updates = {
+            status: 'succeeded',
+            stripe_payment_intent_data: pi,
+            updated_at: new Date().toISOString(),
+        };
+        if (!existingTransaction?.credit_consumed_at) {
+            const currentCredits = existingTransaction?.available_credits ?? 0;
+            updates.available_credits = Math.max(currentCredits, 1);
+            updates.credit_consumed_at = null;
+        }
+        const { error: updateError } = await supabase
+            .from('stripe_transactions')
+            .update(updates)
             .eq('payment_intent_id', paymentIntentId);
+        if (updateError) {
+            console.error('[STRIPE_FINALIZE] Erro ao atualizar transação:', updateError);
+        }
         // Determine identity: prefer authenticated user, then metadata.userId, else deviceId
         let targetUserId = req.user?.id || null;
         const metaUserId = pi.metadata?.userId || null;
@@ -68,64 +88,8 @@ router.post('/finalize', paymentRateLimit, optionalAuthMiddleware, async (req, r
         }
         // Reset quota by updating freesongsused counter to 0 (keep records for history)
         const results = [];
-        try {
-            if (targetUserId) {
-                // Reset freesongsused counter for this user to 0
-                const { error } = await supabase
-                    .from('user_creations')
-                    .update({
-                    freesongsused: 0,
-                    creations: 0,
-                    updated_at: new Date().toISOString()
-                })
-                    .eq('user_id', targetUserId);
-                results.push({ target: 'userId', updated: !error });
-                console.log('[STRIPE_FINALIZE] Reset quota for userId:', targetUserId, 'success:', !error);
-            }
-        }
-        catch (e) {
-            console.warn('[STRIPE_FINALIZE] Falha ao resetar por userId', e);
-        }
-        try {
-            if (targetDeviceId) {
-                // Reset freesongsused counter for this device_id
-                const { error } = await supabase
-                    .from('user_creations')
-                    .update({
-                    freesongsused: 0,
-                    creations: 0,
-                    updated_at: new Date().toISOString()
-                })
-                    .eq('device_id', targetDeviceId)
-                    .is('user_id', null);
-                results.push({ target: 'deviceId', updated: !error });
-                console.log('[STRIPE_FINALIZE] Reset quota for deviceId:', targetDeviceId, 'success:', !error);
-            }
-        }
-        catch (e) {
-            console.warn('[STRIPE_FINALIZE] Falha ao resetar por deviceId', e);
-        }
-        // Extra: também resetar por IP para evitar bloqueio pelo filtro OR
-        try {
-            if (clientIp) {
-                // Reset freesongsused counter for this IP
-                const { error } = await supabase
-                    .from('user_creations')
-                    .update({
-                    freesongsused: 0,
-                    creations: 0,
-                    updated_at: new Date().toISOString()
-                })
-                    .eq('last_used_ip', clientIp)
-                    .is('user_id', null);
-                results.push({ target: 'last_used_ip', updated: !error });
-                console.log('[STRIPE_FINALIZE] Reset quota for IP:', clientIp, 'success:', !error);
-            }
-        }
-        catch (e) {
-            console.warn('[STRIPE_FINALIZE] Falha ao resetar por last_used_ip', e);
-        }
-        res.status(200).json({ success: true, message: 'Pagamento verificado e cota liberada', results });
+        console.log('[STRIPE_FINALIZE] Payment succeeded; crédito liberado para consumo.');
+        res.status(200).json({ success: true, message: 'Pagamento verificado', results });
     }
     catch (err) {
         console.error('[STRIPE_FINALIZE] Erro:', err);
@@ -261,7 +225,9 @@ router.post('/create-payment-intent', paymentRateLimit, optionalAuthMiddleware, 
             amount: amount,
             currency: currency,
             status: 'created',
-            metadata: metadata || {},
+            metadata: paymentMetadata,
+            available_credits: 0,
+            credit_consumed_at: null,
             created_at: new Date().toISOString()
         });
         if (dbError) {
@@ -399,52 +365,33 @@ async function handlePaymentSuccess(paymentIntent) {
     try {
         console.log('[STRIPE_WEBHOOK] Processando pagamento bem-sucedido:', paymentIntent.id);
         const supabase = getSupabaseClient();
-        // Atualizar status da transação
-        const { error: updateError } = await supabase
+        const { data: existingTransaction, error: fetchError } = await supabase
             .from('stripe_transactions')
-            .update({
+            .select('id, available_credits, credit_consumed_at')
+            .eq('payment_intent_id', paymentIntent.id)
+            .maybeSingle();
+        if (fetchError) {
+            console.error('[STRIPE_WEBHOOK] Erro ao buscar transação:', fetchError);
+        }
+        const updates = {
             status: 'succeeded',
             stripe_payment_intent_data: paymentIntent,
-            updated_at: new Date().toISOString()
-        })
+            updated_at: new Date().toISOString(),
+        };
+        if (!existingTransaction?.credit_consumed_at) {
+            const currentCredits = existingTransaction?.available_credits ?? 0;
+            updates.available_credits = Math.max(currentCredits, 1);
+            updates.credit_consumed_at = null;
+        }
+        const { error: updateError } = await supabase
+            .from('stripe_transactions')
+            .update(updates)
             .eq('payment_intent_id', paymentIntent.id);
         if (updateError) {
             console.error('[STRIPE_WEBHOOK] Erro ao atualizar transação:', updateError);
             return;
         }
-        // Se há userId nos metadados, resetar contador de músicas gratuitas
-        const userId = paymentIntent.metadata?.userId;
-        if (userId && userId !== 'guest') {
-            const { error: resetError } = await supabase
-                .from('user_creations')
-                .update({ freesongsused: 0 })
-                .eq('user_id', userId);
-            if (resetError) {
-                console.error('[STRIPE_WEBHOOK] Erro ao resetar contador de músicas:', resetError);
-            }
-            else {
-                console.log('[STRIPE_WEBHOOK] Contador de músicas resetado para usuário:', userId);
-            }
-        }
-        else {
-            // Caso convidado: usar deviceId na metadata para resetar contador
-            const deviceId = (paymentIntent.metadata?.deviceId || paymentIntent.metadata?.device_id);
-            if (deviceId) {
-                const { error: resetGuestError } = await supabase
-                    .from('user_creations')
-                    .update({ freesongsused: 0 })
-                    .eq('device_id', deviceId);
-                if (resetGuestError) {
-                    console.error('[STRIPE_WEBHOOK] Erro ao resetar contador (guest por device_id):', resetGuestError);
-                }
-                else {
-                    console.log('[STRIPE_WEBHOOK] Contador resetado para guest com device_id:', deviceId);
-                }
-            }
-            else {
-                console.warn('[STRIPE_WEBHOOK] Pagamento sem userId e sem deviceId na metadata. Nenhum reset aplicado.');
-            }
-        }
+        console.log('[STRIPE_WEBHOOK] Crédito disponibilizado para pagamento bem-sucedido:', paymentIntent.id);
         console.log('[STRIPE_WEBHOOK] Pagamento processado com sucesso:', paymentIntent.id);
     }
     catch (error) {

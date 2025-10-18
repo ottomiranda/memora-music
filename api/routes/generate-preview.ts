@@ -5,7 +5,7 @@ import fetch from 'node-fetch';
 import multer from 'multer';
 import { SongService } from '../../src/lib/services/songService.js';
 import { executeSupabaseQuery, getSupabaseServiceClient, testSupabaseConnection } from '../../src/lib/supabase-client.js';
-import { hasUnlimitedAccess, normalizeIds, resolveFreeUsage, syncUsageRecords, type UsageRecord } from '../lib/paywall-utils.js';
+import { consumePaidCredit, hasUnlimitedAccess, normalizeIds, resolveFreeUsage, syncUsageRecords, type UsageRecord } from '../lib/paywall-utils.js';
 import { PromptAdapter } from '../../src/lib/services/promptAdapter.js';
 
 // Função para obter cliente Supabase (compatibilidade)
@@ -193,6 +193,20 @@ class SunoAPI {
 
 // Inicializar cliente Suno
 const sunoClient = new SunoAPI(SUNO_API_KEY || '');
+
+class SunoIntegrationError extends Error {
+  statusCode: number;
+  sunoCode?: string;
+  payload?: unknown;
+
+  constructor(message: string, options: { statusCode?: number; sunoCode?: string; payload?: unknown } = {}) {
+    super(message);
+    this.name = 'SunoIntegrationError';
+    this.statusCode = options.statusCode ?? 500;
+    this.sunoCode = options.sunoCode;
+    this.payload = options.payload;
+  }
+}
 
 // Função para salvamento automático de músicas no banco de dados
 async function autoSaveSongToDatabase(task: Record<string, unknown>, userId?: string, guestId?: string) {
@@ -815,6 +829,46 @@ router.post('/', upload.none(), async (req: Request, res: Response) => {
             existingUser = null;
             console.log('[PAYWALL_STEP1] Nenhum registro existente para usuário ou convidado - será criado após geração');
           }
+
+          if (!existingUser && userId) {
+            console.log('[PAYWALL_STEP1] Buscando registros existentes vinculados ao user_id...');
+            const { data: userRecords, error: userRecordsError } = await supabase
+              .from('user_creations')
+              .select('device_id, user_id, freesongsused, last_used_ip, creations, updated_at')
+              .eq('user_id', userId)
+              .order('updated_at', { ascending: false });
+
+            if (userRecordsError) {
+              console.error('[PAYWALL_STEP1] Erro ao buscar registros por user_id:', userRecordsError);
+            } else if (userRecords && userRecords.length > 0) {
+              usageRecords = userRecords.map(record => ({
+                device_id: record.device_id ?? null,
+                user_id: record.user_id ?? null,
+                freesongsused: record.freesongsused ?? 0,
+                last_used_ip: record.last_used_ip ?? null,
+                creations: record.creations ?? null,
+              }));
+
+              usageDeviceIds = usageRecords
+                .map(record => record.device_id)
+                .filter((value): value is string => Boolean(value));
+
+              const preferredDeviceId = usageDeviceIds[0]
+                ?? deviceId
+                ?? guestId
+                ?? userId
+                ?? null;
+
+              existingUser = {
+                user_id: userId,
+                device_id: preferredDeviceId,
+                freesongsused: usageRecords[0]?.freesongsused ?? 0,
+                last_used_ip: usageRecords[0]?.last_used_ip ?? null,
+              };
+
+              console.log('[PAYWALL_STEP1] Registros anteriores por user_id consolidados:', existingUser);
+            }
+          }
         } catch (lookupError) {
           console.error('[PAYWALL_ERROR] Erro ao buscar registros em user_creations:', lookupError);
           return res.status(500).json({
@@ -844,41 +898,41 @@ router.post('/', upload.none(), async (req: Request, res: Response) => {
           existingUser?.device_id,
           ...usageDeviceIds,
         ];
-        const hasPremiumAccess = await hasUnlimitedAccess(supabaseClient, {
+        let premiumAccess = await hasUnlimitedAccess(supabaseClient, {
           userId,
           deviceIds: premiumDeviceCandidates,
         });
 
-        if (!hasPremiumAccess) {
-          const identifierTarget = userId
-            ? `usuário ${userId}`
-            : `dispositivo ${normalizeIds([deviceId, guestId, existingUser?.device_id ?? null])[0] || 'desconhecido'}`;
+        const identifierTarget = userId
+          ? `usuário ${userId}`
+          : `dispositivo ${normalizeIds([deviceId, guestId, existingUser?.device_id ?? null])[0] || 'desconhecido'}`;
 
-          if (existingUser && existingUser.freesongsused >= FREE_SONG_LIMIT) {
-            console.log(`[PAYWALL_BLOCK] Limite atingido para ${identifierTarget}. FreeSongsUsed: ${existingUser.freesongsused}`);
-            
-            // Verificação dupla: consultar novamente hasUnlimitedAccess para casos de pagamento recente
-            console.log('[PAYWALL_DOUBLE_CHECK] Verificando novamente acesso premium após limite atingido...');
-            const doubleCheckAccess = await hasUnlimitedAccess(supabaseClient, {
-              userId,
-              deviceIds: [deviceId, guestId, existingUser?.device_id].filter(Boolean)
+        if (!premiumAccess.hasAccess && existingUser && existingUser.freesongsused >= FREE_SONG_LIMIT) {
+          console.log(`[PAYWALL_BLOCK] Limite atingido para ${identifierTarget}. FreeSongsUsed: ${existingUser.freesongsused}`);
+          
+          console.log('[PAYWALL_DOUBLE_CHECK] Verificando novamente acesso premium após limite atingido...');
+          const doubleCheckAccess = await hasUnlimitedAccess(supabaseClient, {
+            userId,
+            deviceIds: [deviceId, guestId, existingUser?.device_id].filter(Boolean),
+          });
+
+          if (doubleCheckAccess.hasAccess) {
+            console.log('[PAYWALL_DOUBLE_CHECK] ✅ Acesso premium confirmado na segunda verificação - permitindo geração');
+            premiumAccess = doubleCheckAccess;
+          } else {
+            console.log('[PAYWALL_DOUBLE_CHECK] ❌ Acesso premium não confirmado - bloqueando geração');
+            return res.status(402).json({
+              success: false,
+              error: 'PAYMENT_REQUIRED',
+              message: 'Você já usou suas criações de música gratuitas. Por favor, faça um upgrade para criar mais.',
+              freeSongsUsed: existingUser.freesongsused,
+              maxFreeSongs: FREE_SONG_LIMIT,
+              requiresPayment: true
             });
-            
-            if (doubleCheckAccess) {
-              console.log('[PAYWALL_DOUBLE_CHECK] ✅ Acesso premium confirmado na segunda verificação - permitindo geração');
-            } else {
-              console.log('[PAYWALL_DOUBLE_CHECK] ❌ Acesso premium não confirmado - bloqueando geração');
-              return res.status(402).json({
-                success: false,
-                error: 'PAYMENT_REQUIRED',
-                message: 'Você já usou suas criações de música gratuitas. Por favor, faça um upgrade para criar mais.',
-                freeSongsUsed: existingUser.freesongsused,
-                maxFreeSongs: FREE_SONG_LIMIT,
-                requiresPayment: true
-              });
-            }
           }
+        }
 
+        if (!premiumAccess.hasAccess) {
           const currentCount = existingUser?.freesongsused || 0;
           console.log(`[PAYWALL_ALLOW] Permissão concedida para ${identifierTarget}. Músicas usadas: ${currentCount}/${FREE_SONG_LIMIT}`);
 
@@ -962,7 +1016,33 @@ router.post('/', upload.none(), async (req: Request, res: Response) => {
             });
           }
         } else {
-          console.log('[PAYWALL_ALLOW] Plano ativo detectado - ignorando limite e contador de músicas gratuitas');
+          console.log('[PAYWALL_ALLOW] Plano ativo detectado - consumindo crédito pago disponível');
+          const transactionId = premiumAccess.transaction?.id;
+
+          if (!transactionId) {
+            console.error('[PAYWALL] Crédito pago disponível sem transactionId. Bloqueando geração por segurança.');
+            return res.status(402).json({
+              success: false,
+              error: 'PAYMENT_REQUIRED',
+              message: 'Seu pagamento foi identificado, mas não foi possível liberar o crédito. Tente novamente.',
+              requiresPayment: true
+            });
+          }
+
+          const consumption = await consumePaidCredit(supabaseClient, transactionId);
+          if (!consumption.success) {
+            console.warn('[PAYWALL] Falha ao consumir crédito pago. Crédito possivelmente já utilizado.', {
+              transactionId,
+            });
+            return res.status(402).json({
+              success: false,
+              error: 'PAYMENT_REQUIRED',
+              message: 'O crédito disponível já foi utilizado. Por favor, realize um novo pagamento para continuar.',
+              requiresPayment: true
+            });
+          }
+
+          console.log('[PAYWALL] Crédito consumido com sucesso. Créditos restantes:', consumption.remainingCredits);
         }
         
       } catch (error) {
@@ -1219,34 +1299,76 @@ router.post('/', upload.none(), async (req: Request, res: Response) => {
         body: JSON.stringify(generatePayload)
       }, 3);
       
-      if (!generateResponse.ok) {
-        const errorText = await generateResponse.text();
-        console.log('❌ Erro na chamada /generate:', generateResponse.status, errorText);
-        throw new Error(`Erro na geração Suno: ${generateResponse.status} - ${errorText}`);
-      }
-      
       const responseBodyText = await generateResponse.text();
       // ---> PASSO 2 DE DEBUG: Logar a resposta bruta que recebemos
       console.log('[DEBUG SUNO] Resposta bruta do /generate:', responseBodyText);
-      
-      // Tente fazer o parse do JSON APÓS logar o texto
-      const generateData = JSON.parse(responseBodyText);
+
+      let parsedResponse: unknown = null;
+      try {
+        parsedResponse = responseBodyText ? JSON.parse(responseBodyText) : null;
+      } catch (parseError) {
+        console.log('[DEBUG SUNO] Resposta não é um JSON válido:', (parseError as Error).message);
+      }
+
+      const extractSunoErrorInfo = (rawMessage: string | undefined | null, fallbackStatus?: number) => {
+        const baseStatus = typeof fallbackStatus === 'number' ? fallbackStatus : generateResponse.status;
+        const normalized = rawMessage?.toLowerCase?.() ?? '';
+        const insufficientCredits = normalized.includes('insufficient') && normalized.includes('credit');
+        return {
+          sunoCode: insufficientCredits ? 'SUNO_INSUFFICIENT_CREDITS' : 'SUNO_ERROR',
+          statusCode: insufficientCredits ? 402 : baseStatus,
+          message: rawMessage ?? `HTTP ${baseStatus}`
+        };
+      };
+
+      if (!generateResponse.ok) {
+        const errorBody = parsedResponse as { msg?: string; message?: string; error?: string; code?: number } | null;
+        const rawMessage = errorBody?.msg || errorBody?.message || errorBody?.error || responseBodyText || 'Erro desconhecido';
+        const { statusCode, sunoCode, message } = extractSunoErrorInfo(rawMessage);
+        console.log('❌ Erro na chamada /generate:', generateResponse.status, message);
+        throw new SunoIntegrationError(`Erro na geração Suno: ${message}`, {
+          statusCode,
+          sunoCode,
+          payload: errorBody ?? responseBodyText
+        });
+      }
+
+      const generateData = parsedResponse;
       console.log('✅ Resposta do /generate:', JSON.stringify(generateData, null, 2));
       
       // Verificar se a resposta tem o formato esperado da Suno API
       if (!generateData || typeof generateData !== 'object') {
-        throw new Error('Resposta inválida do /generate: formato inesperado');
+        throw new SunoIntegrationError('Resposta inválida do /generate: formato inesperado', {
+          payload: responseBodyText
+        });
       }
+
+      const sunoResponse = generateData as { code?: number; msg?: string; data?: { taskId?: string } | null };
       
       // A Suno API retorna: {"code":200,"msg":"success","data":{"taskId":"..."}}
-      if (generateData.code !== 200 || !generateData.data) {
-        throw new Error(`Erro da Suno API: ${generateData.msg || 'Resposta inválida'}`);
+      if (sunoResponse.code !== 200 || !sunoResponse.data) {
+        const rawMessage = sunoResponse.msg || 'Resposta inválida';
+        const errorInfo = extractSunoErrorInfo(rawMessage, typeof sunoResponse.code === 'number' ? sunoResponse.code : undefined);
+        const resolvedStatus = errorInfo.sunoCode === 'SUNO_INSUFFICIENT_CREDITS'
+          ? 402
+          : errorInfo.statusCode >= 400
+            ? errorInfo.statusCode
+            : (typeof sunoResponse.code === 'number' && sunoResponse.code >= 400 ? sunoResponse.code : 500);
+        throw new SunoIntegrationError(`Erro da Suno API: ${errorInfo.message}`, {
+          statusCode: resolvedStatus,
+          sunoCode: errorInfo.sunoCode,
+          payload: sunoResponse
+        });
       }
       
       // Extrair taskId da resposta
-      const taskId = generateData.data.taskId;
+      const taskId = sunoResponse.data.taskId;
       if (!taskId) {
-        throw new Error('TaskId não encontrado na resposta da Suno API');
+        throw new SunoIntegrationError('TaskId não encontrado na resposta da Suno API', {
+          statusCode: 502,
+          sunoCode: 'SUNO_ERROR',
+          payload: sunoResponse
+        });
       }
       
       console.log('🎵 TaskId extraído:', taskId);
@@ -1400,8 +1522,20 @@ router.post('/', upload.none(), async (req: Request, res: Response) => {
     // Tratamento de erros específicos
     let errorMessage = 'Ocorreu um erro interno. Tente novamente em alguns instantes.';
     let statusCode = 500;
+    let errorCode: string | undefined;
+    let errorDetails: string = error instanceof Error ? error.message : 'Erro desconhecido';
     
-    if (error instanceof Error) {
+    if (error instanceof SunoIntegrationError) {
+      statusCode = error.statusCode;
+      errorCode = error.sunoCode;
+      errorDetails = error.message;
+      
+      if (error.sunoCode === 'SUNO_INSUFFICIENT_CREDITS') {
+        errorMessage = 'Estamos temporariamente sem créditos de geração. Já notificamos nossa equipe e retomaremos em breve.';
+      } else {
+        errorMessage = 'Não foi possível gerar a música. Tente novamente.';
+      }
+    } else if (error instanceof Error) {
       // Diagnóstico específico para erros de fetch/conectividade
       if (error.message.includes('fetch failed') || error.message.includes('ENOTFOUND')) {
         errorMessage = 'Erro de conectividade com a API de música - DNS não resolvido';
@@ -1430,13 +1564,24 @@ router.post('/', upload.none(), async (req: Request, res: Response) => {
         errorMessage = 'Não foi possível gerar a música. Tente novamente.';
       }
     }
-
-    res.status(statusCode).json({
+    
+    const responseBody: Record<string, unknown> = {
       success: false,
       error: errorMessage,
-      details: error instanceof Error ? error.message : 'Erro desconhecido',
+      message: errorMessage,
+      details: errorDetails,
       timestamp: new Date().toISOString()
-    });
+    };
+
+    if (errorCode) {
+      responseBody.code = errorCode;
+    }
+
+    if (error instanceof SunoIntegrationError && error.payload && process.env.NODE_ENV !== 'production') {
+      responseBody.meta = error.payload;
+    }
+
+    res.status(statusCode).json(responseBody);
   }
 });
 

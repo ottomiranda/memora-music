@@ -1,15 +1,31 @@
 import { Router } from 'express';
 import axios from 'axios';
 const router = Router();
-const ensureMp3Extension = (filename) => {
-    if (!filename) {
-        return 'musica_personalizada.mp3';
-    }
-    const trimmed = filename.trim();
-    if (!trimmed) {
-        return 'musica_personalizada.mp3';
-    }
-    return trimmed.toLowerCase().endsWith('.mp3') ? trimmed : `${trimmed}.mp3`;
+// ===== Utilitários locais espelhando src/utils/filename.ts =====
+const stripDiacritics = (input) => {
+    return input.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+};
+const sanitizeForFilesystem = (input) => {
+    let s = input.normalize('NFKC').trim().replace(/\.+$/, '');
+    s = s.replace(/[<>:\"/\\|?*\x00-\x1F]/g, '-');
+    s = s.replace(/[\s]+/g, ' ').replace(/-{2,}/g, '-');
+    s = s.trim().replace(/^[\s-]+|[\s-]+$/g, '');
+    return s || 'musica_personalizada';
+};
+const ensureMp3Suffix = (name) => {
+    return /\.mp3$/i.test(name) ? name.replace(/\.mp3$/i, '.mp3') : `${name}.mp3`;
+};
+const buildMp3FilenameServer = (title) => {
+    const base = (title ?? '').toString();
+    const normalized = base.normalize('NFKC').trim();
+    const prepared = normalized ? normalized : 'musica_personalizada';
+    const sanitized = sanitizeForFilesystem(prepared);
+    return ensureMp3Suffix(sanitized);
+};
+const encodeRFC5987ValueChars = (str) => {
+    return encodeURIComponent(str)
+        .replace(/['()*]/g, c => `%${c.charCodeAt(0).toString(16).toUpperCase()}`)
+        .replace(/%(7C|60|5E)/g, (match) => match.toUpperCase());
 };
 /**
  * Endpoint de proxy para download de arquivos de áudio
@@ -17,7 +33,9 @@ const ensureMp3Extension = (filename) => {
  */
 router.get('/', async (req, res) => {
     const externalUrl = req.query.url;
-    const filename = ensureMp3Extension(typeof req.query.filename === 'string' ? req.query.filename : undefined);
+    const finalName = buildMp3FilenameServer(typeof req.query.filename === 'string' ? req.query.filename : undefined);
+    const asciiFallback = finalName.replace(/[^\x20-\x7E]/g, '-');
+    const encodedUtf8 = encodeRFC5987ValueChars(finalName);
     if (!externalUrl) {
         return res.status(400).json({ error: 'URL do arquivo é obrigatória.' });
     }
@@ -30,14 +48,16 @@ router.get('/', async (req, res) => {
             responseType: 'stream',
             timeout: 30000, // 30 segundos de timeout
         });
-        // Define os cabeçalhos que forçam o download
-        res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
-        res.setHeader('Content-Type', 'audio/mpeg');
+        // Define os cabeçalhos que forçam o download (compat e RFC 5987)
+        // application/octet-stream + nosniff evita heurísticas do navegador que podem ocultar a extensão
+        res.setHeader('Content-Type', 'application/octet-stream');
+        res.setHeader('X-Content-Type-Options', 'nosniff');
+        res.setHeader('Content-Disposition', `attachment; filename="${asciiFallback}"; filename*=UTF-8''${encodedUtf8}`);
         // Se o servidor externo forneceu o tamanho do arquivo, repassa
         if (response.headers['content-length']) {
             res.setHeader('Content-Length', response.headers['content-length']);
         }
-        console.log(`[DOWNLOAD PROXY] Transmitindo arquivo: ${filename}`);
+        console.log(`[DOWNLOAD PROXY] Transmitindo arquivo: ${finalName}`);
         // Transmite o stream do arquivo diretamente para o cliente
         response.data.pipe(res);
         // Trata erros no stream
